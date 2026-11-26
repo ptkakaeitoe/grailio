@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useCollection } from "@/lib/collection";
 import { useDemo } from "@/lib/demo";
 import { stockOf } from "@/lib/stocks";
+import { demoTokenPrice } from "@/lib/market";
+import { useMarketCoins } from "@/lib/published-packs";
 
 /*
- * What the demo wallet holds: BNB, the bStocks paid out by redeemed cards, and the bStocks still sealed inside the
- * cards you keep. Valued at live prices: BNB from Chainlink (/api/bnb), bStocks from signed Atlas prices (/api/atlas).
+ * What the demo wallet holds: BNB, bStocks and tokens bought in Trade, the bStocks paid out by redeemed cards, and the
+ * bStocks still sealed inside the cards you keep. Valued at live prices: BNB from Chainlink (/api/bnb), bStocks from signed Atlas prices (/api/atlas).
  */
 
 export type Holding = { key: string; label: string; name: string; ticker: string | null; amount: number; price: number | null };
@@ -15,12 +17,15 @@ export type Holding = { key: string; label: string; name: string; ticker: string
 export function useHoldings() {
   const demo = useDemo();
   const cards = useCollection();
+  const coins = useMarketCoins();
+  const assets = useMemo(() => demo.assets ?? {}, [demo.assets]);
   const [bnbUsd, setBnbUsd] = useState<number | null>(null);
   const [prices, setPrices] = useState<Map<number, number>>(new Map());
   const [loaded, setLoaded] = useState(false);
 
   // Feeds for every stock the collection touches.
-  const feedIds = useMemo(() => [...new Set(cards.map((c) => stockOf(c.ticker)?.feedId).filter((id): id is number => typeof id === "number"))].sort((a, b) => a - b), [cards]);
+  const stockTickers = useMemo(() => [...cards.map((c) => c.ticker), ...Object.keys(assets).filter((k) => !k.startsWith("token:"))], [cards, assets]);
+  const feedIds = useMemo(() => [...new Set(stockTickers.map((t) => stockOf(t)?.feedId).filter((id): id is number => typeof id === "number"))].sort((a, b) => a - b), [stockTickers]);
   const feedKey = feedIds.join(",");
 
   useEffect(() => {
@@ -43,10 +48,17 @@ export function useHoldings() {
   // Redeemed cards: their bStocks are in the wallet, summed per stock.
   const redeemed = new Map<string, number>();
   for (const c of cards) if (c.redeemedAt) redeemed.set(c.ticker, (redeemed.get(c.ticker) ?? 0) + c.shares);
+  // Bought in Trade.
+  for (const [k, amount] of Object.entries(assets)) if (!k.startsWith("token:") && amount > 0) redeemed.set(k, (redeemed.get(k) ?? 0) + amount);
+  const tokens = Object.entries(assets).flatMap(([k, amount]) => {
+    const coin = k.startsWith("token:") && amount > 0 ? coins.find((c) => c.slug === k.slice(6)) : undefined;
+    return coin ? [{ key: k, label: coin.name, name: "Token", ticker: null, amount, price: demoTokenPrice(coin) }] : [];
+  });
 
   const holdings: Holding[] = [
     { key: "bnb", label: "BNB", name: "BNB Chain testnet", ticker: null, amount: demo.bnb, price: bnbUsd },
     ...[...redeemed].map(([ticker, amount]) => ({ key: ticker, label: `${ticker}B`, name: stockOf(ticker)?.name ?? ticker, ticker, amount, price: priceOf(ticker) })),
+    ...tokens,
   ];
 
   // Cards you keep: the bStocks inside them, at today's price.
