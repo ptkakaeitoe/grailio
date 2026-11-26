@@ -10,7 +10,7 @@ import type { MarketCoin } from "@/lib/market";
  * Demo mode's pack launch, simulated in this browser with the same numbers as the contracts
  * (contracts/src/packs/PackLauncher.sol, PackVault.sol, PackTypes.sol):
  *  - Presale: PRESALE_PACKS packs at one pack price. The sale that sells the last pack launches the coin:
- *    70% of the raise seeds liquidity, 30% becomes the presale reserve, and buyers split 30% of the supply by packs.
+ *    70% of the raise seeds liquidity, 30% becomes the presale reserve, and buyers split 50% of the supply by packs.
  *  - Presale packs pay (reserve left / presale packs left) x a Medium roll / 0.9; the last one gets what remains.
  *  - Bought packs (Low / Medium / High at the pack price): buying sets the top prize aside; the margin, or the
  *    shortfall, moves the stock pool. Medium and High sell only while the pool covers (top prize - price).
@@ -22,7 +22,10 @@ import type { MarketCoin } from "@/lib/market";
 export const PRESALE_PACKS = 10;
 export const SEED_SHARE = 0.3;
 export const TOTAL_SUPPLY = 1_000_000;
-export const BUYERS_SUPPLY = TOTAL_SUPPLY * 0.3;
+export const BUYERS_SUPPLY = TOTAL_SUPPLY * 0.5;
+/** Market cap a presale buyer pays (coins net of the card's share of the raise) and the pool opens at: equal at 50/50. */
+export const presaleMcap = (raise: number) => (raise * (1 - SEED_SHARE)) / (BUYERS_SUPPLY / TOTAL_SUPPLY);
+export const launchMcap = (raise: number) => (raise * (1 - SEED_SHARE)) / (1 - BUYERS_SUPPLY / TOTAL_SUPPLY);
 export const TAX_SPLIT = { pool: 0.5, stakers: 0.3, creator: 0.15, platform: 0.05 } as const;
 /** The vault streams stakers' rewards over 7 days; the demo streams them over a minute. */
 export const STREAM_MS = 60_000;

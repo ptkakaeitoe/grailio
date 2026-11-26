@@ -10,7 +10,7 @@ import { SET_FOR_SIZE, cardArt } from "@/lib/cards";
 import { addCard } from "@/lib/collection";
 import { startDemo, useDemo } from "@/lib/demo";
 import {
-  BUYERS_SUPPLY, SEED_SHARE, TABLES, TAX_SPLIT, TIERS, buyPresale, buyTier, canBuyTier, openBought, openPresale, otherBuysPresale,
+  BUYERS_SUPPLY, SEED_SHARE, TABLES, launchMcap, presaleMcap, TAX_SPLIT, TIERS, buyPresale, buyTier, canBuyTier, openBought, openPresale, otherBuysPresale,
   packSizeOf, poolNeeded, presalePacksOf, simulateTax, topMult, useLaunchSim, type LaunchSim, type Opened, type Tier,
 } from "@/lib/demo-launch";
 import { stockOf } from "@/lib/stocks";
@@ -264,6 +264,10 @@ function PresalePanel({ market, sim, bnbUsd }: { market: MarketCoin; sim: Launch
         <Stat label="Your packs" value={String(sim.mine)} />
         <Stat label="Pack" value={usd(sim.price, 0)} />
         <Stat label="Left" value={String(left)} />
+      </dl>
+      <dl className="mt-5 grid grid-cols-2 gap-3">
+        <Stat label="You buy at" value={`${usd(presaleMcap(raise), 0)} mcap`} />
+        <Stat label="Launches at" value={`${usd(launchMcap(raise), 0)} mcap`} />
       </dl>
       <p className="mt-5 text-[13px] text-muted">At launch</p>
       <dl className="mt-2 grid grid-cols-3 gap-3 rounded-md border border-border p-3">
