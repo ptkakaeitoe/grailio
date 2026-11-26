@@ -8,7 +8,7 @@ import { StockLogo } from "@/components/stock-logo";
 import { cleanButton, cleanChip, cleanField, cn } from "@/components/clean-ui";
 import { publishPack } from "@/lib/published-packs";
 import { showToast } from "@/lib/toast";
-import { BASKET_PRESETS, DEFAULT_SIZES, TIER_PRESETS, evenSplit, resetPack, updatePack, usePack, type Launchpad } from "@/lib/pack";
+import { BASKET_PRESETS, DEFAULT_SIZES, TIER_PRESETS, evenSplit, resetPack, risksFor, updatePack, usePack, type Launchpad } from "@/lib/pack";
 import { PRICED_STOCKS, stockOf } from "@/lib/stocks";
 
 /*
@@ -142,7 +142,7 @@ export function Studio() {
           <span className={label}>Risk</span>
           <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Risk">
             {TIER_PRESETS.map((t) => (
-              <button key={t.id} type="button" className={option} aria-pressed={tier?.id === t.id} onClick={() => updatePack({ tiers: t.tiers })}>
+              <button key={t.id} type="button" className={option} aria-pressed={tier?.id === t.id} onClick={() => updatePack({ tiers: t.tiers, risks: risksFor(t.id) })}>
                 <span className="block text-base">{t.name}</span>
                 <span className="block text-sm text-muted">{t.blurb}</span>
               </button>

@@ -351,3 +351,22 @@ export function resetPack() {
 
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 export const usePack = () => useSyncExternalStore(subscribe, load, () => DEFAULT_CONFIG);
+
+/** How far a risk style stretches Medium and High around their average (Low stays flat). */
+const SPREAD: Record<string, number> = { steady: 0.55, classic: 1, moonshot: 1.5 };
+
+/**
+ * The shop's risk tiers for a studio risk style: Steady narrows Medium and High's swing, Moonshot widens it, and each
+ * tier keeps its average payback (so the vault's maths doesn't change). Low always pays 0.95x.
+ */
+export function risksFor(style: string): RiskTier[] {
+  const k = SPREAD[style] ?? 1;
+  return DEFAULT_RISKS.map((r) => {
+    if (r.id === "low") return r;
+    const avg = tierReturn(r);
+    const stretched = r.tiers.map((t) => ({ ...t, mult: Math.max(0.05, avg + (t.mult - avg) * k) }));
+    const scaled = { ...r, tiers: stretched };
+    const fix = avg / tierReturn(scaled);
+    return { ...r, tiers: stretched.map((t) => ({ ...t, mult: Math.round(t.mult * fix * 100) / 100 })) };
+  });
+}
