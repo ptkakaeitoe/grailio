@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BadgeCheck, RefreshCw, Search, TriangleAlert } from "lucide-react";
+import { BadgeCheck, RefreshCw, Search, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import type { AtlasSnapshot } from "@/lib/atlas";
 import { underlying } from "@/lib/atlas-feeds";
 import { usePack } from "@/lib/pack";
@@ -109,27 +109,39 @@ export function StockList() {
         {agree && <><span aria-hidden="true">·</span><span>{agree.ok}/{agree.n} match CMC</span></>}
       </p>
 
-      <div className="flex flex-col gap-3 wide:flex-row wide:items-center wide:justify-between">
-        <div className="flex flex-col gap-3 desk:flex-row desk:items-center desk:gap-2">
-          <label className="relative desk:w-[220px] desk:shrink-0">
-            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
-            <input className={cn(cleanField, "num pl-10 text-sm uppercase placeholder:normal-case placeholder:text-muted desk:h-9")} placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search symbol or feed ID" />
-          </label>
-          {/* Phones: one row of chips you can swipe instead of wrapping. */}
-          <div className="-mx-[var(--gutter)] flex gap-1.5 overflow-x-auto px-[var(--gutter)] [scrollbar-width:none] desk:mx-0 desk:flex-wrap desk:px-0 [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filter">
-            {([["all", "All"], ["pack", "In your pack"], ["healthy", "Healthy"], ["degraded", "Degraded"]] as const).map(([id, label]) => (
-              <button key={id} type="button" className={chip} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
-            ))}
+      {/* Search, then a Filter panel (show, sort, auto-refresh) and Refresh, so the list starts right away. */}
+      <div className="flex items-center gap-2">
+        <label className="relative min-w-0 flex-1 desk:max-w-[320px]">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
+          <input className={cn(cleanField, "num pl-10 text-sm uppercase placeholder:normal-case placeholder:text-muted desk:h-10")} placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search symbol or feed ID" />
+        </label>
+        <details className="group relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape") e.currentTarget.open = false; }}>
+          <summary className={cn(chip, "inline-flex list-none items-center gap-1.5 group-open:border-black desk:min-h-10 [&::-webkit-details-marker]:hidden")} aria-label="Filter and sort">
+            <SlidersHorizontal className="size-4" aria-hidden="true" /><span className="max-phone:sr-only">Filter</span>
+            {(filter !== "all" || sort !== "symbol") && <span className="size-1.5 rounded-full bg-black" aria-label="filters on" />}
+          </summary>
+          <div className="absolute top-[calc(100%+8px)] right-0 z-20 w-[min(300px,calc(100vw-36px))] animate-[popover-in_.15s_ease-out] rounded-md border border-border-strong bg-white p-4 shadow-[0_12px_30px_#0000004d]">
+            <p className="mb-2 text-sm text-muted">Show</p>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter">
+              {([["all", "All"], ["pack", "In your pack"], ["healthy", "Healthy"], ["degraded", "Degraded"]] as const).map(([id, label]) => (
+                <button key={id} type="button" className={chip} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
+              ))}
+            </div>
+            <p className="mt-4 mb-2 text-sm text-muted">Sort</p>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Sort">
+              {([["symbol", "A–Z"], ["price", "Price"], ["change", "Change"], ["score", "Score"], ["volume", "Volume"], ["gap", "Atlas↔CMC gap"]] as const).map(([id, label]) => (
+                <button key={id} type="button" className={chip} aria-pressed={sort === id} onClick={() => setSort(id)}>{label}</button>
+              ))}
+            </div>
+            <label className="mt-4 flex min-h-11 items-center justify-between gap-3 border-t border-border pt-3 text-sm">
+              Auto-refresh
+              <input type="checkbox" className="size-4 accent-[var(--ink)]" checked={auto} onChange={() => setAuto((a) => !a)} />
+            </label>
           </div>
-        </div>
-        <div className="-mx-[var(--gutter)] flex items-center gap-1.5 overflow-x-auto px-[var(--gutter)] [scrollbar-width:none] desk:mx-0 desk:flex-wrap desk:px-0 [&::-webkit-scrollbar]:hidden" role="group" aria-label="Sort">
-          <span className="mr-1 shrink-0 text-sm text-muted">Sort</span>
-          {([["symbol", "A–Z"], ["price", "Price"], ["change", "Change"], ["score", "Score"], ["volume", "Volume"], ["gap", "Atlas↔CMC gap"]] as const).map(([id, label]) => (
-            <button key={id} type="button" className={chip} aria-pressed={sort === id} onClick={() => setSort(id)}>{label}</button>
-          ))}
-          <button type="button" className={chip} aria-pressed={auto} onClick={() => setAuto((a) => !a)} title="Refresh every 30 seconds">Auto</button>
-          <button type="button" className={cn(chip, "inline-flex items-center gap-1.5 disabled:opacity-50")} onClick={load} disabled={loading} aria-label="Refresh"><RefreshCw className={cn("size-4", loading && "animate-spin")} /> <span>Refresh</span></button>
-        </div>
+        </details>
+        <button type="button" className={cn(chip, "inline-flex items-center disabled:opacity-50 desk:min-h-10")} onClick={load} disabled={loading} aria-label="Refresh prices">
+          <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+        </button>
       </div>
 
       {error && <p className="rounded-md border border-down/40 bg-down/10 px-4 py-3 text-sm break-words text-down" role="alert">{error}</p>}
