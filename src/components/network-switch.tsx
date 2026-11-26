@@ -4,9 +4,10 @@ import { cn } from "@/components/clean-ui";
 
 /**
  * Testnet / Mainnet beta. This app is the testnet; mainnet is a separate deployment (the `mainnet/` app), linked by
- * NEXT_PUBLIC_MAINNET_URL. Without that URL the mainnet side shows as coming soon.
+ * NEXT_PUBLIC_MAINNET_URL (in development it falls back to the mainnet dev server on port 3300). Without a URL the
+ * mainnet side shows as coming soon.
  */
-const MAINNET_URL = process.env.NEXT_PUBLIC_MAINNET_URL ?? "";
+const MAINNET_URL = process.env.NEXT_PUBLIC_MAINNET_URL || (process.env.NODE_ENV === "development" ? "http://localhost:3300" : "");
 
 const pill = "inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm transition-colors";
 
