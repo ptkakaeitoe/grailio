@@ -6,6 +6,7 @@ import { ArrowUpRight, Lock, Minus, Plus, TrendingUp, X } from "lucide-react";
 import { Holo, StockCardFront, tilt } from "@/components/stock-card-front";
 import { coverStyle, designedCard } from "@/components/launch-design";
 import { StakePanel } from "@/components/stake-panel";
+import { CoinPackLink } from "@/components/coin-link";
 import { SET_FOR_SIZE, cardArt } from "@/lib/cards";
 import { addCard } from "@/lib/collection";
 import { startDemo, useDemo } from "@/lib/demo";
@@ -434,6 +435,8 @@ export function PackShop({ market }: { market: MarketCoin }) {
       </div>
 
       <div className="min-w-0 pb-8 desk:pt-10" aria-live="polite">
+        <CoinPackLink market={market} page="packs" />
+        <div className="mt-6" />
         {sim.phase === "presale"
           ? <PresalePanel market={market} sim={sim} bnbUsd={bnbUsd} />
           : <LivePanel market={market} sim={sim} bnbUsd={bnbUsd} onOpen={(kind, count) => setOpening({ kind, count })} />}

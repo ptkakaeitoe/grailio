@@ -8,6 +8,7 @@ import { cn } from "@/components/clean-ui";
 import { startDemo, tradeDemo, tradeDemoBnb, useDemo } from "@/lib/demo";
 import { demoTokenPrice } from "@/lib/market";
 import { simTokenPrice, useDemoLaunches } from "@/lib/demo-launch";
+import { CoinPackLink } from "@/components/coin-link";
 import { useMarketCoins } from "@/lib/published-packs";
 import { stockOf } from "@/lib/stocks";
 import { showToast } from "@/lib/toast";
@@ -146,6 +147,8 @@ export function TradeScreen({ asset }: { asset: Asset }) {
       ) : (
         <div className="grid h-[120px] place-items-center rounded-md border border-dashed border-border text-sm text-muted">No price history yet</div>
       )}
+
+      {coin && coin.config.kind !== "classic" && <CoinPackLink market={coin} page="coin" />}
 
       <section aria-label="Swap" className="flex flex-col gap-1.5">
         <div className="rounded-md border border-border bg-surface-muted p-4">
