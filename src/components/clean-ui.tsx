@@ -89,7 +89,7 @@ export function SectionHeading({
     <div className="mb-10 grid grid-cols-1 items-start gap-4 border-t border-border pt-6 desk:mb-16 desk:grid-cols-2 desk:gap-8">
       <p className="text-sm text-black">[ {label} ]</p>
       <div>
-        <h2 className="text-[clamp(36px,3.8vw,48px)] leading-[1.15] font-normal tracking-[-0.02em]">
+        <h2 className="font-[family-name:var(--font-outfit)] text-[clamp(36px,3.8vw,48px)] leading-[1.15] font-light tracking-[-0.02em]">
           {title}
           {subtitle && (
             <>

@@ -7,7 +7,9 @@ import { PACK_COVER, cardArt } from "@/lib/cards";
 import { REPO_URL } from "@/lib/site";
 
 const sectionSpace = "pt-20 desk:pt-28";
-const sectionTitle = "text-[clamp(34px,calc(5.5vw_-_10px),74px)] leading-[1.06] font-normal tracking-[-0.04em]";
+/** Section titles: Outfit light, like the hero's headline. */
+const sectionTitle =
+  "font-[family-name:var(--font-outfit)] text-[clamp(34px,calc(5.5vw_-_10px),74px)] leading-[1.06] font-light tracking-[-0.04em]";
 
 const FLOW = [
   { title: "Holders own the gacha", body: "Packs sell before the coin exists. Buyers get the coin and the cards." },

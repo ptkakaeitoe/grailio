@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
-  Graily's look (from collectX): dark, near-black canvas with light ink and neutral greys; Inter text, Geist Mono
+  Graily's look (from collectX): dark, near-black canvas with light ink and neutral greys; DM Sans text, Geist Mono
   numbers, the Syne wordmark; hairline borders and rounded-md controls. (Graily's rainbow glow is off for now.)
   Mobile first: a bottom tab bar on phones, graily's full top bar from 801px.
 */
@@ -46,8 +46,8 @@
   --color-up: var(--up);
   --color-down: var(--down);
   --color-warn: var(--warn);
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-inter);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-brand: var(--font-syne), system-ui, sans-serif;
   --breakpoint-desk: 50.0625rem;
@@ -74,7 +74,7 @@
   body {
     background: var(--bg);
     color: var(--ink);
-    font-family: var(--font-inter), system-ui, sans-serif;
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
     font-size: 15px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
@@ -94,7 +94,7 @@
   .label::before { content: "[ "; }
   .label::after { content: " ]"; }
 
-  .display { font-family: var(--font-inter), sans-serif; font-weight: 400; letter-spacing: -0.025em; line-height: 1.1; }
+  .display { font-family: var(--font-dm-sans), sans-serif; font-weight: 400; letter-spacing: -0.025em; line-height: 1.1; }
   /* The wordmark: Syne, bold and wide, set slightly tight (graily's .wordmark). */
   .wordmark { font-family: var(--font-syne), system-ui, sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
   .soft { color: var(--ink-faint); }

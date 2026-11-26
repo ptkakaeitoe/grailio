@@ -1,15 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Inter, Syne } from "next/font/google";
+import { DM_Sans, Geist_Mono, Outfit, Syne } from "next/font/google";
 import { Providers } from "@/app/providers";
 import { BottomTabs, SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/toaster";
 import "./globals.css";
 
-/** Graily's type: Inter for text, Geist Mono for numbers, Syne for the wordmark. */
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+/** Type: DM Sans for text, Geist Mono for numbers, Syne for the wordmark (Outfit for the landing headings, below). */
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", weight: "700" });
+/** The landing hero's headline and tagline. */
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
   title: { default: "Grailio", template: "%s · Grailio" },
@@ -21,7 +23,7 @@ export const viewport: Viewport = { viewportFit: "cover", themeColor: "#111111" 
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${geistMono.variable} ${syne.variable} overscroll-y-none antialiased`}>
+    <html lang="en" className={`${dmSans.variable} ${geistMono.variable} ${syne.variable} ${outfit.variable} overscroll-y-none antialiased`}>
       <body className="flex min-h-dvh flex-col">
         <Providers>
           <SiteHeader />
