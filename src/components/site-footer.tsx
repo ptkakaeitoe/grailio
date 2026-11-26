@@ -4,23 +4,22 @@ import { cleanLink, cn } from "@/components/clean-ui";
 import { REPO_URL } from "@/lib/site";
 import { DemoFooterControls } from "@/components/demo-footer-controls";
 
-/** Site footer (ported from collectX): wordmark, page links, network, source and credit. */
+/** Site footer: wordmark, page links, network, source and credit. Phones have the tab bar, so they only get the credit and demo controls. */
 export function SiteFooter() {
   return (
-    <footer className="mx-auto mt-24 w-full max-w-[1440px] border-t border-border px-[var(--gutter)] desk:mt-32">
-      <div className="flex flex-wrap items-center justify-between gap-6 pt-6 pb-6 desk:gap-8">
+    <footer className="mx-auto mt-16 w-full max-w-[1440px] border-t border-border px-[var(--gutter)] desk:mt-32">
+      <div className="hidden flex-wrap items-center justify-between gap-8 pt-6 pb-6 desk:flex">
         <Link href="/" className="wordmark text-2xl">bsctemp</Link>
         <nav aria-label="Footer navigation" className="order-3 flex w-full flex-wrap gap-x-[22px] gap-y-2 desk:order-none desk:w-auto desk:gap-x-[34px]">
           <Link href="/app/packs" className={cleanLink}>packs</Link>
           <Link href="/app/stocks" className={cleanLink}>stocks</Link>
-          <Link href="/studio" className={cleanLink}>pack studio</Link>
           <Link href="/launch" className={cleanLink}>launch</Link>
           <a href={REPO_URL} target="_blank" rel="noreferrer" className={cleanLink}>source <ArrowUpRightIcon weight="bold" /></a>
         </nav>
         <a href="https://testnet.bscscan.com" target="_blank" rel="noreferrer" className={cleanLink}>bnb chain · testnet <ArrowUpRightIcon weight="bold" /></a>
       </div>
       {/* Credit: the studio's X profile (@Blurrylogics), as in collectX. */}
-      <p className="flex items-center gap-2.5 pb-10 text-sm text-muted">
+      <p className="flex items-center gap-2.5 pt-6 pb-8 text-sm text-muted desk:pt-0 desk:pb-10">
         built by
         <a href="https://x.com/Blurrylogics" target="_blank" rel="noreferrer" className={cn(cleanLink, "text-sm")}>
           <svg viewBox="0 0 1221 512" className="h-3 w-auto shrink-0" aria-hidden="true">
