@@ -51,17 +51,17 @@ export function SealedPack({ size, coin, color, className, style }: { size: Pack
   const p = color ?? PALETTE[size.id] ?? PALETTE.standard;
   const shape = size.id === "grail" ? "rounded-[45%_45%_6px_6px]" : "rounded-full";
   return (
-    <div className={cn("relative flex flex-col rounded-[4px] shadow-[0_18px_30px_-18px_#000a]", className)} style={{ background: p.bg, color: p.ink, ...style }}>
+    <div className={cn("relative flex flex-col rounded-[4px] shadow-[0_18px_30px_-18px_#000a]", !className?.includes("h-full") && "aspect-[5/7]", className)} style={{ background: p.bg, color: p.ink, ...style }}>
       <div className={seal} />
-      <div className="flex flex-col items-center px-5 pt-[30px] pb-5">
+      <div className="flex flex-1 flex-col items-center justify-between px-5 pt-5 pb-4">
         <span className="max-w-full truncate text-[13px] tracking-[0.12em] uppercase">{coin}</span>
         <span className="mt-[9px] text-[7px] tracking-[0.14em] opacity-75">STOCK PACK · {usd(size.price, 0)}</span>
-        <div className={cn("relative my-7 grid size-[112px] place-items-center border border-current before:absolute before:inset-[5px] before:rounded-[inherit] before:border before:border-current before:opacity-40 [&_svg]:size-[44%]", shape)}>
+        <div className={cn("relative my-4 grid size-[84px] place-items-center border border-current before:absolute before:inset-[5px] before:rounded-[inherit] before:border before:border-current before:opacity-40 [&_svg]:size-[44%]", shape)}>
           <svg viewBox="0 0 100 100" aria-hidden="true"><EmblemGlyph emblem={coinArt(coin).emblem} tilt={coinArt(coin).tilt} /></svg>
         </div>
-        <span className="text-[34px] tracking-[-0.02em]">{size.name}</span>
+        <span className="text-[28px] leading-none tracking-[-0.02em]">{size.name}</span>
         <span className="mt-1.5 text-[10px] opacity-80">{SUBTITLE[size.id] ?? ""}</span>
-        <div className="mt-6 flex w-full justify-between gap-2 border-t border-current/35 pt-3 text-[6px] opacity-75">
+        <div className="mt-4 flex w-full justify-between gap-2 border-t border-current/35 pt-3 text-[6px] opacity-75">
           <span>SEALED / STOCK PACK</span>
           <span>BSC TESTNET</span>
         </div>
