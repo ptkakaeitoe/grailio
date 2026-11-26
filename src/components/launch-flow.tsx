@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseEventLogs } from "viem";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Globe, ImagePlus, RotateCcw, Search, Send, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Globe, ImagePlus, RotateCcw, Search, Send, X } from "lucide-react";
 import { StockLogo } from "@/components/stock-logo";
 import { CoinPreview } from "@/components/launch-preview";
 import { cleanButton, cleanChip, cleanField, cn } from "@/components/clean-ui";
@@ -60,7 +60,6 @@ export function LaunchFlow() {
   const [picError, setPicError] = useState("");
   const picInput = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [linksOpen, setLinksOpen] = useState(false);
 
   const classic = c.kind === "classic";
   const steps = classic ? CLASSIC_STEPS : STEPS;
@@ -149,8 +148,6 @@ export function LaunchFlow() {
     }
   }
 
-  const linkCount = LINKS.filter((l) => c.links?.[l.id]?.trim()).length;
-
   return (
     <div className="mx-auto max-w-[560px] pt-4 desk:grid desk:max-w-[1000px] desk:grid-cols-[minmax(0,1fr)_320px] desk:items-start desk:gap-12 desk:pt-8">
       <div className="flex min-w-0 flex-col gap-6">
@@ -234,13 +231,8 @@ export function LaunchFlow() {
           </div>
 
           {!classic && <div>
-            <button type="button" aria-expanded={linksOpen} aria-controls="coin-links" onClick={() => setLinksOpen(!linksOpen)}
-              className="-ml-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-sm text-muted transition-colors hover:text-black">
-              {linksOpen ? "Links" : "Add links"}{linkCount > 0 && <span className="tabular-nums">· {linkCount}</span>}
-              <ChevronDown className={cn("size-4 transition-transform", linksOpen && "rotate-180")} aria-hidden="true" />
-            </button>
-            {linksOpen && (
-              <div id="coin-links" className="mt-1 flex flex-col gap-2">
+            <span className={cn(label, "flex justify-between")}>Links <span>Optional</span></span>
+            <div id="coin-links" className="flex flex-col gap-2">
                 {LINKS.map((l) => (
                   <label key={l.id} className="relative block">
                     <span className="sr-only">{l.name}</span>
@@ -252,7 +244,6 @@ export function LaunchFlow() {
                   </label>
                 ))}
               </div>
-            )}
           </div>}
 
           <div>
