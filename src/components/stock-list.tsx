@@ -2,26 +2,29 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BadgeCheck, RefreshCw, Search, SlidersHorizontal, TriangleAlert } from "lucide-react";
+import { BadgeCheck, RefreshCw, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import type { AtlasSnapshot } from "@/lib/atlas";
 import { underlying } from "@/lib/atlas-feeds";
 import { stockOf } from "@/lib/stocks";
 import { usePack } from "@/lib/pack";
 import { compactUsd, gapPct, useCmc } from "@/lib/use-cmc";
-import { usd } from "@/lib/format";
-import { cleanChip, cleanField, cn } from "@/components/clean-ui";
+import { ago, usd } from "@/lib/format";
+import { cn } from "@/components/clean-ui";
+import { TradeToolbar, toolbarChip, tradeList, tradeTable } from "@/components/trade-toolbar";
 import { StockLogo } from "@/components/stock-logo";
 
 const REFRESH_MS = 30_000;
-type Filter = "all" | "pack" | "healthy" | "degraded";
-type Sort = "symbol" | "price" | "change" | "score" | "volume" | "gap";
+/** The quick views above the list: everything, your pack's stocks, or the biggest moves first. */
+type View = "all" | "pack" | "movers";
+type Consensus = "any" | "healthy" | "degraded";
+type Sort = "featured" | "symbol" | "price" | "change" | "score" | "volume" | "gap";
 const AGREE_PCT = 1;
 
-const ago = (ts: number, now: number) => {
-  const s = Math.max(0, Math.round(now / 1000 - ts));
-  return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ago`;
-};
-
+/**
+ * Every bStock Atlas prices, in one dense list (no pages: about a hundred rows, refreshed every 30 s). Featured order
+ * puts your pack's stocks first, then the busiest. The feed ID, signing time and the stock cross-check live on each
+ * stock's trade screen.
+ */
 export function StockList() {
   const pack = usePack();
   const inPack = useMemo(() => new Set(pack.basket.map((b) => b.ticker)), [pack.basket]);
@@ -32,8 +35,9 @@ export function StockList() {
   // Clock starts at 0 and is set after mount, so the server render never reads the time.
   const [now, setNow] = useState(0);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
-  const [sort, setSort] = useState<Sort>("symbol");
+  const [view, setView] = useState<View>("all");
+  const [consensus, setConsensus] = useState<Consensus>("any");
+  const [sort, setSort] = useState<Sort>("featured");
   const cmc = useCmc();
 
   const load = useCallback(async () => {
@@ -68,22 +72,30 @@ export function StockList() {
     if (!snap) return [];
     const q = query.trim().toUpperCase();
     const list = snap.quotes.filter((r) => {
-      if (q && !r.symbol.includes(q) && !String(r.id).includes(q)) return false;
-      if (filter === "pack") return inPack.has(underlying(r.symbol));
-      if (filter === "healthy") return r.consensusStatus === "HEALTHY";
-      if (filter === "degraded") return r.consensusStatus !== null && r.consensusStatus !== "HEALTHY";
+      if (q && !r.symbol.includes(q) && !String(r.id).includes(q) && !stockOf(underlying(r.symbol))?.name.toUpperCase().includes(q)) return false;
+      if (view === "pack" && !inPack.has(underlying(r.symbol))) return false;
+      if (view === "movers" && r.changePct == null) return false;
+      if (consensus === "healthy") return r.consensusStatus === "HEALTHY";
+      if (consensus === "degraded") return r.consensusStatus !== null && r.consensusStatus !== "HEALTHY";
       return true;
     });
-    const by: Record<Sort, (a: (typeof list)[number], b: (typeof list)[number]) => number> = {
+    type Row = (typeof list)[number];
+    const volume = (r: Row) => cmc.byTicker.get(underlying(r.symbol))?.volume24h ?? -1;
+    const by: Record<Sort, (a: Row, b: Row) => number> = {
+      // Your pack's stocks first, then the busiest, then A–Z.
+      featured: (a, b) =>
+        Number(inPack.has(underlying(b.symbol))) - Number(inPack.has(underlying(a.symbol))) || volume(b) - volume(a) || a.symbol.localeCompare(b.symbol),
       symbol: (a, b) => a.symbol.localeCompare(b.symbol),
       price: (a, b) => b.price - a.price,
       change: (a, b) => (b.changePct ?? -Infinity) - (a.changePct ?? -Infinity),
       score: (a, b) => (b.consensusScore ?? -1) - (a.consensusScore ?? -1),
-      volume: (a, b) => (cmc.byTicker.get(underlying(b.symbol))?.volume24h ?? -1) - (cmc.byTicker.get(underlying(a.symbol))?.volume24h ?? -1),
+      volume: (a, b) => volume(b) - volume(a),
       gap: (a, b) => Math.abs(gapPct(b.price, cmc.byTicker.get(underlying(b.symbol))?.price) ?? -1) - Math.abs(gapPct(a.price, cmc.byTicker.get(underlying(a.symbol))?.price) ?? -1),
     };
-    return [...list].sort(by[sort]);
-  }, [snap, query, filter, sort, inPack, cmc.byTicker]);
+    // Movers: the biggest moves first, up or down, whatever the sort says.
+    const order = view === "movers" ? (a: Row, b: Row) => Math.abs(b.changePct ?? 0) - Math.abs(a.changePct ?? 0) : by[sort];
+    return [...list].sort(order);
+  }, [snap, query, view, consensus, sort, inPack, cmc.byTicker]);
 
   const agree = useMemo(() => {
     if (!snap || !cmc.snap) return null;
@@ -92,70 +104,81 @@ export function StockList() {
   }, [snap, cmc.snap, cmc.byTicker]);
   const newest = snap ? Math.max(...snap.quotes.map((q) => q.timestamp)) : 0;
 
-  const chip = cn(cleanChip, "min-h-11 shrink-0 px-4 desk:min-h-9 desk:px-3");
+  const chip = toolbarChip;
   const changeText = (c: number | null) => (c == null ? "—" : `${c > 0 ? "+" : ""}${c.toFixed(2)}%`);
   const changeTone = (c: number | null) => (c == null ? "text-muted" : c >= 0 ? "text-up" : "text-down");
   const empty = !snap && !error ? "Fetching signed prices from Atlas…" : snap && rows.length === 0 ? "No feeds match." : null;
 
-  return (
-    <div className="flex flex-col gap-6 desk:gap-8">
-      {/* One status line: how many feeds, that Atlas signed them, how fresh, and how many agree with CoinMarketCap. */}
-      <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted tabular-nums">
-        <span>{snap ? snap.quotes.length : "—"} feeds</span>
-        <span aria-hidden="true">·</span>
-        <span className={cn("inline-flex items-center gap-1", snap?.signerOk ? "text-up" : snap ? "text-down" : "")} title={snap?.signer}>
-          {snap ? (snap.signerOk ? <BadgeCheck className="size-3.5" /> : <TriangleAlert className="size-3.5" />) : null}
-          {snap ? (snap.signerOk ? "signed" : "unknown signer") : "—"}
-        </span>
-        {snap && <span>{ago(newest, now)}</span>}
-        {agree && <><span aria-hidden="true">·</span><span>{agree.ok}/{agree.n} match CMC</span></>}
-      </p>
+  /** The status line: how many feeds, that Atlas signed them, how fresh, and how many agree with CoinMarketCap. */
+  const status = (
+    <>
+      <span>{snap ? snap.quotes.length : "—"} feeds</span>
+      <span aria-hidden="true">·</span>
+      <span className={cn("inline-flex items-center gap-1", snap?.signerOk ? "text-up" : snap ? "text-down" : "")} title={snap?.signer}>
+        {snap ? (snap.signerOk ? <BadgeCheck className="size-3.5" /> : <TriangleAlert className="size-3.5" />) : null}
+        {snap ? (snap.signerOk ? "signed" : "unknown signer") : "—"}
+      </span>
+      {snap && <span>{ago(newest, now)}</span>}
+      {agree && <><span aria-hidden="true">·</span><span>{agree.ok}/{agree.n} match CMC</span></>}
+    </>
+  );
 
-      {/* Search, then a Filter panel (show, sort, auto-refresh) and Refresh, so the list starts right away. */}
-      <div className="flex items-center gap-2">
-        <label className="relative min-w-0 flex-1 desk:max-w-[320px]">
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
-          <input className={cn(cleanField, "num pl-10 text-sm uppercase placeholder:normal-case placeholder:text-muted desk:h-10")} placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search symbol or feed ID" />
-        </label>
-        <details className="group relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape") e.currentTarget.open = false; }}>
-          <summary className={cn(chip, "inline-flex list-none items-center gap-1.5 group-open:border-black desk:min-h-10 [&::-webkit-details-marker]:hidden")} aria-label="Filter and sort">
-            <SlidersHorizontal className="size-4" aria-hidden="true" /><span className="max-phone:sr-only">Filter</span>
-            {(filter !== "all" || sort !== "symbol") && <span className="size-1.5 rounded-full bg-black" aria-label="filters on" />}
-          </summary>
-          <div className="absolute top-[calc(100%+8px)] right-0 z-20 w-[min(300px,calc(100vw-36px))] animate-[popover-in_.15s_ease-out] rounded-md border border-border-strong bg-white p-4 shadow-[0_12px_30px_#0000004d]">
-            <p className="mb-2 text-sm text-muted">Show</p>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter">
-              {([["all", "All"], ["pack", "In your pack"], ["healthy", "Healthy"], ["degraded", "Degraded"]] as const).map(([id, label]) => (
-                <button key={id} type="button" className={chip} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
-              ))}
+  return (
+    <div className="flex flex-col gap-5 desk:gap-6">
+
+      {/* Quick views (All, In pack, Movers), the status line, then search, a Filter panel (consensus, sort,
+          auto-refresh) and Refresh. */}
+      <TradeToolbar
+        views={[["all", "All"], ["pack", "In pack"], ["movers", "Movers"]] as const}
+        view={view}
+        onView={setView}
+        status={status}
+        query={query}
+        onQuery={setQuery}
+        placeholder="Search stocks"
+        searchLabel="Search by ticker, name or feed ID"
+        upper
+        actions={<>
+          <details className="group relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape") e.currentTarget.open = false; }}>
+            <summary className={cn(chip, "inline-flex list-none items-center gap-1.5 group-open:border-black desk:min-h-10 [&::-webkit-details-marker]:hidden")} aria-label="Filter and sort">
+              <SlidersHorizontal className="size-4" aria-hidden="true" /><span className="max-phone:sr-only">Filter</span>
+              {(consensus !== "any" || sort !== "featured") && <span className="size-1.5 rounded-full bg-black" aria-label="filters on" />}
+            </summary>
+            <div className="absolute top-[calc(100%+8px)] right-0 z-20 w-[min(300px,calc(100vw-36px))] animate-[popover-in_.15s_ease-out] rounded-md border border-border-strong bg-white p-4 shadow-[0_12px_30px_#0000004d]">
+              <p className="mb-2 text-sm text-muted">Consensus</p>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Consensus">
+                {([["any", "Any"], ["healthy", "Healthy"], ["degraded", "Degraded"]] as const).map(([id, label]) => (
+                  <button key={id} type="button" className={chip} aria-pressed={consensus === id} onClick={() => setConsensus(id)}>{label}</button>
+                ))}
+              </div>
+              <p className="mt-4 mb-2 text-sm text-muted">Sort{view === "movers" && <span className="text-[12px]"> · Movers sorts by the size of the move</span>}</p>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Sort">
+                {([["featured", "Featured"], ["symbol", "A–Z"], ["price", "Price"], ["change", "Change"], ["score", "Score"], ["volume", "Volume"], ["gap", "Atlas↔CMC gap"]] as const).map(([id, label]) => (
+                  <button key={id} type="button" className={chip} aria-pressed={sort === id} disabled={view === "movers"} onClick={() => setSort(id)}>{label}</button>
+                ))}
+              </div>
+              <label className="mt-4 flex min-h-11 items-center justify-between gap-3 border-t border-border pt-3 text-sm">
+                Auto-refresh
+                <input type="checkbox" className="size-4 accent-[var(--ink)]" checked={auto} onChange={() => setAuto((a) => !a)} />
+              </label>
             </div>
-            <p className="mt-4 mb-2 text-sm text-muted">Sort</p>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Sort">
-              {([["symbol", "A–Z"], ["price", "Price"], ["change", "Change"], ["score", "Score"], ["volume", "Volume"], ["gap", "Atlas↔CMC gap"]] as const).map(([id, label]) => (
-                <button key={id} type="button" className={chip} aria-pressed={sort === id} onClick={() => setSort(id)}>{label}</button>
-              ))}
-            </div>
-            <label className="mt-4 flex min-h-11 items-center justify-between gap-3 border-t border-border pt-3 text-sm">
-              Auto-refresh
-              <input type="checkbox" className="size-4 accent-[var(--ink)]" checked={auto} onChange={() => setAuto((a) => !a)} />
-            </label>
-          </div>
-        </details>
-        <button type="button" className={cn(chip, "inline-flex items-center disabled:opacity-50 desk:min-h-10")} onClick={load} disabled={loading} aria-label="Refresh prices">
-          <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-        </button>
-      </div>
+          </details>
+          <button type="button" className={cn(chip, "inline-flex items-center disabled:opacity-50 desk:min-h-10")} onClick={load} disabled={loading} aria-label="Refresh prices">
+            <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+          </button>
+        </>}
+      />
 
       {error && <p className="rounded-md border border-down/40 bg-down/10 px-4 py-3 text-sm break-words text-down" role="alert">{error}</p>}
 
       {/* Phones and tablets: a compact price list like a trading app's watchlist. */}
-      <ul className="border-y border-border desk:hidden" aria-label="bStocks prices">
+      <ul className={tradeList.frame} aria-label="bStocks prices">
         {empty && <li className="py-12 text-center text-sm text-muted">{empty}</li>}
         {rows.map((r) => {
           const tick = underlying(r.symbol);
           return (
-            <li key={r.id} className="border-b border-border last:border-b-0">
-              <Link href={stockOf(tick) ? `/app/trade/stock/${tick}` : "#"} aria-disabled={!stockOf(tick)} className="flex min-h-16 items-center gap-3 py-3 transition-colors hover:bg-surface-muted aria-disabled:pointer-events-none">
+            <li key={r.id} className={tradeList.item}>
+              <Link href={stockOf(tick) ? `/app/trade/stock/${tick}` : "#"} aria-disabled={!stockOf(tick)} className={cn(tradeList.link, "aria-disabled:pointer-events-none")}>
               <StockLogo ticker={r.symbol} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2">
@@ -174,58 +197,48 @@ export function StockList() {
         })}
       </ul>
 
-      {/* From 801px: the full table with the CoinMarketCap cross-check and consensus. */}
-      <div className="hidden overflow-hidden rounded-md border border-border desk:block">
-        <table className="w-full text-sm">
-          <thead className="bg-surface-muted text-left text-[12px] text-muted">
+      {/* From 801px: a dense table, one line per stock (about 12 on screen), with the CoinMarketCap cross-check and
+          consensus (Volume from 1201px). The whole row opens the stock's trade screen. */}
+      <div className={tradeTable.frame}>
+        <table className={tradeTable.table}>
+          <thead className={tradeTable.head}>
             <tr>
-              <th className="px-4 py-3 font-normal">Stock</th>
-              <th className="px-4 py-3 text-right font-normal">Price</th>
-              <th className="px-4 py-3 text-right font-normal">Change</th>
-              <th className="px-4 py-3 text-right font-normal">CoinMarketCap</th>
-              <th className="hidden px-4 py-3 text-right font-normal wide:table-cell">vs stock</th>
-              <th className="px-4 py-3 font-normal">Consensus</th>
-              <th className="hidden px-4 py-3 text-right font-normal wide:table-cell">Feed ID</th>
-              <th className="hidden px-4 py-3 text-right font-normal wide:table-cell">Signed</th>
+              <th className="px-4 py-2.5 font-normal">Stock</th>
+              <th className="px-4 py-2.5 text-right font-normal">Price</th>
+              <th className="px-4 py-2.5 text-right font-normal">Change</th>
+              <th className="px-4 py-2.5 text-right font-normal">CoinMarketCap</th>
+              <th className="hidden px-4 py-2.5 text-right font-normal wide:table-cell">Volume</th>
+              <th className="px-4 py-2.5 font-normal">Consensus</th>
             </tr>
           </thead>
           <tbody>
             {empty && (
-              <tr><td colSpan={8} className="px-4 py-12 text-center text-muted">{empty}</td></tr>
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-muted">{empty}</td></tr>
             )}
             {rows.map((r) => {
               const tick = underlying(r.symbol);
               const ok = r.consensusStatus === "HEALTHY";
+              const m = cmc.byTicker.get(tick);
+              const dev = gapPct(r.price, m?.price);
               return (
-                <tr key={r.id} className="border-t border-border transition-colors hover:bg-surface-muted">
+                <tr key={r.id} className={tradeTable.row}>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       <StockLogo ticker={r.symbol} size={24} />
-                      {stockOf(tick) ? <Link href={`/app/trade/stock/${tick}`} className="num underline-offset-4 hover:underline">{tick}</Link> : <span className="num">{tick}</span>}
-                      {inPack.has(tick) && <span className="rounded-[4px] bg-surface-muted px-1.5 py-0.5 text-[11px] text-muted">in pack</span>}
+                      {stockOf(tick) ? (
+                        <Link href={`/app/trade/stock/${tick}`} className={cn("num shrink-0", tradeTable.rowLink)}>{tick}</Link>
+                      ) : <span className="num shrink-0">{tick}</span>}
+                      <span className="truncate text-[13px] text-muted">{stockOf(tick)?.name ?? "Token"}</span>
+                      {inPack.has(tick) && <span className="shrink-0 rounded-[4px] bg-surface-muted px-1.5 py-0.5 text-[11px] text-muted">in pack</span>}
                     </div>
-                    <span className="text-[12px] text-muted">{stockOf(tick)?.name ?? "Token"}</span>
                   </td>
                   <td className="num px-4 py-3 text-right">{usd(r.price, r.price < 1 ? 4 : 2)}</td>
                   <td className={cn("num px-4 py-3 text-right", changeTone(r.changePct))}>{changeText(r.changePct)}</td>
-                  {(() => {
-                    const m = cmc.byTicker.get(tick);
-                    const dev = gapPct(r.price, m?.price);
-                    const toStock = gapPct(m?.price, m?.underlyingAvg);
-                    return (
-                      <>
-                        <td className="num px-4 py-3 text-right">
-                          <span className="text-ink-soft">{m?.price ? usd(m.price, m.price < 1 ? 4 : 2) : "—"}</span>
-                          {dev !== null && <span className={cn("ml-1.5 text-[11px]", Math.abs(dev) > AGREE_PCT ? "text-warn" : "text-muted")}>{dev > 0 ? "+" : ""}{dev.toFixed(2)}%</span>}
-                          <span className="block text-[11px] text-muted">vol {compactUsd(m?.volume24h)}</span>
-                        </td>
-                        <td className={cn("num hidden px-4 py-3 text-right text-[13px] wide:table-cell", toStock === null ? "text-muted" : Math.abs(toStock) > AGREE_PCT ? "text-warn" : "text-ink-soft")}
-                          title={m?.underlyingAvg ? `Average across ${m.issuers} tokenized ${tick} issuers: ${usd(m.underlyingAvg)}` : undefined}>
-                          {toStock === null ? "—" : `${toStock > 0 ? "+" : ""}${toStock.toFixed(2)}%`}
-                        </td>
-                      </>
-                    );
-                  })()}
+                  <td className="num px-4 py-3 text-right whitespace-nowrap">
+                    <span className="text-ink-soft">{m?.price ? usd(m.price, m.price < 1 ? 4 : 2) : "—"}</span>
+                    {dev !== null && <span className={cn("ml-1.5 text-[11px]", Math.abs(dev) > AGREE_PCT ? "text-warn" : "text-muted")}>{dev > 0 ? "+" : ""}{dev.toFixed(2)}%</span>}
+                  </td>
+                  <td className="num hidden px-4 py-3 text-right text-ink-soft wide:table-cell">{compactUsd(m?.volume24h)}</td>
                   <td className="px-4 py-3">
                     {r.consensusScore == null ? <span className="text-muted">—</span> : (
                       <div className="flex items-center gap-2">
@@ -237,8 +250,6 @@ export function StockList() {
                       </div>
                     )}
                   </td>
-                  <td className="num hidden px-4 py-3 text-right text-[12px] text-muted wide:table-cell">{r.id}</td>
-                  <td className="num hidden px-4 py-3 text-right text-[12px] text-muted wide:table-cell">{ago(r.timestamp, now)}</td>
                 </tr>
               );
             })}
