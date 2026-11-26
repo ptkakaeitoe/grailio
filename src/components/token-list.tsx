@@ -2,19 +2,36 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ChevronRight, Search } from "lucide-react";
-import { cleanField, cn } from "@/components/clean-ui";
+import { cn } from "@/components/clean-ui";
+import { TradeToolbar, tradeList, tradeTable } from "@/components/trade-toolbar";
 import { useMarketCoins } from "@/lib/published-packs";
+import type { MarketCoin } from "@/lib/market";
 import { useDemoLaunches } from "@/lib/demo-launch";
 
 const PAD_NAME = { flap: "Flap", four: "Four.meme" } as const;
+type View = "all" | keyof typeof PAD_NAME;
 const compact = (v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : `$${Math.round(v)}`);
 
-/** Launched coins, busiest first: each opens its trade screen. Names only, no tickers. */
+function CoinMark({ coin, size }: { coin: MarketCoin; size: "sm" | "md" }) {
+  return (
+    <span className={cn("grid shrink-0 place-items-center overflow-hidden rounded-full text-[#fff]", size === "sm" ? "size-6 text-[11px]" : "size-9 text-sm")} style={{ background: coin.tone }} aria-hidden="true">
+      {coin.config.image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
+        <img src={coin.config.image} alt="" className="size-full object-cover" />
+      ) : coin.name[0]}
+    </span>
+  );
+}
+
+/**
+ * Launched coins, busiest first, laid out like the bStocks list: the same toolbar (All, Flap, Four.meme), a table from
+ * 801px and a compact list on phones. Each row opens the coin's trade screen. Names only, no tickers.
+ */
 export function TokenList() {
   const market = useMarketCoins();
   const sims = useDemoLaunches();
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<View>("all");
   // Demo-launched coins: pool and volume from the simulation (volume = tax received / tax rate).
   const coins = useMemo(() => market.filter((c) => c.config.kind !== "classic").map((c) => {
     const s = sims[c.slug];
@@ -25,40 +42,85 @@ export function TokenList() {
   }), [market, sims]);
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return coins.filter((c) => !q || c.name.toLowerCase().includes(q)).sort((a, b) => b.volumeUsd - a.volumeUsd);
-  }, [coins, query]);
+    return coins
+      .filter((c) => (view === "all" || c.launchpad === view) && (!q || c.name.toLowerCase().includes(q)))
+      .sort((a, b) => b.volumeUsd - a.volumeUsd);
+  }, [coins, query, view]);
+  const totalPool = coins.reduce((sum, c) => sum + c.poolUsd, 0);
+
+  const status = (
+    <>
+      <span>{coins.length} {coins.length === 1 ? "token" : "tokens"}</span>
+      <span aria-hidden="true">·</span>
+      <span>pools {compact(totalPool)}</span>
+      <span aria-hidden="true">·</span>
+      <span>busiest first</span>
+    </>
+  );
+  const empty = rows.length === 0 ? "No tokens match." : null;
 
   return (
-    <div className="flex flex-col gap-4">
-      <label className="relative desk:max-w-[320px]">
-        <span className="sr-only">Search tokens</span>
-        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
-        <input className={cn(cleanField, "pl-10 text-sm desk:h-10")} placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} />
-      </label>
-      <ul className="border-t border-border">
+    <div className="flex flex-col gap-5 desk:gap-6">
+      <TradeToolbar
+        views={[["all", "All"], ["flap", "Flap"], ["four", "Four.meme"]] as const}
+        view={view}
+        onView={setView}
+        status={status}
+        query={query}
+        onQuery={setQuery}
+        placeholder="Search tokens"
+        searchLabel="Search tokens by name"
+      />
+
+      {/* Phones and tablets: a compact list. */}
+      <ul className={tradeList.frame} aria-label="Tokens">
+        {empty && <li className="py-12 text-center text-sm text-muted">{empty}</li>}
         {rows.map((c) => (
-          <li key={c.slug}>
-            <Link href={`/app/trade/token/${c.slug}`} className="flex min-h-16 items-center gap-3 border-b border-border py-3 transition-colors hover:bg-surface-muted">
-              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full text-sm text-[#fff]" style={{ background: c.tone }} aria-hidden="true">
-                {c.config.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
-                  <img src={c.config.image} alt="" className="size-full object-cover" />
-                ) : c.name[0]}
-              </span>
+          <li key={c.slug} className={tradeList.item}>
+            <Link href={`/app/trade/token/${c.slug}`} className={tradeList.link}>
+              <CoinMark coin={c} size="md" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-base">{c.name}</span>
                 <span className="block truncate text-[13px] text-muted">{PAD_NAME[c.launchpad]} · pool {compact(c.poolUsd)}</span>
               </span>
-              <span className="text-right">
-                <span className="block text-base tabular-nums">{compact(c.volumeUsd)}</span>
+              <span className="shrink-0 text-right">
+                <span className="num block text-base">{compact(c.volumeUsd)}</span>
                 <span className="block text-[13px] text-muted">24h vol</span>
               </span>
-              <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden="true" />
             </Link>
           </li>
         ))}
-        {rows.length === 0 && <li className="py-12 text-center text-sm text-muted">No tokens match.</li>}
       </ul>
+
+      {/* From 801px: the same table frame as bStocks. The whole row opens the coin. */}
+      <div className={tradeTable.frame}>
+        <table className={tradeTable.table}>
+          <thead className={tradeTable.head}>
+            <tr>
+              <th className={tradeTable.th}>Token</th>
+              <th className={tradeTable.th}>Launchpad</th>
+              <th className={cn(tradeTable.th, "text-right")}>Pool</th>
+              <th className={cn(tradeTable.th, "text-right")}>24h volume</th>
+            </tr>
+          </thead>
+          <tbody>
+            {empty && <tr><td colSpan={4} className="px-4 py-12 text-center text-muted">{empty}</td></tr>}
+            {rows.map((c) => (
+              <tr key={c.slug} className={tradeTable.row}>
+                <td className={tradeTable.td}>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <CoinMark coin={c} size="sm" />
+                    <Link href={`/app/trade/token/${c.slug}`} className={cn("truncate", tradeTable.rowLink)}>{c.name}</Link>
+                  </div>
+                </td>
+                <td className={cn(tradeTable.td, "text-ink-soft")}>{PAD_NAME[c.launchpad]}</td>
+                <td className={cn(tradeTable.td, "num text-right")}>{compact(c.poolUsd)}</td>
+                <td className={cn(tradeTable.td, "num text-right text-ink-soft")}>{compact(c.volumeUsd)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
