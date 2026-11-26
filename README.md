@@ -24,7 +24,7 @@ Odds are shown for every pack. Nothing here is investment advice.
 | `/` | Landing page: how the vault works |
 | `/app/packs` | Pack marketplace: one shelf per coin, with its pool size and packs |
 | `/app/packs/<coin>` | A coin's packs: size, risk tier, odds, the Cournot risk check, buy and open |
-| `/app/stocks` | Live signed bStocks prices from Atlas, cross-checked with CoinMarketCap |
+| `/app/trade` | Trade: Stocks (live signed bStocks prices from Atlas, cross-checked with CoinMarketCap) and Tokens (the coins launched with packs) |
 | `/studio` | Pack studio: basket, sleeve, cards, rarity tiers, tax and sale settings |
 | `/launch` | Launch a coin: name, ticker, picture, launchpad, and its pack vault settings |
 

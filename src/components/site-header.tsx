@@ -16,7 +16,7 @@ const NAV = [
   { label: "Packs", href: "/app/packs", icon: Package },
   { label: "Collection", href: "/app/collection", icon: LayoutGrid },
   { label: "Launch", href: "/launch", icon: Plus },
-  { label: "Stocks", href: "/app/stocks", icon: LineChart },
+  { label: "Trade", href: "/app/trade", icon: LineChart },
   { label: "Profile", href: "/app/profile", icon: UserRound },
 ] as const;
 

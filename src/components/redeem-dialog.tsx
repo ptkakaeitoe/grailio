@@ -71,7 +71,7 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
         )}
         {phase === "done" && (
           <div className={revealUi.actions}>
-            <Link className={cleanButton.solid} href="/app/stocks" onClick={onClose}>
+            <Link className={cleanButton.solid} href="/app/trade" onClick={onClose}>
               See {card.ticker}B price <ArrowUpRightIcon weight="bold" />
             </Link>
             <button type="button" className={cn(cleanLink, "text-sm text-muted")} onClick={onClose}>Back to collection</button>
