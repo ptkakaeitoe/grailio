@@ -20,7 +20,7 @@ const transport = http(rpcUrl);
 const publicClient = createPublicClient({ chain: appChain, transport });
 
 /**
- * Spending limits. Every relayed transaction costs the relayer real AVAX, so:
+ * Spending limits. Every relayed transaction costs the relayer real BNB, so:
  *  - per wallet: 6 a minute and 300 a day (keyed by the account a post is from,
  *    recovered from its signature, not by the signature itself);
  *  - overall: RELAY_DAILY_LIMIT transactions per day (default 3,000, roughly
@@ -31,14 +31,14 @@ const publicClient = createPublicClient({ chain: appChain, transport });
  */
 const LIMITS = { perMinute: 6, perDay: 300, dailyTotal: Number(process.env.RELAY_DAILY_LIMIT ?? 3_000) };
 const MAX_GAS_PRICE = BigInt(Math.round(Number(process.env.RELAY_MAX_GWEI ?? 50) * 1e9));
-const MIN_BALANCE = 50_000_000_000_000_000n; // 0.05 AVAX
+const MIN_BALANCE = 10_000_000_000_000_000n; // 0.01 BNB
 
 /** Network and wallet checks before spending gas. */
 async function relayerReady(address: Hex): Promise<string | null> {
   const [gasPrice, balance] = await Promise.all([publicClient.getGasPrice(), publicClient.getBalance({ address })]);
   if (gasPrice > MAX_GAS_PRICE) return "The network is busy. Free posting resumes when gas drops.";
   if (balance < MIN_BALANCE) {
-    console.error(`chat relayer ${address} is low on AVAX: ${balance} wei`);
+    console.error(`chat relayer ${address} is low on BNB: ${balance} wei`);
     return "Free posting is temporarily unavailable.";
   }
   return null;
@@ -55,7 +55,7 @@ function bad(message: string, status = 400) {
 export async function POST(request: Request) {
   if (!chatLive) return bad("Chat is not deployed on this chain yet", 503);
   if (!(await validToken((await cookies()).get(BETA_COOKIE)?.value))) return bad("Beta access required", 401);
-  // A dedicated key, so the chat wallet's AVAX is the most it can ever spend.
+  // A dedicated key, so the chat wallet's BNB is the most it can ever spend.
   const raw = process.env.RELAYER_KEY;
   if (!raw) return bad("Chat relay is not configured", 503);
   // Limits must be shared across instances; without a store, don't spend.

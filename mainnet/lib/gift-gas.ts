@@ -1,12 +1,12 @@
 /**
- * Gas for gift recipients (app/api/gift/gas). A new wallet has no AVAX, so it
+ * Gas for gift recipients (app/api/gift/gas). A new wallet has no BNB, so it
  * couldn't pay to claim its gift or open the packs. The relayer sends a small
  * top-up once, if the browser proves it holds an open gift's code by signing
  * this message, which names the receiving wallet, with the code's key.
  */
-export const GIFT_GAS_AMOUNT = "0.01"; // AVAX: enough to claim and open a few packs
-/** Wallets holding at least this much (AVAX) don't need a top-up. */
-export const GIFT_GAS_THRESHOLD = "0.005";
+export const GIFT_GAS_AMOUNT = "0.002"; // BNB (~$1): plenty to claim and open a few packs at BNB Chain gas prices
+/** Wallets holding at least this much (BNB) don't need a top-up. */
+export const GIFT_GAS_THRESHOLD = "0.001";
 export const GIFT_GAS_MAX_AGE = 10 * 60; // seconds
 
 export const giftGasMessage = (recipient: string, issuedAt: number) => `Grailio: gas for gift claim to ${recipient.toLowerCase()} (${issuedAt})`;

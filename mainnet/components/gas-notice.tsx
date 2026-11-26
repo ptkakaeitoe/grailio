@@ -10,17 +10,17 @@ import { useDemo } from "@/components/demo-provider";
 import { appChain } from "@/lib/chain";
 import { useWalletAuth } from "@/lib/wallet-auth";
 
-/** Below this, a wallet can't pay for much on Avalanche (a few cents of AVAX covers many actions). */
-const LOW_AVAX = 0.005;
-/** What "Buy AVAX" suggests: plenty for months of normal use. */
-const TOP_UP = "0.1";
+/** Below this, a wallet can't pay for much on BNB Chain (a dollar of BNB covers many actions). */
+const LOW_AVAX = 0.001;
+/** What "Buy BNB" suggests: plenty for months of normal use. */
+const TOP_UP = "0.01";
 
 const chip = "inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border-strong bg-white px-3 text-sm transition-colors hover:border-black";
 
 /**
  * New wallets (especially ones Privy makes for email sign-ins) start with no
- * AVAX, and every action on Avalanche needs a little for network fees. This
- * says so once, with a way to add some: buy with a card (Privy) or send AVAX
+ * BNB, and every action on BNB Chain needs a little for network fees. This
+ * says so once, with a way to add some: buy with a card (Privy) or send BNB
  * to the address. Hidden in demo mode, on other networks, or once dismissed.
  */
 export function GasNotice() {
@@ -52,13 +52,13 @@ export function GasNotice() {
         <div className="pointer-events-auto mt-2 flex w-full max-w-md flex-col gap-3 rounded-lg border border-border bg-white/72 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] backdrop-blur-[14px]" role="status">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm">
-              <strong className="font-normal">Add a little AVAX for network fees.</strong>{" "}
-              <span className="text-muted">Every action on Avalanche costs a fraction of a cent; your wallet has none yet.</span>
+              <strong className="font-normal">Add a little BNB for network fees.</strong>{" "}
+              <span className="text-muted">Every action on BNB Chain costs a fraction of a cent; your wallet has none yet.</span>
             </p>
             <button type="button" className="-m-1.5 grid size-8 shrink-0 place-items-center rounded-md text-muted hover:text-black" aria-label="Dismiss" onClick={() => setDismissed(true)}><XIcon size={16} /></button>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            {fund && <button type="button" className={chip} onClick={() => { void fund(address, TOP_UP).catch(() => {}); }}>Buy AVAX</button>}
+            {fund && <button type="button" className={chip} onClick={() => { void fund(address, TOP_UP).catch(() => {}); }}>Buy BNB</button>}
             <button type="button" className={chip} onClick={copy}>{copied ? <CheckIcon /> : <CopyIcon />} {copied ? "Copied" : "Copy address"}</button>
           </div>
         </div>
