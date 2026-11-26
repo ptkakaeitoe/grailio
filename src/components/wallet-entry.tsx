@@ -10,6 +10,17 @@ import { startDemo } from "@/lib/demo";
 import { useWalletAuth } from "@/lib/wallet-auth";
 import { NetworkSwitch } from "@/components/network-switch";
 
+/**
+ * Closes a dialog, then runs `action` once its close transition has played. For actions that unmount the dialog
+ * (starting demo hides the header's Connect; signing out swaps the wallet button), so it isn't torn out mid-animation.
+ */
+function closeThen(el: HTMLDialogElement | null, action: () => void) {
+  if (!el) return action();
+  el.close();
+  // Reading animations flushes style, so the close transitions (panel and ::backdrop) are already listed here.
+  const closing = el.getAnimations({ subtree: true }).filter((a) => a instanceof CSSTransition);
+  void Promise.allSettled(closing.map((a) => a.finished)).then(action);
+}
 
 /** Opens a drop panel just under the button that opened it (on phones, centred: `.drop-panel` in globals.css). */
 function useDropPanel() {
@@ -23,7 +34,7 @@ function useDropPanel() {
     dialog.current?.showModal();
   }
   const close = () => dialog.current?.close();
-  return { dialog, place, open, close };
+  return { dialog, place, open, close, closeThen: (action: () => void) => closeThen(dialog.current, action) };
 }
 
 function DropPanel({ panel, label, title, children }: { panel: ReturnType<typeof useDropPanel>; label: ReactNode; title: string; children: ReactNode }) {
@@ -73,7 +84,7 @@ export function WalletEntry({ className = "btn btn-ghost shrink-0", disabled = f
               <span className={cn("shrink-0 text-[13px]", available ? "text-up" : "text-muted")}>{available ? "Detected" : "Not found"}</span>
             </button>
           )}
-          <button type="button" className={walletRow} onClick={() => { close(); startDemo(); }}>
+          <button type="button" className={walletRow} onClick={() => closeThen(dialog.current, startDemo)}>
             <span className={rowIcon}><Play className="size-5" aria-hidden="true" /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-base">Try the demo</span>
@@ -94,7 +105,7 @@ export function HeaderWallet() {
   const { address, isConnected, chainId } = useAccount();
   const { switchChain, isPending } = useSwitchChain();
   const panel = useDropPanel();
-  const { open, close } = panel;
+  const { open, close, closeThen } = panel;
   const [copied, setCopied] = useState(false);
 
   if (!isConnected || !address) return <WalletEntry disabled={!auth.ready || auth.restoring} />;
@@ -126,7 +137,7 @@ export function HeaderWallet() {
         )}
       </div>
       <div className={dialogFooter}>
-        <button type="button" className={cn(cleanButton.outline, "w-full justify-between")} onClick={() => { close(); void auth.logout(); }}>Sign out <LogOut className="size-5" /></button>
+        <button type="button" className={cn(cleanButton.outline, "w-full justify-between")} onClick={() => closeThen(() => void auth.logout())}>Sign out <LogOut className="size-5" /></button>
       </div>
     </DropPanel>
   </>;
