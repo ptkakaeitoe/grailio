@@ -1,1 +1,311 @@
 @import "tailwindcss";
+
+/*
+  Graily's look (from collectX): dark, near-black canvas with light ink and neutral greys; Inter text, Geist Mono
+  numbers, the Syne wordmark; hairline borders and rounded-md controls. (Graily's rainbow glow is off for now.)
+  Mobile first: a bottom tab bar on phones, graily's full top bar from 801px.
+*/
+
+:root {
+  --bg: #111111;
+  --ink: #f5f5f5;
+  --ink-soft: #d0d0d0;
+  --ink-faint: #adadad;
+  --line: #434343;
+  --hair: #2d2d2d;
+  --raised: rgb(255 255 255 / .045);
+  --raised-strong: rgb(255 255 255 / .1);
+  --up: #2fc25b;
+  --down: #e5322d;
+  --warn: #e3b341;
+  --header-h: 64px;
+  --tabbar-h: 64px;
+  --gutter: 18px;
+  color-scheme: dark;
+}
+@media (min-width: 30.0625rem) { :root { --gutter: 24px; } }
+@media (min-width: 50.0625rem) { :root { --header-h: 80px; --tabbar-h: 0px; --gutter: 32px; } }
+@media (min-width: 75.0625rem) { :root { --gutter: 64px; } }
+
+/* Like graily, Tailwind's white and black flip: "white" is the dark surface and "black" the light ink, so every
+   bg-white / text-black / border-black follows the theme. Card and pack art keep their own literal colours. */
+@theme {
+  --color-white: #111111;
+  --color-black: #f5f5f5;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-hair: var(--hair);
+  --color-raised: var(--raised);
+  --color-raised-strong: var(--raised-strong);
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-inter);
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-brand: var(--font-syne), system-ui, sans-serif;
+  --breakpoint-desk: 50.0625rem;
+  --breakpoint-wide: 75.0625rem;
+  --breakpoint-phone: 30.0625rem;
+
+  /* Names used by components ported from collectX (graily's palette). */
+  --color-border: var(--line);
+  --color-border-strong: #5e5e5e;
+  --color-muted: var(--ink-faint);
+  --color-muted-soft: var(--ink-faint);
+  --color-surface-muted: var(--raised);
+  --color-foreground: var(--ink);
+  --color-positive: var(--up);
+  --color-warning: var(--warn);
+  --color-block-salmon: #ec746e;
+  --color-block-green: #74fc84;
+  --color-block-ink: #202020;
+  --color-block-crimson: #8f1a12;
+  --color-block-gray: #666666;
+}
+
+@layer base {
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-inter), system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #3f3f3f; }
+  a, button, summary { -webkit-tap-highlight-color: transparent; }
+  button:not(:disabled) { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
+}
+
+@layer components {
+  .page { width: 100%; max-width: 1440px; margin-inline: auto; padding: 0 var(--gutter) 72px; }
+
+  .label { font-family: var(--font-geist-mono), monospace; font-size: 11px; letter-spacing: 0.02em; color: var(--ink-faint); text-transform: lowercase; }
+  .label::before { content: "[ "; }
+  .label::after { content: " ]"; }
+
+  .display { font-family: var(--font-inter), sans-serif; font-weight: 400; letter-spacing: -0.025em; line-height: 1.1; }
+  /* The wordmark: Syne, bold and wide, set slightly tight (graily's .wordmark). */
+  .wordmark { font-family: var(--font-syne), system-ui, sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+  .soft { color: var(--ink-faint); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 34px; padding: 0 14px; border-radius: 6px;
+    border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg);
+    font-size: 13px; font-weight: 500; white-space: nowrap;
+    transition: background-color .2s, color .2s, border-color .2s;
+  }
+  .btn:hover:not(:disabled) { background: transparent; color: var(--ink); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover:not(:disabled) { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 14px; border-radius: 6px;
+    border: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); background: var(--bg);
+    transition: background-color .2s, color .2s, border-color .2s;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .chip[aria-pressed="true"], .chip[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .field {
+    width: 100%; min-height: 44px; padding: 0 18px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg);
+    font-size: 14px; transition: border-color .2s;
+  }
+  .field:focus { outline: none; border-color: var(--ink); }
+
+  input[type="range"].range { width: 100%; accent-color: var(--ink); }
+
+  .card { border: 1px solid var(--hair); border-radius: 12px; background: var(--raised); padding: 24px; min-width: 0; }
+
+  /* Excalidraw-like dotted board. */
+  .board {
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, rgb(255 255 255 / .09) 1px, transparent 1.2px);
+    background-size: 22px 22px;
+  }
+}
+
+/* Pack studio card tilt. */
+.tilt { transition: transform .5s cubic-bezier(.2, .8, .3, 1); }
+@media (hover: hover) and (pointer: fine) { .tilt:hover { transform: perspective(700px) rotateX(4deg) rotateY(-6deg) scale(1.02); } }
+
+/* ---- Ported from collectX: card fronts, rarity frames and foil, card tilt, dialogs, animation keyframes. ---- */
+
+/* The card's lettering and rules are shared DOM, so every stock uses the same frame. */
+.stock-card-front {
+  container-type: inline-size;
+  display: grid;
+  grid-template-rows: 14% 65% 21%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border: 1px solid #181818;
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 10px 24px -14px #0007;
+}
+.stock-card-front__masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2cqw;
+  padding: 0 5cqw;
+  /* White strip with black type; the nameplate at the foot is the inverse (black with white type). */
+  background: #fff;
+  color: #111;
+  border-bottom: 1px solid #181818;
+}
+.stock-card-front__masthead strong { font-size: 11cqw; line-height: 1; font-weight: 800; letter-spacing: -.065em; }
+.stock-card-front__masthead span { font-size: 4.4cqw; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stock-card-front__art { position: relative; overflow: hidden; border-bottom: 1px solid #111; }
+.stock-card-front__art img { object-fit: cover; object-position: center; }
+.stock-card-front__nameplate { display: flex; flex-direction: column; justify-content: center; gap: 1.5cqw; min-width: 0; padding: 0 5cqw; border-top: 1.5cqw solid var(--card-accent); background: #111; color: #fff; text-transform: uppercase; }
+.stock-card-front__nameplate strong { overflow: hidden; font-size: 9cqw; line-height: 1.05; font-weight: 800; letter-spacing: -.04em; white-space: nowrap; }
+.stock-card-front__nameplate div { display: flex; align-items: center; justify-content: space-between; gap: 2cqw; font-size: 4.6cqw; line-height: 1; font-weight: 600; letter-spacing: .06em; }
+.stock-card-front__nameplate div span:last-child { font-size: 3.8cqw; color: #9a9a9a; }
+/* The coin a card holds: its logo before the ticker. */
+/* Card status tag (components/profile-cards.tsx): the same small tag as the collection and market cards
+   (components/market-parts.tsx: light fill, dark lowercase text, 4px corners, 16% down, 6px in), sized in cqw. */
+.card-status-frame { position: relative; display: block; container-type: inline-size; }
+.card-status-clip { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: 4px; pointer-events: none; }
+.card-status {
+  position: absolute; top: 24cqw; right: 3cqw;
+  padding: 1cqw 4.2cqw; border-radius: 4px;
+  background: #f5f5f5; color: #111;
+  font-size: 5.6cqw; line-height: 1.45; text-transform: lowercase; white-space: nowrap;
+}
+.stock-card-front__coin { display: inline-flex; align-items: center; gap: 1.6cqw; min-width: 0; }
+.stock-card-front__coin-logo { width: 6cqw; height: 6cqw; flex-shrink: 0; }
+
+/* Rarity frames (StockCardFront rarity): a band just inside the card's edge, over the art. Sized in cqw so it scales with the card.
+   Rare: solid blue. Epic: purple-to-cyan foil with a soft glow. Legendary: gold foil that turns slowly, with a warm glow. */
+@property --frame-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.stock-card-front[data-rarity] { position: relative; }
+.stock-card-front[data-rarity]::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit; padding: 2.2cqw;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.stock-card-front[data-rarity="1"]::after { background: #779bad; }
+.stock-card-front[data-rarity="2"] { box-shadow: 0 0 0 1px #9883aa, 0 10px 26px -10px #8c5fd0aa; }
+.stock-card-front[data-rarity="2"]::after { background: linear-gradient(135deg, #b48cf2, #e58ad8 35%, #7fd3f5 70%, #9b7be0); }
+.stock-card-front[data-rarity="3"] { border-color: #8a6414; box-shadow: 0 0 0 1px #b29451, 0 12px 30px -10px #e0a82eb3; }
+.stock-card-front[data-rarity="3"]::after {
+  padding: 2.8cqw;
+  background: conic-gradient(from var(--frame-turn), #8a6414, #ffd76a, #fff3c4, #c8930f, #ffe08a, #8a6414);
+  animation: frame-turn 6s linear infinite;
+}
+@keyframes frame-turn { to { --frame-turn: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .stock-card-front[data-rarity="3"]::after { animation: none; } }
+/* Rarity foil over a card front (components/stock-card-front.tsx Holo). Overlay blending keeps the white masthead and black nameplate clean and lights up the art:
+   rare gets a passing white shine, epic a sweeping rainbow band, legendary a sweeping gold band over a gold tint with twinkling glitter. */
+.holo { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; mix-blend-mode: overlay; }
+.holo--rare {
+  background: linear-gradient(110deg, transparent 38%, rgb(255 255 255 / .85) 50%, transparent 62%) 100% 0 / 250% 100% no-repeat;
+  animation: holo-shine 4.5s ease-in-out infinite;
+}
+.holo--epic {
+  background:
+    linear-gradient(115deg, transparent 22%, #ff0084 32%, #ffe600 40%, #00ff8a 48%, #00cfff 56%, #cc4cfa 64%, transparent 74%) 0 0 / 300% 100% no-repeat,
+    linear-gradient(115deg, #ff008426, #00cfff26, #cc4cfa26);
+  animation: holo-sweep 6s ease-in-out infinite alternate;
+}
+.holo--legendary {
+  background:
+    linear-gradient(115deg, transparent 26%, #ffb347 36%, #ffe27a 45%, #fff6d0 50%, #ffd700 56%, #c8930f 64%, transparent 74%) 0 0 / 300% 100% no-repeat,
+    radial-gradient(circle, #fff 0 1px, transparent 1.6px) 0 0 / 17px 17px,
+    radial-gradient(circle, #fff 0 .8px, transparent 1.4px) 8px 9px / 23px 23px,
+    linear-gradient(135deg, #ffd70040, #fff1a830 50%, #c8930f40);
+  opacity: .85;
+  animation: holo-sweep 5s ease-in-out infinite alternate, holo-glitter 1.8s ease-in-out infinite alternate;
+}
+
+/* Hovered with a mouse, a card tilts toward the pointer, a glare follows it and the foil band tracks it instead of animating.
+   --px / --py (0–1) are set by pointer handlers in components/market-parts.tsx. The band math maps --px onto each layer's oversized background. */
+.holo-card { --px: .5; --py: .5; transition: transform .5s cubic-bezier(.2,.8,.3,1); }
+.holo-glare {
+  position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(circle at calc(var(--px) * 100%) calc(var(--py) * 100%), rgb(255 255 255 / .65), transparent 55%);
+  mix-blend-mode: overlay; opacity: 0; transition: opacity .3s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .holo-card:hover { transform: perspective(700px) rotateX(calc((.5 - var(--py)) * 16deg)) rotateY(calc((var(--px) - .5) * 16deg)) scale(1.02); transition-duration: .12s; }
+  .holo-card:hover .holo-glare { opacity: 1; }
+  .holo-card:hover .holo--rare { animation: none; background-position: calc((1.25 - var(--px)) / 1.5 * 100%) 0; }
+  .holo-card:hover .holo--epic { animation: none; background-position: calc((1.5 - var(--px)) * 50%) 0, 0 0; }
+  .holo-card:hover .holo--legendary { animation: holo-glitter 1.8s ease-in-out infinite alternate; background-position: calc((1.5 - var(--px)) * 50%) 0, 0 0, 8px 9px, 0 0; }
+}
+/* .holo-reveal keeps the foil hidden until hover (components/holo-stock-card.tsx on the landing page). */
+.holo-reveal .holo { opacity: 0; transition: opacity .3s; }
+@media (hover: hover) and (pointer: fine) { .holo-reveal:hover .holo { opacity: 1; } }
+/* The pack carousel's centred pack: same tilt and glare, switched on by data-active from components/pack-panel.tsx (its children ignore pointer events for dragging). */
+.pack-tilt { --px: .5; --py: .5; transition: transform .5s cubic-bezier(.2,.8,.3,1); }
+.pack-tilt[data-active] { transform: perspective(900px) rotateX(calc((.5 - var(--py)) * 12deg)) rotateY(calc((var(--px) - .5) * 12deg)) scale(1.02); transition-duration: .12s; }
+.pack-tilt[data-active] .holo-glare { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .holo { animation: none !important; } .holo-card:hover, .pack-tilt[data-active] { transform: none; } }
+
+
+/* Keyframes referenced from Tailwind `animate-[...]` classes. */
+@keyframes live-marquee { to { transform: translateX(-50%); } }
+@keyframes popover-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes swap-confirm { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes message-flash { 0%, 30% { background: var(--accent-soft); } 100% { background: transparent; } }
+@keyframes pack-halo { from { transform: scale(.4); opacity: 0; } to { transform: scale(1.25); opacity: 1; } }
+@keyframes pack-pulse { from { transform: scale(1.25); opacity: 1; } to { transform: scale(1.05); opacity: .6; } }
+@keyframes pack-shake { from { transform: rotate(-5deg); } to { transform: rotate(5deg) translateY(-5px); } }
+@keyframes pack-tear { to { transform: translate(35px, -60px) rotate(25deg); opacity: 0; } }
+@keyframes pack-fade { to { opacity: 0; transform: scale(1.12); } }
+@keyframes holo-shine { 0%, 45% { background-position: 100% 0; } 100% { background-position: 0% 0; } }
+/* The band is the first background layer; later values keep legendary's glitter still (epic ignores the extras). */
+@keyframes holo-sweep { from { background-position: 100% 0, 0 0, 8px 9px, 0 0; } to { background-position: 0% 0, 0 0, 8px 9px, 0 0; } }
+@keyframes holo-glitter { from { filter: brightness(.9); } to { filter: brightness(1.25); } }
+@keyframes card-unveil { from { opacity: 0; transform: perspective(800px) rotateY(85deg) translateY(20px); } to { opacity: 1; transform: perspective(800px) rotateY(0) translateY(0); } }
+
+
+/* Pop-ups anchored under a button (get started, share profile): grow out of their top-right corner. */
+.drop-panel {
+  opacity: 0;
+  scale: .92;
+  transform-origin: 100% 0;
+  transition: opacity .22s ease-out, scale .34s cubic-bezier(.22, .8, .24, 1), overlay .34s allow-discrete, display .34s allow-discrete;
+}
+.drop-panel[open] { opacity: 1; scale: 1; }
+@starting-style { .drop-panel[open] { opacity: 0; scale: .92; } }
+
+/* Centred pop-ups (cleanDialog): fade in while rising a touch and scaling up from 96%, and back out on close; the
+   backdrop dims in and out with them. Pop-ups anchored under a button keep .drop-panel's grow-from-corner instead. */
+.pop-dialog:not(.drop-panel) {
+  opacity: 0;
+  scale: .96;
+  translate: 0 10px;
+  transition: opacity .24s ease-out, scale .36s cubic-bezier(.22, .8, .24, 1), translate .36s cubic-bezier(.22, .8, .24, 1), overlay .36s allow-discrete, display .36s allow-discrete;
+}
+.pop-dialog:not(.drop-panel)[open] { opacity: 1; scale: 1; translate: 0 0; }
+@starting-style { .pop-dialog:not(.drop-panel)[open] { opacity: 0; scale: .96; translate: 0 10px; } }
+.pop-dialog::backdrop { transition: background-color .3s ease-out, overlay .3s allow-discrete, display .3s allow-discrete; }
+.pop-dialog:not([open])::backdrop { background-color: rgb(0 0 0 / 0); }
+@starting-style { .pop-dialog[open]::backdrop { background-color: rgb(0 0 0 / 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .side-drawer, .side-drawer::backdrop, .drop-panel, .pop-dialog, .pop-dialog::backdrop { transition: none; }
+}
+
+html:has(dialog:modal) { overflow: hidden; scrollbar-gutter: stable; }
+
+
+/* Numbers in Geist Mono (graily): prices, balances, odds, counts. */
+.num, .tabular-nums { font-family: var(--font-geist-mono), ui-monospace, monospace; }
