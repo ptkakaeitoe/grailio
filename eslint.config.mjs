@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Solidity projects with their own tooling.
     "contracts/**",
     "openfour/**",
+    // The mainnet app has its own config.
+    "mainnet/**",
   ]),
 ]);
 
