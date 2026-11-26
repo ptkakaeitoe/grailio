@@ -97,7 +97,7 @@ export function WalletEntry({ className = headerButton, disabled = false }: { cl
           </button>
         </div>
       </div>
-      <p className="border-t border-border px-5 py-4 text-[13px] text-muted phone:px-6">{appChain.name}</p>
+      <p className="px-5 pb-5 text-[13px] text-muted phone:px-6">{appChain.name}</p>
     </dialog>
   </>;
 }

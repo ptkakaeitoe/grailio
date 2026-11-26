@@ -48,10 +48,10 @@ export const cleanDialog =
  * bottom even when the content is short). Add the layout, e.g. `flex flex-col gap-2`.
  */
 export const dialogFooter =
-  "sticky bottom-0 z-10 mt-auto border-t border-border bg-white px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] empty:hidden phone:px-6";
+  "sticky bottom-0 z-10 mt-auto bg-white px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] empty:hidden phone:px-6";
 
-/** A dialog's title bar, pinned to the top while the content scrolls (pairs with dialogFooter). */
-export const dialogHeader = "sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-white px-5 py-3";
+/** A dialog's title bar, pinned to the top while the content scrolls (pairs with dialogFooter). No dividers: spacing separates the sections. */
+export const dialogHeader = "sticky top-0 z-10 flex items-center justify-between gap-3 bg-white px-5 py-3";
 
 /** Square close button for dialogs. */
 export const dialogClose =
