@@ -138,7 +138,11 @@ export type PackConfig = {
   design?: "default" | "custom";
   /** Pack cover art: a set cover path (/art/packs/…) or a small uploaded data URL. Unset: colour and pattern. */
   cover?: string | null;
+  /** Optional coin links set in the Launch flow (short strings, saved with the published coin). */
+  links?: CoinLinks;
 };
+
+export type CoinLinks = { website?: string; x?: string; telegram?: string };
 
 export const TONES = ["#111111", "#3a1f5c", "#2f5f8f", "#2b8a3e", "#c2255c", "#c78a5c"];
 
@@ -160,7 +164,7 @@ export const TIER_PRESETS: { id: string; name: string; blurb: string; tiers: Pac
 export const DEFAULT_CONFIG: PackConfig = {
   name: "Robo Rally",
   ticker: "ROBO",
-  tagline: "AI stocks in every pack",
+  tagline: "",
   tone: TONES[1],
   pattern: "stripes",
   image: null,

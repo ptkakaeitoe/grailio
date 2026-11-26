@@ -28,7 +28,9 @@ export function publishPack(config: PackConfig) {
   // Keep the coin picture, cover and card images only if they're the small shrunk ones.
   const small = (v: string | null | undefined, max: number) => (v && v.length < max ? v : null);
   const image = small(config.image, 60_000);
-  const clean: PackConfig = { ...config, image, cover: small(config.cover, 60_000), cards: config.cards.map((d) => ({ ...d, image: small(d.image, 40_000) })) };
+  // Optional links: keep only short, non-empty ones.
+  const links = Object.fromEntries(Object.entries(config.links ?? {}).map(([k, v]) => [k, v?.trim()]).filter(([, v]) => v && v.length <= 200));
+  const clean: PackConfig = { ...config, image, tagline: (config.tagline ?? "").slice(0, 200), links: Object.keys(links).length ? links : undefined, cover: small(config.cover, 60_000), cards: config.cards.map((d) => ({ ...d, image: small(d.image, 40_000) })) };
   cache = [...readPublished(), { slug, config: clean, publishedAt: Date.now() }];
   try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch { /* keep in memory */ }
   listeners.forEach((l) => l());
