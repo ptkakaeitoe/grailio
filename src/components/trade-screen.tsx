@@ -7,7 +7,9 @@ import { StockLogo } from "@/components/stock-logo";
 import { cn } from "@/components/clean-ui";
 import { startDemo, tradeDemo, tradeDemoBnb, useDemo } from "@/lib/demo";
 import { demoTokenPrice } from "@/lib/market";
-import { simTokenPrice, useDemoLaunches } from "@/lib/demo-launch";
+import { launchMcap, simOf, simTokenHistory, simTokenPrice, TOTAL_SUPPLY, tradeTokenSim, useDemoLaunches, type LaunchSim } from "@/lib/demo-launch";
+import { PriceChart } from "@/components/price-chart";
+import type { MarketCoin } from "@/lib/market";
 import { CoinPackLink } from "@/components/coin-link";
 import { useMarketCoins } from "@/lib/published-packs";
 import { stockOf } from "@/lib/stocks";
@@ -29,22 +31,6 @@ const PERIODS = ["24H", "7D", "30D"] as const;
 
 const fmt = (n: number, max = 6) => n.toLocaleString("en-US", { maximumFractionDigits: max });
 const priceText = (p: number) => (p >= 1 ? usd(p) : `$${p.toPrecision(3)}`);
-
-function Chart({ points, up }: { points: Point[]; up: boolean }) {
-  if (points.length < 2) return null;
-  const W = 600, H = 180;
-  const ps = points.map((x) => x.p);
-  const lo = Math.min(...ps), hi = Math.max(...ps), span = hi - lo || 1;
-  const xy = points.map((x, i) => [(i / (points.length - 1)) * W, H - 8 - ((x.p - lo) / span) * (H - 16)] as const);
-  const line = xy.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const color = up ? "var(--up)" : "var(--down)";
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-[180px] w-full" role="img" aria-label="Price chart">
-      <path d={`${line} L${W},${H} L0,${H} Z`} fill={color} opacity={0.12} />
-      <path d={line} fill="none" stroke={color} strokeWidth={2} vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
 
 const AGREE_PCT = 1;
 const signed = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -95,6 +81,42 @@ function StockPriceData({ ticker, quote }: { ticker: string; quote: AtlasQuote |
   );
 }
 
+const compactUsd = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(1)}k` : usd(n));
+
+/** Beside a coin's chart: its stock pool and where the trading tax went, its mcap and pack price, and a way to its packs. */
+function PoolPanel({ coin, sim, price }: { coin: MarketCoin; sim: LaunchSim; price: number | null }) {
+  const presale = sim.phase === "presale";
+  const mcap = price ? price * TOTAL_SUPPLY : launchMcap(sim.price * sim.packsForSale);
+  const tax = sim.tax.pool + sim.tax.stakers + sim.tax.creator + sim.tax.platform;
+  const rows: [string, string, boolean][] = [
+    [presale ? "Mcap at launch" : "Mcap", compactUsd(mcap), false],
+    ["Liquidity", sim.liquidity > 0 ? compactUsd(sim.liquidity) : "—", false],
+    ["Tax collected", compactUsd(tax), false],
+    ["to the pool", compactUsd(sim.tax.pool), true],
+    ["to stakers", compactUsd(sim.tax.stakers), true],
+    ["Pack", `${usd(sim.price, 0)} each`, false],
+  ];
+  return (
+    <section aria-label="Pool" className="rounded-md border border-border p-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-sm text-muted">Stock pool</h2>
+        <span className="text-[13px] text-muted">{presale ? "presale" : "live"}</span>
+      </div>
+      <p className="mt-1 text-[32px] leading-tight tabular-nums">{compactUsd(sim.pool)}</p>
+      <p className="text-[13px] text-muted">Pays out pack prizes in stocks</p>
+      <dl className="mt-4 grid grid-cols-[1fr_auto] gap-x-6 gap-y-2 border-t border-border pt-4 text-sm">
+        {rows.map(([label, value, sub]) => (
+          <div key={label} className="contents">
+            <dt className={sub ? "pl-3 text-muted" : "text-muted"}>{label}</dt>
+            <dd className="m-0 text-right tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <Link href={`/app/packs/${coin.slug}`} className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-md border border-border-strong text-sm transition-colors hover:border-black">Open packs</Link>
+    </section>
+  );
+}
+
 export function TradeScreen({ asset }: { asset: Asset }) {
   const demo = useDemo();
   const coins = useMarketCoins();
@@ -113,6 +135,9 @@ export function TradeScreen({ asset }: { asset: Asset }) {
   const key = asset.kind === "stock" ? asset.ticker : asset.kind === "token" ? `token:${asset.slug}` : "bnb";
   const symbol = isBnb ? "BNB" : stock ? stock.ticker : coin ? coin.config.ticker || coin.name : "";
   const price = isBnb ? bnbUsd : stock ? livePrice : coin ? simTokenPrice(sims, coin) ?? demoTokenPrice(coin) : null;
+  // Coins: one chart point per demo trade (lib/demo-launch).
+  const coinHistory = coin ? simTokenHistory(sims, coin) : [];
+  const sim = coin ? simOf(sims, coin) : null;
   /** What you pay with: BNB for stocks and tokens, USDT for BNB. */
   const quote = isBnb ? "USDT" : "BNB";
   const quoteUsd = isBnb ? 1 : bnbUsd;
@@ -135,7 +160,8 @@ export function TradeScreen({ asset }: { asset: Asset }) {
     return () => { live = false; };
   }, [chartTicker, period]);
 
-  const change = history.length > 1 ? (history.at(-1)!.p - history[0].p) / history[0].p : null;
+  const points = coin ? coinHistory : history;
+  const change = points.length > 1 ? (points.at(-1)!.p - points[0].p) / points[0].p : null;
   const held = isBnb ? demo.bnb : demo.assets?.[key] ?? 0;
   const quoteBalance = isBnb ? demo.usdt : demo.bnb;
   const payBalance = side === "buy" ? quoteBalance : held;
@@ -155,13 +181,15 @@ export function TradeScreen({ asset }: { asset: Asset }) {
     if (!demo.active) { startDemo(); return; }
     if (!valid || !price || !bnbUsd) return;
     if (isBnb ? tradeDemoBnb(side, value, bnbUsd) : tradeDemo(side, key, value, price, bnbUsd)) {
+      // Coins: the trade moves the demo price and its tax fills the pool.
+      if (coin) tradeTokenSim(coin, side, side === "buy" ? value * bnbUsd : value * price);
       showToast({ kind: "success", title: `${side === "buy" ? "Bought" : "Sold"} ${fmt(side === "buy" ? receive ?? 0 : value, 4)} ${symbol}`, detail: "Simulated · BSC testnet" });
       setAmount("");
     }
   }
 
   return (
-    <div className="mx-auto flex max-w-[560px] flex-col gap-6 pt-4 pb-10 desk:pt-8">
+    <div className="mx-auto flex max-w-[560px] flex-col gap-6 pt-4 pb-10 desk:max-w-[1180px] desk:pt-8">
       <Link href="/app/trade" className="-ml-1 inline-flex min-h-11 w-fit items-center gap-1.5 px-1 text-sm text-muted hover:text-black"><ArrowLeft className="size-4" /> Trade</Link>
 
       <header className="flex items-center gap-3">
@@ -186,22 +214,29 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         </div>
       </header>
 
-      {chartTicker ? (
-        <section aria-label="Chart">
-          {history.length > 1 ? <Chart points={history} up={(change ?? 0) >= 0} /> : <div className="grid h-[180px] place-items-center text-sm text-muted">Loading chart…</div>}
-          <div className="mt-2 flex gap-1" role="group" aria-label="Period">
-            {PERIODS.map((p) => (
-              <button key={p} type="button" aria-pressed={period === p} onClick={() => setPeriod(p)}
-                className="min-h-9 rounded-md px-3 text-sm text-muted transition-colors aria-pressed:bg-surface-muted aria-pressed:text-black">{p}</button>
-            ))}
-          </div>
-        </section>
-      ) : (
-        <div className="grid h-[120px] place-items-center rounded-md border border-dashed border-border text-sm text-muted">No price history yet</div>
-      )}
+      <div className="grid gap-6 desk:grid-cols-[minmax(0,1fr)_380px] desk:gap-8">
+        <div className="flex min-w-0 flex-col gap-6">
+          {chartTicker ? (
+            <section aria-label="Chart">
+              {history.length > 1 ? <PriceChart points={history} up={(change ?? 0) >= 0} /> : <div className="grid h-[260px] place-items-center text-sm text-muted">Loading chart…</div>}
+              <div className="mt-2 flex gap-1" role="group" aria-label="Period">
+                {PERIODS.map((p) => (
+                  <button key={p} type="button" aria-pressed={period === p} onClick={() => setPeriod(p)}
+                    className="min-h-9 rounded-md px-3 text-sm text-muted transition-colors aria-pressed:bg-surface-muted aria-pressed:text-black">{p}</button>
+                ))}
+              </div>
+            </section>
+          ) : coinHistory.length > 1 ? (
+            <section aria-label="Chart"><PriceChart points={coinHistory} up={(change ?? 0) >= 0} /></section>
+          ) : (
+            <div className="grid h-[260px] place-items-center rounded-md border border-dashed border-border text-sm text-muted">No trades yet. The chart starts with the first one.</div>
+          )}
+          {coin && coin.config.kind !== "classic" && <CoinPackLink market={coin} page="coin" />}
+          {stock && <StockPriceData ticker={stock.ticker} quote={atlasQuote} />}
+        </div>
 
-      {coin && coin.config.kind !== "classic" && <CoinPackLink market={coin} page="coin" />}
-
+        <div className="flex min-w-0 flex-col gap-6">
+      {coin && sim && coin.config.kind !== "classic" && <PoolPanel coin={coin} sim={sim} price={price} />}
       <section aria-label="Swap" className="flex flex-col gap-1.5">
         <div className="rounded-md border border-border bg-surface-muted p-4">
           <div className="flex items-baseline justify-between text-sm text-muted">
@@ -245,7 +280,8 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         {!demo.active ? "Try the demo" : !valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`}
       </button>
       <p className="-mt-3 text-center text-sm text-muted">Simulated · BSC testnet</p>
-      {stock && <StockPriceData ticker={stock.ticker} quote={atlasQuote} />}
+        </div>
+      </div>
     </div>
   );
 }

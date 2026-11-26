@@ -64,7 +64,13 @@ export type LaunchSim = {
   tax: { pool: number; stakers: number; creator: number; platform: number };
   /** Stakers' stream (you are the only staker in the demo). */
   stake: { pot: number; queued: number; rate: number; finish: number; last: number; earned: number; weight: number; claimed: number };
+  /** Price moves from demo trades (1 = the launch price), constant-product against `liquidity`. */
+  mult?: number;
+  /** Price after each demo trade, for the coin's chart (newest last). */
+  history?: PricePoint[];
 };
+export type PricePoint = { t: number; p: number };
+const HISTORY_MAX = 400;
 
 const KEY = "bsctemp.demo-launch.v1";
 const listeners = new Set<() => void>();
@@ -108,11 +114,45 @@ function initial(coin: MarketCoin): LaunchSim {
 
 export const simOf = (all: Record<string, LaunchSim>, coin: MarketCoin) => all[coin.slug] ?? initial(coin);
 
-/** A demo-launched coin's token price: its launch mcap over the supply; null before launch or for seed coins. */
+/** Launch price before any demo trades: launch mcap over the supply, or a seed coin's listed price from its pool. */
+function basePrice(s: LaunchSim | undefined, coin: MarketCoin): number | null {
+  if (coin.seed && (!s || s.phase === "live")) return Math.max(0.000001, coin.poolUsd / 1e8);
+  return s?.phase === "live" ? launchMcap(s.price * s.packsForSale) / TOTAL_SUPPLY : null;
+}
+
+/** A coin's demo token price, moved by demo trades; null before launch. */
 export const simTokenPrice = (all: Record<string, LaunchSim>, coin: MarketCoin) => {
   const s = all[coin.slug];
-  return s?.phase === "live" ? launchMcap(s.price * s.packsForSale) / TOTAL_SUPPLY : null;
+  const base = basePrice(s, coin);
+  return base === null ? null : base * (s?.mult ?? 1);
 };
+
+/** The coin's chart: one point per demo trade (empty until it trades). */
+export const simTokenHistory = (all: Record<string, LaunchSim>, coin: MarketCoin): PricePoint[] => all[coin.slug]?.history ?? [];
+
+/**
+ * A demo trade of `usd` worth of the coin moves its price like a constant-product pool holding `liquidity` USD
+ * (buys push it up, sells down), records the new price for the chart, and sends the trading tax through the usual
+ * 50 / 30 / 15 / 5 split, so trades fill the coin's stock pool.
+ */
+export function tradeTokenSim(coin: MarketCoin, side: "buy" | "sell", usd: number) {
+  if (!(usd > 0)) return;
+  const now = Date.now();
+  update(coin, (s) => {
+    const base = basePrice(s, coin);
+    if (base === null) return null;
+    const depth = Math.max(s.liquidity, coin.seed ? coin.poolUsd : 0, 100);
+    const before = s.mult ?? 1;
+    const ratio = side === "buy" ? (depth + usd) / depth : Math.max(0.05, (depth - usd) / depth);
+    const mult = before * ratio * ratio;
+    const prev = s.history?.length ? s.history : [{ t: now - 1000, p: base * before }];
+    const history = [...prev, { t: now, p: base * mult }].slice(-HISTORY_MAX);
+    // Seed coins start live; the trade also makes the pool real liquidity.
+    return { ...s, phase: "live", mult, history, liquidity: side === "buy" ? depth + usd : Math.max(100, depth - usd) };
+  });
+  const taxPct = (side === "buy" ? coin.config.buyTax ?? 3 : coin.config.sellTax ?? 3) / 100;
+  simulateTax(coin, usd * taxPct);
+}
 
 function update(coin: MarketCoin, fn: (s: LaunchSim) => LaunchSim | null) {
   const all = load();
