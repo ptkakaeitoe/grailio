@@ -12,11 +12,12 @@ import { exitDemo, useDemo } from "@/lib/demo";
  * bottom with Launch as the centre button. From 801px: graily's top bar with the lowercase nav in the middle.
  */
 
+/** Trade first; Launch stays in the middle so the phone tab bar keeps its centre + button. */
 const NAV = [
-  { label: "Packs", href: "/app/packs", icon: Package },
-  { label: "Collection", href: "/app/collection", icon: LayoutGrid },
-  { label: "Launch", href: "/launch", icon: Plus },
   { label: "Trade", href: "/app/trade", icon: LineChart },
+  { label: "Packs", href: "/app/packs", icon: Package },
+  { label: "Launch", href: "/launch", icon: Plus },
+  { label: "Collection", href: "/app/collection", icon: LayoutGrid },
   { label: "Profile", href: "/app/profile", icon: UserRound },
 ] as const;
 
