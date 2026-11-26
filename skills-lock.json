@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "cournot": {
+      "source": "Cournot-AI/cournot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cournot/SKILL.md",
+      "computedHash": "edb6e42966f1d6a7f23702010eb7c811577f4f85c9f096f705b478269bdbcb79"
+    }
+  }
+}
