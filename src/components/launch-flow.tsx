@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseEventLogs } from "viem";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
@@ -39,7 +39,7 @@ const DESC_MAX = 120;
 const LINK_MAX = 100;
 const PADS: { id: Launchpad; name: string }[] = [{ id: "flap", name: "Flap" }, { id: "four", name: "Four.meme" }];
 const label = "mb-2 block text-sm text-muted";
-const option = "flex min-h-14 items-center gap-3 rounded-md border border-border px-4 text-left transition-colors hover:border-border-strong aria-pressed:border-black aria-pressed:bg-surface-muted";
+const option = "flex min-h-14 items-center gap-3 rounded-md border border-border px-4 text-left transition-colors hover:border-border-strong aria-pressed:border-black aria-pressed:bg-black aria-pressed:text-white";
 
 /** publishPack keeps a coin picture under 60k characters. */
 const PIC_KEEP = 58_000;
@@ -54,6 +54,8 @@ export function LaunchFlow() {
   const c = usePack();
   const router = useRouter();
   const [step, setStep] = useState(0);
+  // Each step starts at the top, where its header is.
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [step]);
   const [query, setQuery] = useState("");
   const [picError, setPicError] = useState("");
   const picInput = useRef<HTMLInputElement>(null);
@@ -102,6 +104,7 @@ export function LaunchFlow() {
   const publishCollection = () => {
     publishPack({ ...c, ...designPatch(c), kind: "classic", name, ticker: "", links: undefined, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
     showToast({ kind: "success", title: "Collection published · simulated", detail: name });
+    resetPack(); updatePack({ kind: "classic" });
     router.push("/app/packs?tab=classic");
   };
 
@@ -109,7 +112,8 @@ export function LaunchFlow() {
     if (classic) { publishCollection(); return; }
     if (onchain) { void launchOnchain(); return; }
     const slug = publishPack({ ...c, ...designPatch(c), name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
-    showToast({ kind: "success", title: `${name} launched`, detail: `Simulated on ${padName} · BSC testnet` });
+    showToast({ kind: "success", title: `${name} · presale open`, detail: `Simulated on ${padName} · BSC testnet` });
+    resetPack();
     router.push(`/app/packs/${slug}`);
   };
 
@@ -136,6 +140,7 @@ export function LaunchFlow() {
         onchain: { pad: "four", token: created.args.token, saleVault: created.args.vault, packVault, createTx: hash },
       });
       showToast({ kind: "success", title: `${name} is live`, detail: "Four.meme · BSC testnet" });
+      resetPack();
       router.push(`/app/packs/${slug}`);
     } catch (e) {
       showToast({ kind: "error", title: "Launch failed", detail: txErrorMessage(e) });
@@ -159,7 +164,7 @@ export function LaunchFlow() {
         <div className="grid grid-cols-2 gap-1 rounded-md border border-border bg-surface-muted p-1" role="group" aria-label="Mode">
           {MODES.map((m) => (
             <button key={m.id} type="button" aria-pressed={(c.kind ?? "coin") === m.id} onClick={() => setMode(m.id)}
-              className="min-h-11 rounded-[5px] text-sm text-muted transition-colors hover:text-black aria-pressed:bg-white aria-pressed:text-black aria-pressed:shadow-[0_0_0_1px_var(--color-border)]">
+              className="min-h-11 rounded-[5px] text-sm text-muted transition-colors hover:text-black aria-pressed:bg-black aria-pressed:text-white">
               {m.name}
             </button>
           ))}
@@ -251,10 +256,10 @@ export function LaunchFlow() {
 
           <div>
             <span className={label}>Colour</span>
-            <div className="-mx-[var(--gutter)] flex overflow-x-auto px-[calc(var(--gutter)-4px)] [scrollbar-width:none] desk:mx-0 desk:px-0 [&::-webkit-scrollbar]:hidden" role="group" aria-label="Colour">
+            <div className="-mx-1.5 grid grid-cols-8 desk:mx-0 desk:flex" role="group" aria-label="Colour">
               {TONES.map((t) => (
                 <button key={t} type="button" aria-label={`Colour ${t}`} aria-pressed={c.tone === t} onClick={() => updatePack({ tone: t })}
-                  className="group grid size-11 shrink-0 place-items-center">
+                  className="group grid h-11 min-w-0 place-items-center desk:w-11">
                   <span className="grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-white transition-shadow group-aria-pressed:ring-2 group-aria-pressed:ring-black" style={{ background: t }}>
                     {c.tone === t && <Check className="size-3.5 text-[#fff]" />}
                   </span>
