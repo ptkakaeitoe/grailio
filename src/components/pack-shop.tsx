@@ -202,7 +202,9 @@ function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClos
 }
 
 export function PackShop({ market, initialSize }: { market?: MarketCoin; initialSize?: string } = {}) {
-  const c = usePack();
+  const draft = usePack();
+  // A marketplace pack uses its own Pack studio design; without one, the local draft.
+  const c = market?.config ?? draft;
   const allSizes = c.sizes?.length ? c.sizes : DEFAULT_SIZES;
   // A marketplace coin sells only the sizes it launched with, in its own colors.
   const sizes = market ? allSizes.filter((s) => market.packs.some((p) => p.size === s.id)) : allSizes;
@@ -340,7 +342,7 @@ export function PackShop({ market, initialSize }: { market?: MarketCoin; initial
         <p className="num mb-5 text-[13px] text-muted desk:mb-6">
           Stock pool {usd(poolUsd, 0)}{nextUnlock ? ` · ${nextUnlock.name} unlocks at ${usd(unlockAt(unlocks, nextUnlock.id), 0)}` : " · all tiers unlocked"}
         </p>
-        {market && <RiskPanel coin={market.slug} onDecision={setRiskDecision} />}
+        {market?.seed && <RiskPanel coin={market.slug} onDecision={setRiskDecision} />}
 
         <div className="flex items-center justify-between gap-4">
           <details className="group relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }}>

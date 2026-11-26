@@ -1,0 +1,45 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { MARKET_COINS, slugify, toCoin, type MarketCoin } from "@/lib/market";
+import type { PackConfig } from "@/lib/pack";
+
+/* Packs published from Pack studio, saved in this browser and listed on the marketplace beside the seed packs. */
+
+
+const KEY = "bsctemp.published-packs.v1";
+type Published = { slug: string; config: PackConfig; publishedAt: number };
+const listeners = new Set<() => void>();
+let cache: Published[] | null = null;
+const NONE: Published[] = [];
+
+function readPublished(): Published[] {
+  if (cache) return cache;
+  try { cache = JSON.parse(localStorage.getItem(KEY) ?? "[]"); } catch { cache = []; }
+  return cache!;
+}
+
+/** Publishes the studio's pack; returns its slug. A new launch starts with an empty pool (Low packs only). */
+export function publishPack(config: PackConfig) {
+  const taken = new Set([...MARKET_COINS.map((c) => c.slug), ...readPublished().map((p) => p.slug)]);
+  const base = slugify(config.name);
+  let slug = base;
+  for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
+  // Uploaded images stay out of storage.
+  const clean: PackConfig = { ...config, image: null, cards: config.cards.map((d) => ({ ...d, image: null })) };
+  cache = [...readPublished(), { slug, config: clean, publishedAt: Date.now() }];
+  try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch { /* keep in memory */ }
+  listeners.forEach((l) => l());
+  return slug;
+}
+
+const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
+
+/** Seed packs plus the ones published in this browser (new launches: empty pool, newest first). */
+export function useMarketCoins(): MarketCoin[] {
+  const published = useSyncExternalStore(subscribe, readPublished, () => NONE);
+  return [
+    ...MARKET_COINS,
+    ...published.map((p) => toCoin(p.config, { poolUsd: 0, volumeUsd: 0, ageDays: 0 }, false, p.slug)),
+  ];
+}

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { MARKET_COINS, coinBySlug } from "@/lib/market";
 import { CoinShop } from "./coin-shop";
@@ -17,16 +16,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: coin ? `${coin.name} packs` : "Packs" };
 }
 
-/** Reads the coin from the URL inside Suspense, so the page shell stays shared across coins. */
+/** Reads the pack from the URL inside Suspense, so the page shell stays shared across packs. */
 async function CoinBody({ params }: Props) {
-  const coin = coinBySlug((await params).coin);
-  if (!coin) notFound();
-  return (
-    <>
-      <h1 className="sr-only">{coin.name} packs</h1>
-      <CoinShop slug={coin.slug} />
-    </>
-  );
+  // Seed packs are prerendered; packs published in this browser are looked up there.
+  return <CoinShop slug={(await params).coin} />;
 }
 
 export default function CoinPacksPage({ params }: Props) {

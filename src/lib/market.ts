@@ -1,16 +1,18 @@
-import type { Launchpad } from "@/lib/pack";
+import type { Launchpad, PackConfig } from "@/lib/pack";
+import { SEED_PACKS } from "@/data/packs";
 
 /*
- * Demo coins for the pack marketplace (/app/packs). Each coin launched with its own packs; its stock pool decides
- * which risk tiers are unlocked. Names only, no tickers. Replace with on-chain data once launches are live.
+ * The pack marketplace: every coin is a pack designed in Pack studio. Seed packs ship with the app (src/data/packs,
+ * exported from the studio); packs you publish from the studio are saved in this browser and listed beside them.
+ * Names only on screen, no tickers.
  */
 
 export type PackColor = { bg: string; ink: string };
-export type MarketPack = { size: "starter" | "standard" | "grail"; color: PackColor };
+export type MarketPack = { size: string; color: PackColor };
 export type MarketCoin = {
   slug: string;
   name: string;
-  /** Avatar and halo color. */
+  /** Avatar and halo colour (the studio's tone). */
   tone: string;
   launchpad: Launchpad;
   poolUsd: number;
@@ -21,41 +23,47 @@ export type MarketCoin = {
   packs: MarketPack[];
   /** bStocks the pool buys, by weight (percent). The biggest one is the subject of the Cournot risk check. */
   basket: { ticker: string; weight: number }[];
+  /** The full Pack studio design: sizes, risk tiers, unlocks, cards. */
+  config: PackConfig;
+  /** Ships with the app (has a server-side risk check), or was published in this browser. */
+  seed: boolean;
 };
 
-export const MARKET_COINS: MarketCoin[] = [
-  {
-    slug: "moon-cats", name: "Moon Cats", tone: "#ec746e", launchpad: "flap", poolUsd: 12400, volumeUsd: 86000, ageDays: 9,
-    packs: [
-      { size: "starter", color: { bg: "#ec746e", ink: "#2a0e0b" } },
-      { size: "standard", color: { bg: "#8f1a12", ink: "#f6d4cf" } },
-      { size: "grail", color: { bg: "#3b0a06", ink: "#f5b9b0" } },
-    ],
-    basket: [{ ticker: "TSLA", weight: 50 }, { ticker: "SPCX", weight: 30 }, { ticker: "RKLB", weight: 20 }],
-  },
-  {
-    slug: "robo-rally", name: "Robo Rally", tone: "#3fb68b", launchpad: "four", poolUsd: 4100, volumeUsd: 41000, ageDays: 4,
-    packs: [
-      { size: "starter", color: { bg: "#5dcaa5", ink: "#04342c" } },
-      { size: "standard", color: { bg: "#202020", ink: "#74fc84" } },
-    ],
-    basket: [{ ticker: "NVDA", weight: 40 }, { ticker: "AMD", weight: 30 }, { ticker: "TSM", weight: 30 }],
-  },
-  {
-    slug: "pixel-pups", name: "Pixel Pups", tone: "#7f77dd", launchpad: "four", poolUsd: 6300, volumeUsd: 23000, ageDays: 2,
-    packs: [
-      { size: "starter", color: { bg: "#afa9ec", ink: "#26215c" } },
-      { size: "standard", color: { bg: "#534ab7", ink: "#eeedfe" } },
-      { size: "grail", color: { bg: "#26215c", ink: "#cecbf6" } },
-    ],
-    basket: [{ ticker: "META", weight: 40 }, { ticker: "GOOGL", weight: 35 }, { ticker: "MSFT", weight: 25 }],
-  },
-  {
-    slug: "frog-fund", name: "Frog Fund", tone: "#639922", launchpad: "flap", poolUsd: 800, volumeUsd: 9000, ageDays: 1,
-    packs: [{ size: "standard", color: { bg: "#97c459", ink: "#173404" } }],
-    basket: [{ ticker: "COIN", weight: 50 }, { ticker: "HOOD", weight: 50 }],
-  },
-];
+export type SeedPack = { meta: { poolUsd: number; volumeUsd: number; ageDays: number }; config: PackConfig };
+
+const hex = (n: number) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, "0");
+function mix(color: string, target: string, amount: number) {
+  const a = color.replace("#", ""), b = target.replace("#", "");
+  const ch = (s: string, i: number) => parseInt(s.slice(i, i + 2), 16);
+  return `#${[0, 2, 4].map((i) => hex(ch(a, i) + (ch(b, i) - ch(a, i)) * amount)).join("")}`;
+}
+function ink(bg: string) {
+  const c = bg.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.55 ? mix(bg, "#000000", 0.82) : mix(bg, "#ffffff", 0.85);
+}
+
+/** Pack colours per size from the studio tone: lighter Starter, the tone itself for Standard, darker Grail. */
+function packColors(tone: string, sizes: string[]): MarketPack[] {
+  const shade: Record<string, string> = { starter: mix(tone, "#ffffff", 0.35), standard: tone, grail: mix(tone, "#000000", 0.5) };
+  return sizes.map((size) => {
+    const bg = shade[size] ?? tone;
+    return { size, color: { bg, ink: ink(bg) } };
+  });
+}
+
+export const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "pack";
+
+export function toCoin(config: PackConfig, meta: SeedPack["meta"], seed: boolean, slug = slugify(config.name)): MarketCoin {
+  return {
+    slug, name: config.name, tone: config.tone, launchpad: config.launchpad,
+    poolUsd: meta.poolUsd, volumeUsd: meta.volumeUsd, ageDays: meta.ageDays,
+    packs: packColors(config.tone, config.sizes.map((s) => s.id)),
+    basket: config.basket, config, seed,
+  };
+}
+
+export const MARKET_COINS: MarketCoin[] = SEED_PACKS.map((p) => toCoin(p.config, p.meta, true));
 
 export const coinBySlug = (slug: string) => MARKET_COINS.find((c) => c.slug === slug);
 

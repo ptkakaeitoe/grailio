@@ -5,8 +5,8 @@ import { useMemo, useState } from "react";
 import { ArrowUpRight, Search } from "lucide-react";
 import { SealedPack } from "@/components/pack-shop";
 import { cleanChip, cleanField, cn } from "@/components/clean-ui";
-import { MARKET_COINS, type MarketCoin } from "@/lib/market";
-import { DEFAULT_SIZES } from "@/lib/pack";
+import type { MarketCoin } from "@/lib/market";
+import { useMarketCoins } from "@/lib/published-packs";
 import { usd } from "@/lib/format";
 
 /*
@@ -33,7 +33,7 @@ const SCALE = 0.62;
 const compact = (v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : usd(v, 0));
 
 function Shelf({ coin }: { coin: MarketCoin }) {
-  const sizes = DEFAULT_SIZES.filter((s) => coin.packs.some((p) => p.size === s.id));
+  const sizes = coin.config.sizes;
   const href = `/app/packs/${coin.slug}`;
   return (
     <section className="border-t border-border pt-6 pb-7 desk:pt-8 desk:pb-10" aria-labelledby={`coin-${coin.slug}`}>
@@ -77,10 +77,11 @@ function Shelf({ coin }: { coin: MarketCoin }) {
 export function PackMarket() {
   const [sort, setSort] = useState<SortId>("trending");
   const [query, setQuery] = useState("");
-  const coins = useMemo(() => {
+  const coins = useMarketCoins();
+  const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MARKET_COINS.filter((c) => !q || c.name.toLowerCase().includes(q)).sort(SORTS.find((s) => s.id === sort)!.by);
-  }, [sort, query]);
+    return coins.filter((c) => !q || c.name.toLowerCase().includes(q)).sort(SORTS.find((s) => s.id === sort)!.by);
+  }, [coins, sort, query]);
 
   return (
     <div className="page pt-6 desk:pt-10">
@@ -89,7 +90,7 @@ export function PackMarket() {
         <div>
           <div className="flex items-baseline justify-between gap-3">
             <h1 className="text-[32px] leading-[1.1] font-normal tracking-[-0.02em] desk:text-[clamp(40px,4.5vw,56px)]">Packs</h1>
-            <span className="num text-sm text-muted desk:hidden">[ {String(MARKET_COINS.length).padStart(2, "0")} coins ]</span>
+            <span className="num text-sm text-muted desk:hidden">[ {String(coins.length).padStart(2, "0")} coins ]</span>
           </div>
         </div>
       </header>
@@ -112,8 +113,8 @@ export function PackMarket() {
         </label>
       </div>
 
-      {coins.length ? coins.map((c) => <Shelf key={c.slug} coin={c} />) : (
-        <p className="border-t border-border py-12 text-center text-base text-muted">No coins match &ldquo;{query.trim()}&rdquo;.</p>
+      {shown.length ? shown.map((c) => <Shelf key={c.slug} coin={c} />) : (
+        <p className="border-t border-border py-12 text-center text-base text-muted">{query.trim() ? <>No coins match &ldquo;{query.trim()}&rdquo;.</> : <>No packs yet. <Link href="/studio" className="text-black underline underline-offset-4">Design one in Pack studio</Link>.</>}</p>
       )}
     </div>
   );
