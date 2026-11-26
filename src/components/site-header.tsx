@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, LineChart, Package, Paintbrush, Plus, UserRound, X } from "lucide-react";
+import { LayoutGrid, LineChart, Package, Plus, UserRound, X } from "lucide-react";
 import { cleanLink, cn } from "@/components/clean-ui";
 import { HeaderWallet } from "@/components/wallet-entry";
 import { exitDemo, useDemo } from "@/lib/demo";
@@ -17,12 +17,10 @@ const NAV = [
   { label: "Collection", href: "/app/collection", icon: LayoutGrid },
   { label: "Launch", href: "/launch", icon: Plus },
   { label: "Stocks", href: "/app/stocks", icon: LineChart },
-  { label: "Studio", href: "/studio", icon: Paintbrush },
   { label: "Profile", href: "/app/profile", icon: UserRound },
 ] as const;
 
-/** The phone tab bar has five slots: Studio stays in the desktop nav, Profile takes its place. */
-const TABS = NAV.filter((item) => item.href !== "/studio");
+const TABS = NAV;
 
 const isCurrent = (path: string, href: string) => path === href || path.startsWith(`${href}/`);
 
