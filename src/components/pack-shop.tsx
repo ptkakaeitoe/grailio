@@ -40,7 +40,7 @@ const solid = cn(cleanButton.solid, "px-5 disabled:hover:bg-black disabled:hover
 const outline = cn(cleanButton.outline, "px-5");
 const stepperButton = "grid size-11 place-items-center disabled:cursor-default disabled:opacity-30";
 /** Carousel arrows, level with the centred pack (340px tall on phones, 380px from 481px, 520px from 801px). */
-const stepButton = "absolute top-[148px] z-[3] grid size-11 place-items-center rounded-full border border-border-strong bg-white text-black transition-colors hover:border-black phone:top-[168px] desk:top-[238px]";
+const stepButton = "absolute top-[168px] z-[3] grid size-11 place-items-center rounded-full border border-border-strong bg-white text-black transition-colors hover:border-black phone:top-[188px] desk:top-[238px]";
 const seal = "h-[15px] bg-[repeating-linear-gradient(90deg,transparent_0_3px,currentColor_3px_4px)] opacity-20";
 const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
 
@@ -217,6 +217,10 @@ export function PackShop({ market, initialSize }: { market?: MarketCoin; initial
   const startAt = sizes.findIndex((s) => s.id === initialSize);
   const [index, setIndex] = useState(startAt >= 0 ? startAt : Math.min(1, sizes.length - 1));
   const [prevIndex, setPrevIndex] = useState(index);
+  // Hold and drag a pack sideways to change it (graily's carousel); a tap opens the odds.
+  const [drag, setDrag] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragFrom = useRef<number | null>(null);
   const [riskId, setRiskId] = useState<RiskId>("low");
   const [currency, setCurrency] = useState<"bnb" | "coin">("bnb");
   const [quantity, setQuantity] = useState(1);
@@ -248,6 +252,30 @@ export function PackShop({ market, initialSize }: { market?: MarketCoin; initial
     setIndex(target);
   };
 
+  const SWIPE_PX = 60, CLICK_PX = 6, FREE_DRAG_PX = 160;
+  function onPointerDown(e: React.PointerEvent) {
+    if (!e.isPrimary || e.button !== 0) return;
+    untilt();
+    dragFrom.current = e.clientX;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    if (dragFrom.current === null) return tiltTo(e);
+    const dx = e.clientX - dragFrom.current, d = Math.abs(dx);
+    // Past FREE_DRAG_PX the pack still follows, with resistance.
+    setDrag(Math.sign(dx) * (d <= FREE_DRAG_PX ? d : FREE_DRAG_PX + (d - FREE_DRAG_PX) * 0.3));
+  }
+  function onPointerUp() {
+    if (dragFrom.current === null) return;
+    if (Math.abs(drag) > SWIPE_PX && sizes.length > 1) goTo(index + (drag < 0 ? 1 : -1));
+    else if (Math.abs(drag) < CLICK_PX) setShowOdds(true);
+    dragFrom.current = null;
+    setDragging(false);
+    setDrag(0);
+  }
+  function onPointerCancel() { dragFrom.current = null; setDragging(false); setDrag(0); }
+
   function tiltTo(e: React.PointerEvent) {
     const el = tiltPack.current;
     if (!el || e.pointerType !== "mouse") return;
@@ -268,33 +296,33 @@ export function PackShop({ market, initialSize }: { market?: MarketCoin; initial
     <div className="grid grid-cols-1 items-start gap-4 desk:grid-cols-2 desk:gap-12">
       <div className="relative flex min-w-0 touch-pan-y flex-col items-center overflow-hidden pb-2 select-none desk:pb-5">
         <button type="button" className={cn(stepButton, "left-2", sizes.length < 2 && "hidden")} onClick={() => goTo(index - 1)} aria-label={`Show the ${sizes[(index - 1 + sizes.length) % sizes.length].name} pack`}><ArrowLeft className="size-5" /></button>
-        <div className="relative h-[340px] w-full overflow-hidden phone:h-[380px] desk:h-[520px]">
+        <div className="relative h-[380px] w-full overflow-hidden phone:h-[420px] desk:h-[520px]">
           {sizes.map((s, i) => {
             const n = sizes.length;
             const offset = n === 1 ? 0 : ((i - index + 1 + n) % n) - 1;
             const before = n === 1 ? 0 : ((i - prevIndex + 1 + n) % n) - 1;
-            const motion = Math.abs(offset - before) > 1 ? "none" : undefined;
+            const motion = dragging || Math.abs(offset - before) > 1 ? "none" : undefined;
             const current = offset === 0;
             return (
               <div
                 key={s.id}
                 className={cn("pointer-events-none absolute inset-0 grid place-items-center transition-transform duration-[550ms] ease-[cubic-bezier(.22,.75,.25,1)]", current && "z-[1]")}
-                style={{ transform: `translateX(calc(${offset} * (50% + 200px)))`, transition: motion }}
+                style={{ transform: `translateX(calc(${offset} * (50% + 200px) + ${drag}px))`, transition: motion }}
                 aria-hidden={!current}
               >
                 <div
                   ref={current ? tiltPack : undefined}
                   role="img"
                   aria-label={`${s.name} pack`}
-                  className={cn("pack-tilt relative w-[260px] max-w-[68%] max-desk:scale-[0.8]", current && "pointer-events-auto cursor-pointer")}
-                  {...(current && { onPointerMove: tiltTo, onPointerLeave: untilt, onClick: () => setShowOdds(true) })}
+                  className={cn("pack-tilt relative w-[260px] max-w-[68%] touch-pan-y max-desk:scale-[0.8]", current && cn("pointer-events-auto", dragging ? "cursor-grabbing" : "cursor-grab"))}
+                  {...(current && { onPointerDown, onPointerMove, onPointerUp, onPointerLeave: untilt, onLostPointerCapture: onPointerUp, onPointerCancel })}
                 >
                   <SealedPack
                     size={s}
                     coin={coin}
                     color={colorOf(s.id)}
                     className="origin-[center_65%] transition-transform duration-[550ms] ease-[cubic-bezier(.22,.75,.25,1)]"
-                    style={{ transform: `rotate(${offset * 18}deg)`, transition: motion }}
+                    style={{ transform: `rotate(${offset * 18 + drag / 18}deg)`, transition: motion }}
                   />
                   <span className="holo-glare rounded-[4px]" aria-hidden="true" />
                 </div>
