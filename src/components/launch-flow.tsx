@@ -206,7 +206,7 @@ export function LaunchFlow() {
               </button>
               {c.image && (
                 <button type="button" onClick={() => updatePack({ image: null })} aria-label={classic ? "Remove cover" : "Remove image"}
-                  className="absolute -top-2 -right-2 grid size-8 place-items-center rounded-full border border-border-strong bg-white text-black transition-colors hover:border-black">
+                  className="absolute top-1 right-1 grid size-8 place-items-center rounded-full bg-[#000]/60 text-[#fff] backdrop-blur-sm transition-colors hover:bg-[#000]/80">
                   <X className="size-3.5" />
                 </button>
               )}
