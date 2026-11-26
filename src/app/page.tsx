@@ -1,3 +1,9 @@
+import { Hero } from "@/components/hero";
+
 export default function Home() {
-  return <main className="p-8">Stock packs for memecoins on BNB Chain.</main>;
+  return (
+    <div className="page">
+      <Hero />
+    </div>
+  );
 }
