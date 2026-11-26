@@ -36,7 +36,7 @@ export function Hero() {
             id="hero-title"
             className="text-[clamp(34px,10.5vw,64px)] leading-[1.12] font-normal tracking-[-0.02em] desk:text-[clamp(40px,calc(min(6vw,10svh)_-_8px),96px)]"
           >
-            Not your typical memecoin.
+            <span className="text-muted-soft">Not your typical card.</span> Not your typical memecoin.
           </h1>
           <ul className="mt-5 flex flex-col gap-2 text-[clamp(18px,4.6vw,24px)] leading-snug desk:mt-7" aria-label="How it's different">
             {POINTS.map((p, i) => (
