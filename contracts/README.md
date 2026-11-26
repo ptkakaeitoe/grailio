@@ -8,7 +8,8 @@ Foundry project for the stock-pack Launcher + Vault on Flap Pool Launch (BSC tes
 - `src/packs/PackVault.sol` + `PackVaultFactory.sol` — takes 80% of the coin's trading tax (BNB). Packs (presale ones
   plus packs bought here) open into card NFTs that hold a bStock; burning a card pays out the bStock. A pack opens only
   when the pool covers its top prize; each style pays 10–300% of the pack price, 90% on average (`PackTypes.sol`).
-- `src/stocks/` — testnet mock bStocks and the market that sells them at owner-posted prices (from Atlas).
+- `src/stocks/` — testnet mock bStocks and the market that sells them: USD prices posted from Atlas's signed stock
+  prices, converted to BNB with Atlas's on-chain BNB/USD feed.
 
 - `src/flap/` — Flap's Pool Launch spec (Launcher/Vault bases and interfaces), copied unchanged from
   [flap-sh/FlapPoolLaunchVaultExample](https://github.com/flap-sh/FlapPoolLaunchVaultExample) (MIT). Flap only enables
@@ -25,6 +26,16 @@ forge install --no-git foundry-rs/forge-std@978ac6fadb62f5f0b723c996f64be52eddba
   vectorized/solady@acd959aa4bd04720d640bf4e6a5c71037510cc4b
 forge build
 ```
+
+## Deployed (BNB Testnet)
+
+| Contract | Address |
+| --- | --- |
+| PackLauncherFactory | [`0x431fCC1ba18213Cb8858BE2F2ca92C6bFe8Ef73b`](https://testnet.bscscan.com/address/0x431fCC1ba18213Cb8858BE2F2ca92C6bFe8Ef73b) |
+| PackVaultFactory | [`0xEF6AbEa35142d14922267487051ea68e787d0024`](https://testnet.bscscan.com/address/0xEF6AbEa35142d14922267487051ea68e787d0024) |
+| MockStockMarket (prices via Atlas BNB/USD) | [`0x1Ef0217aBeF9be772d7956556f7432e3A714C4F7`](https://testnet.bscscan.com/address/0x1Ef0217aBeF9be772d7956556f7432e3A714C4F7) |
+
+All addresses, including the nine mock bStocks, are in `deployments/97.json`.
 
 ## Test
 
