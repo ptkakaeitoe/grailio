@@ -11,6 +11,7 @@ import { cleanButton, cn } from "@/components/clean-ui";
 import { useCardArt } from "@/lib/design";
 import { listCard, useCollection, type OwnedCard } from "@/lib/collection";
 import { ListDialog } from "@/components/list-dialog";
+import { CardStakeButton, StakeRewards } from "@/components/stake-panel";
 import { startDemo, useDemo } from "@/lib/demo";
 import { RARITIES } from "@/lib/pack";
 import { usd } from "@/lib/format";
@@ -58,6 +59,7 @@ export function CollectionPanel() {
 
   return (
     <>
+      <StakeRewards />
       {held.length > 0 ? (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-5 gap-y-7 phone:grid-cols-[repeat(auto-fill,minmax(175px,230px))] desk:grid-cols-[repeat(auto-fill,minmax(205px,255px))] desk:gap-x-8 desk:gap-y-12">
           {held.map((card) => {
@@ -68,32 +70,35 @@ export function CollectionPanel() {
                 <FlipCard
                   flipped={isFlipped}
                   onToggle={() => setFlipped(isFlipped ? null : card.id)}
-                  label={`${card.ticker}B ${art.name}. ${isFlipped ? "Hide" : "Show"} card details.`}
+                  label={`${card.ticker} ${art.name}. ${isFlipped ? "Hide" : "Show"} card details.`}
                   front={<>
                     <StockCardFront art={art} rarity={card.rarity} brand={card.coinName} decorative className="size-full" sizes="(max-width: 480px) 44vw, (max-width: 800px) 30vw, 17vw" />
                     <Holo rarity={card.rarity} />
                   </>}
                   back={<>
                     <span className={cardBack.row}><span>{card.coinName.toUpperCase()}</span><span>{RARITIES[card.rarity].toUpperCase()}</span></span>
-                    <span className={cardBack.title}><strong className={cardBack.name}>{art.name}</strong><span className={cardBack.sub}>{card.ticker}B · {art.tokenName}</span></span>
+                    <span className={cardBack.title}><strong className={cardBack.name}>{art.name}</strong><span className={cardBack.sub}>{card.ticker} · {art.tokenName}</span></span>
                     <dl className={cardBack.meta}>
                       <div className={cardBack.item}><dt className={cardBack.dt}>Card</dt><dd className={cardBack.dd}>#{card.id}</dd></div>
                       <div className={cardBack.item}><dt className={cardBack.dt}>Pack</dt><dd className={cardBack.dd}>{card.size}</dd></div>
-                      <div className={cardBack.item}><dt className={cardBack.dt}>Holds</dt><dd className={cardBack.dd}>{fmtShares(card.shares)} {card.ticker}B</dd></div>
+                      <div className={cardBack.item}><dt className={cardBack.dt}>Holds</dt><dd className={cardBack.dd}>{fmtShares(card.shares)} {card.ticker}</dd></div>
                       <div className={cardBack.item}><dt className={cardBack.dt}>Value</dt><dd className={cardBack.dd}>{usd(card.usd)}</dd></div>
                       <div className={cardBack.item}><dt className={cardBack.dt}>Opened</dt><dd className={cardBack.dd}>{new Date(card.openedAt).toLocaleDateString()}</dd></div>
                     </dl>
                     <span className={cardBack.foot}>SIMULATED · BSC TESTNET</span>
                   </>}
                 />
-                <p className="mt-2 h-5 text-sm text-muted">{card.listedUsd ? <>Listed · <span className="text-black tabular-nums">{usd(card.listedUsd)}</span></> : null}</p>
+                <p className="mt-2 h-5 text-sm text-muted">{card.stakedAt ? "Staked · earning" : card.listedUsd ? <>Listed · <span className="text-black tabular-nums">{usd(card.listedUsd)}</span></> : null}</p>
                 <div className="mt-2.5 grid grid-cols-2 gap-1.5">
-                  {card.listedUsd ? (
+                  {card.stakedAt ? (
+                    <button type="button" className={cn(smallAction, "disabled:cursor-not-allowed disabled:border-dashed disabled:hover:border-border")} disabled>List</button>
+                  ) : card.listedUsd ? (
                     <button type="button" className={smallAction} onClick={() => listCard(card.id, 0)}>Unlist</button>
                   ) : (
                     <button type="button" className={smallAction} onClick={() => setListing(card)}>List</button>
                   )}
-                  <button type="button" className={smallAction} onClick={() => setRedeeming(card)}>Redeem</button>
+                  <button type="button" className={cn(smallAction, "disabled:cursor-not-allowed disabled:border-dashed disabled:hover:border-border")} disabled={Boolean(card.stakedAt)} onClick={() => setRedeeming(card)}>Redeem</button>
+                  <CardStakeButton card={card} className="col-span-2 min-w-0" />
                 </div>
               </li>
             );
@@ -110,7 +115,7 @@ export function CollectionPanel() {
             {redeemed.map((c) => (
               <li key={c.id} className={cn("flex flex-wrap items-baseline justify-between gap-2 py-2.5")}>
                 <span>#{c.id} · {c.coinName} · {cardArt(c).name}</span>
-                <span className="text-muted tabular-nums">{fmtShares(c.shares)} {c.ticker}B · {new Date(c.redeemedAt!).toLocaleDateString()}</span>
+                <span className="text-muted tabular-nums">{fmtShares(c.shares)} {c.ticker} · {new Date(c.redeemedAt!).toLocaleDateString()}</span>
               </li>
             ))}
           </ul>

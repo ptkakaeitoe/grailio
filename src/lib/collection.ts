@@ -25,6 +25,8 @@ export type OwnedCard = {
   redeemedAt?: number;
   /** Asking price (USD) while listed for sale. */
   listedUsd?: number;
+  /** Staked in its coin's vault (demo): earns the stakers' tax share; can't be redeemed or listed until unstaked. */
+  stakedAt?: number;
   /** On-chain card (BSC testnet): its pack vault, NFT id and the bStock amount it holds (wei). */
   onchain?: { vault: `0x${string}`; cardId: string; amount: string };
 };
@@ -52,12 +54,18 @@ export function addCard(card: Omit<OwnedCard, "id" | "openedAt">) {
 }
 
 export function redeemCard(id: number) {
-  save(load().map((c) => (c.id === id && !c.redeemedAt ? { ...c, redeemedAt: Date.now(), listedUsd: undefined } : c)));
+  save(load().map((c) => (c.id === id && !c.redeemedAt && !c.stakedAt ? { ...c, redeemedAt: Date.now(), listedUsd: undefined } : c)));
 }
 
 /** Lists a kept card for sale at a price (USD); 0 or less takes it off sale. */
 export function listCard(id: number, usd: number) {
-  save(load().map((c) => (c.id === id && !c.redeemedAt ? { ...c, listedUsd: usd > 0 ? Math.round(usd * 100) / 100 : undefined } : c)));
+  save(load().map((c) => (c.id === id && !c.redeemedAt && !c.stakedAt ? { ...c, listedUsd: usd > 0 ? Math.round(usd * 100) / 100 : undefined } : c)));
+}
+
+/** Marks cards staked (taken off sale) or unstaked. */
+export function setStaked(ids: number[], staked: boolean) {
+  const set = new Set(ids);
+  save(load().map((c) => (set.has(c.id) && !c.redeemedAt ? { ...c, stakedAt: staked ? Date.now() : undefined, listedUsd: staked ? undefined : c.listedUsd } : c)));
 }
 
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
