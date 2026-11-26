@@ -189,6 +189,63 @@ contract PackBSCTestForkTest is ForkBase {
         portal.newLauncher{value: fee}(address(launcherFactory), abi.encode(c));
     }
 
+    function test_newVaultIsPortalOnly() public {
+        _deploy();
+        vm.startPrank(creator);
+        vm.expectRevert(abi.encodeWithSignature("NotHub(address)", creator));
+        vaultFactory.newVault(address(0x7777), creator, 0, "");
+        vm.stopPrank();
+    }
+
+    function test_onlyTheGuardianUpgrades_andStateSurvives() public {
+        _deploy();
+        _openLauncherFactory(address(launcherFactory));
+        PackLauncher launcher =
+            PackLauncher(payable(_newLauncher(address(launcherFactory), abi.encode(_config("pack-upgrade")))));
+        vm.startPrank(alice);
+        launcher.buyPacks{value: 4 * PRICE}(4);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        launcher.buyPacks{value: 6 * PRICE}(6);
+        vm.stopPrank();
+        PackVault vault = PackVault(payable(launcher.vault()));
+        uint256 poolBefore = address(vault).balance;
+
+        address newLauncherImpl = address(new PackLauncher());
+        address newVaultImpl = address(new PackVault());
+
+        vm.startPrank(creator);
+        vm.expectRevert(abi.encodeWithSignature("NotGuardian(address)", creator));
+        launcherFactory.upgradeVaultImplementation(newLauncherImpl);
+        vm.expectRevert(abi.encodeWithSignature("NotGuardian(address)", creator));
+        vaultFactory.upgradeVaultImplementation(newVaultImpl);
+        vm.stopPrank();
+
+        vm.startPrank(guardian);
+        launcherFactory.upgradeVaultImplementation(newLauncherImpl);
+        vaultFactory.upgradeVaultImplementation(newVaultImpl);
+        vm.stopPrank();
+        assertEq(launcherFactory.beaconImplementation(), newLauncherImpl);
+        assertEq(vaultFactory.beaconImplementation(), newVaultImpl);
+
+        // State survives on both proxies.
+        assertEq(launcher.packsOf(alice), 4);
+        assertTrue(launcher.launched());
+        assertEq(vault.packsOf(bob), 6);
+        assertEq(vault.launcher(), address(launcher));
+        assertEq(address(vault).balance, poolBefore);
+    }
+
+    function test_descriptionStaysUnderThePortalLimit() public {
+        _deploy();
+        _openLauncherFactory(address(launcherFactory));
+        PackConfig memory c = _config("pack-long-name");
+        c.name = "A coin name that is long on purpose, long enough to test the description size limit ok";
+        c.symbol = "LONGSYMBOL";
+        PackLauncher launcher = PackLauncher(payable(_newLauncher(address(launcherFactory), abi.encode(c))));
+        assertLt(bytes(launcher.description()).length, 4096, "Portal reads at most 4 KB");
+    }
+
     function test_vaultFactoryRefusesAStrangerLauncher() public {
         _deploy();
         _openVaultFactory(address(vaultFactory));
