@@ -1,0 +1,20 @@
+{
+  "name": "grailio-openfour",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Grailio stock-pack preset for OpenFour (four.meme). Hardhat + solc 0.8.24 viaIR, as OpenFour requires.",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "4.9.6",
+    "@openzeppelin/contracts-upgradeable": "4.9.6",
+    "dotenv": "^17.4.1"
+  }
+}
