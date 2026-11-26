@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChevronDown, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
-import { DROP_PCT, RISK_RULES, displayTitle, type RiskCheck, type RiskDecision } from "@/lib/risk";
+import { DROP_PCT, displayTitle, type RiskCheck, type RiskDecision } from "@/lib/risk";
 import { usd } from "@/lib/format";
 import { cn } from "@/components/clean-ui";
 
@@ -90,13 +90,9 @@ export function RiskPanel({ coin, onDecision }: { coin: string; onDecision: (d: 
               : paused ? `${pausedNames} paused by the risk check`
               : "Risk check: all tiers on sale"}
           </p>
-          {check ? (
+          {check && (
             <p className="mt-0.5 text-[13px] leading-relaxed text-muted">
-              Cournot puts a <span className="num text-black">{pct(check.chanceOfDrop)}</span> chance on {check.stock.ticker} falling to the market&apos;s level · checked {when(check.checkedAt)}
-            </p>
-          ) : !loading && (
-            <p className="mt-0.5 text-[13px] leading-relaxed text-muted">
-              Asks Cournot how likely the pool&apos;s biggest stock is to drop {Math.round(DROP_PCT * 100)}%. At {pct(RISK_RULES.pauseHigh)} High pauses, at {pct(RISK_RULES.pauseMedium)} Medium too.
+              Cournot: <span className="num text-black">{pct(check.chanceOfDrop)}</span> chance of a {Math.round(DROP_PCT * 100)}% drop in {check.stock.ticker} · {when(check.checkedAt)}
             </p>
           )}
         </div>
