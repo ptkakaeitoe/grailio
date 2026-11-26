@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowDownUp, ArrowLeft } from "lucide-react";
 import { StockLogo } from "@/components/stock-logo";
 import { cn } from "@/components/clean-ui";
@@ -12,7 +12,9 @@ import { CoinPackLink } from "@/components/coin-link";
 import { useMarketCoins } from "@/lib/published-packs";
 import { stockOf } from "@/lib/stocks";
 import { showToast } from "@/lib/toast";
-import { usd } from "@/lib/format";
+import { ago, usd } from "@/lib/format";
+import type { AtlasQuote } from "@/lib/atlas";
+import { gapPct, useCmc } from "@/lib/use-cmc";
 
 /*
  * Trade one asset, minimal: the price and a chart on top, a swap box below (pay BNB, receive the asset; flip to sell).
@@ -44,6 +46,55 @@ function Chart({ points, up }: { points: Point[]; up: boolean }) {
   );
 }
 
+const AGREE_PCT = 1;
+const signed = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
+
+/**
+ * A stock's price data, for checking it: the Atlas feed and when it was signed, its consensus, and how it compares with
+ * CoinMarketCap and with the average across tokenized versions of the stock. (The Trade list keeps only the essentials.)
+ */
+function StockPriceData({ ticker, quote }: { ticker: string; quote: AtlasQuote | null }) {
+  const cmc = useCmc([ticker]);
+  const m = cmc.byTicker.get(ticker);
+  // Clock starts at 0 and is set after mount, so the server render never reads the time.
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    const first = setTimeout(tick, 0);
+    const t = setInterval(tick, 1000);
+    return () => { clearTimeout(first); clearInterval(t); };
+  }, []);
+  const vsCmc = gapPct(quote?.price, m?.price);
+  const vsStock = gapPct(m?.price, m?.underlyingAvg);
+  const healthy = quote?.consensusStatus === "HEALTHY";
+  const rows: [string, ReactNode][] = [
+    ["Atlas feed", quote ? `#${quote.id}` : "—"],
+    ["Signed", quote && now ? ago(quote.timestamp, now) : "—"],
+    ["Consensus", quote?.consensusScore == null ? "—" : (
+      <>{quote.consensusScore.toFixed(2)} <span className={healthy ? "text-up" : "text-warn"}>{quote.consensusStatus?.toLowerCase()}</span></>
+    )],
+    ["CoinMarketCap", m?.price ? (
+      <>{usd(m.price, m.price < 1 ? 4 : 2)}{vsCmc !== null && <span className={cn("ml-1.5", Math.abs(vsCmc) > AGREE_PCT ? "text-warn" : "text-muted")}>Atlas {signed(vsCmc)}</span>}</>
+    ) : "—"],
+    ["vs the stock", vsStock === null ? "—" : (
+      <><span className={Math.abs(vsStock) > AGREE_PCT ? "text-warn" : undefined}>{signed(vsStock)}</span><span className="ml-1.5 text-muted">avg of {m?.issuers} issuers</span></>
+    )],
+  ];
+  return (
+    <section aria-label="Price data" className="rounded-md border border-border p-4">
+      <h2 className="mb-3 text-sm text-muted">Price data</h2>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+        {rows.map(([label, value]) => (
+          <div key={label} className="contents">
+            <dt className="text-muted">{label}</dt>
+            <dd className="m-0 text-right tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 export function TradeScreen({ asset }: { asset: Asset }) {
   const demo = useDemo();
   const coins = useMarketCoins();
@@ -51,6 +102,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
   const [period, setPeriod] = useState<(typeof PERIODS)[number]>("24H");
   const [history, setHistory] = useState<Point[]>([]);
   const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [atlasQuote, setAtlasQuote] = useState<AtlasQuote | null>(null);
   const [bnbUsd, setBnbUsd] = useState<number | null>(null);
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
@@ -71,9 +123,9 @@ export function TradeScreen({ asset }: { asset: Asset }) {
   }, []);
   useEffect(() => {
     if (!stock?.feedId) return;
-    fetch(`/api/atlas?ids=${stock.feedId}`).then((r) => r.json()).then((d: { quotes?: { price: number }[] }) => {
-      const p = d.quotes?.[0]?.price;
-      if (typeof p === "number") setLivePrice(p);
+    fetch(`/api/atlas?ids=${stock.feedId}`).then((r) => r.json()).then((d: { quotes?: AtlasQuote[] }) => {
+      const q = d.quotes?.[0];
+      if (q && typeof q.price === "number") { setLivePrice(q.price); setAtlasQuote(q); }
     }).catch(() => {});
   }, [stock?.feedId]);
   useEffect(() => {
@@ -193,6 +245,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         {!demo.active ? "Try the demo" : !valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`}
       </button>
       <p className="-mt-3 text-center text-sm text-muted">Simulated · BSC testnet</p>
+      {stock && <StockPriceData ticker={stock.ticker} quote={atlasQuote} />}
     </div>
   );
 }
