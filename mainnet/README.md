@@ -1,15 +1,21 @@
-# Collect
+# Grailio (BNB Smart Chain mainnet)
 
-Open $1 packs, collect cards that hold real tokens, trade them, vote and chat, on Avalanche C-Chain (mainnet, chain 43114). **Public beta.**
+The mainnet version of Grailio: open $1 packs, collect cards that hold real tokens, trade them, vote and chat, on **BNB Smart Chain (chain 56)**. It is a separate Next.js app with its own Foundry contracts, kept apart from the testnet app in the repo root (`src/`, `contracts/`, `openfour/`). Nothing here imports from there.
 
-The app (Next.js) is in the repo root; the Solidity contracts are in [`contracts/`](contracts/README.md). Rebuilt from the `stonks` Fuji prototype.
+**Status: the app runs and builds; the contracts are not deployed.** Until `deployments/56.json` has addresses, on-chain pages show demo mode or an "at launch" state. Swaps on `/trade` are already real (KyberSwap's BSC aggregator; the user's wallet signs).
 
-## Status
+## Run it
 
-- **Tokens first, stocks later.** Tokenized stocks aren't on Avalanche yet, so the beta cards hold BTC.b, WETH.e, WAVAX, LINK.e and JOE. The stock framing in the copy stays for launch.
-- **Demo mode uses stocks.** In demo, the same relics track AAPL, MSFT, NVDA, TSLA and AMZN at live Yahoo Finance prices (`DEMO_STOCK_CARDS` in `lib/cards.ts`, `/api/prices?set=stocks`). `useCards()` and `useStockPrices()` pick the set from the current mode; live-only views pin token prices.
-- **Contracts are written and tested but not deployed.** Until `deployments/43114.json` has addresses, on-chain pages show demo mode or an "at launch" state. Swaps on `/trade` are already real (they go through KyberSwap, not our contracts).
-- **No Collect token.** Prices and payments are in USDC (and AVAX on the marketplace). DAO votes use non-transferable points.
+```bash
+cd mainnet
+cp .env.example .env.local     # fill in the values (see below)
+npm install
+npm run dev -- -p 3300         # any free port; the testnet app uses 3200
+```
+
+Checks: `npm run build`, `npm run lint`, `npx tsc --noEmit`, `node --test tests/*.mjs`, and for the contracts `cd contracts && ./install-libs.sh && forge test`.
+
+This Next.js version has breaking changes from older releases: read `AGENTS.md` and `node_modules/next/dist/docs/` before changing code.
 
 ## Pages
 
@@ -17,67 +23,67 @@ The app (Next.js) is in the repo root; the Solidity contracts are in [`contracts
 | --- | --- |
 | `/` | Live prices, packs, get started |
 | `/packs` | Buy and open $1 packs (three designs, three risk levels) |
-| `/trade` | Real swaps via KyberSwap at the best DEX route |
-| `/marketplace` | Buy and sell cards, priced in AVAX or USDC |
-| `/collection` | Your cards (stake, redeem, view) and unopened packs to open |
-| `/gift` | Claim a gift code; see and cancel gifts you sent (buy them on `/packs` with "As a gift") |
+| `/trade` | Real swaps via KyberSwap at the best BSC DEX route |
+| `/marketplace` | Buy and sell cards, priced in BNB or USDC |
+| `/collection` | Your cards (stake, redeem, view) and unopened packs |
+| `/gift` | Claim a gift code; see and cancel gifts you sent |
 | `/profile`, `/@handle` | Username, picture, bio, socials, ID card and holdings |
-| `/dao` | Proposals and votes with collector points (1 per pack bought; demo too) |
+| `/dao` | Proposals and votes with collector points (1 per pack bought) |
 | `/community` | Open lounge plus an encrypted room per token for its card holders |
 | `/treasury` | Owner: pack pool, what's owed, withdraw, pause |
 | `/info` | Field guide and contract table |
 | `/v2` | Minimal black-and-white test UI over the same code |
 
-## How it works
+Cards hold BTCB, ETH, WBNB, LINK or CAKE (1 in 5 each). Payments are in USDC (and BNB on the marketplace). DAO votes use non-transferable points; there is no Grailio token.
 
-### Packs
+## Environment
 
-Every pack costs **$1 in USDC** and earns **1 DAO point**. Each card holds one random token, 1 in 5 each. All three designs average **$0.91 of tokens** per pack (a 9% house edge); only the spread differs.
+Names are in `.env.example`; you fill in the values. Never commit `.env.local`.
 
-| Pack (risk) | Common | Rare | Epic | Legendary |
-| --- | --- | --- | --- | --- |
-| Realistic (lowest) | 50% · $0.82 | 25% · $0.90 | 20% · $1.04 | 5% · $1.34 |
-| Classic (medium) | 50% · $0.46 | 25% · $0.80 | 20% · $1.40 | 5% · $4.00 |
-| Futuristic (high) | 60% · $0.20 | 25% · $0.60 | 12% · $2.80 | 3% · $10.13 |
+| Variable | Needed for | Required? |
+| --- | --- | --- |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | Sign-in (Privy). Enable BNB Smart Chain and add your domain in the Privy dashboard | Yes for production; local dev falls back to a browser wallet |
+| `BETA_ACCESS_CODES`, `BETA_COOKIE_SECRET` | The beta gate for connecting wallets | Yes |
+| `ETHERSCAN_API_KEY` | Activity and chat history (contract logs via Etherscan API v2, chain 56). The key needs BNB Chain access | Yes once contracts are deployed |
+| `RELAYER_KEY` | Free chat posts and gift gas top-ups (a dedicated wallet with a little BNB) | Optional |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Shared relay limits (or Vercel KV) | Required in production if `RELAYER_KEY` is set |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Mobile wallets via WalletConnect | Optional |
+| `NEXT_PUBLIC_BSC_RPC_URL` | Your own RPC instead of `bsc-dataseed.bnbchain.org` | Optional, recommended |
+| `NEXT_PUBLIC_SITE_URL` | Deployed origin, for link previews | Optional |
 
-**Where the $1 goes:** into the pack contract's USDC prize pool. When a pack opens, the contract swaps the card's value from USDC into its token on a DEX (guarded by Chainlink prices) and locks it in the card. On average $0.91 leaves as tokens in cards and about $0.09 stays as profit. The owner can only withdraw USDC above what unopened packs could still pay out. Odds live in `PACK_TIERS` (`lib/contracts.ts`) and `contracts/script/MainnetConfig.sol`.
+## Mainnet addresses it uses
 
-### Prices (`lib/quotes.ts`)
+**Grailio contracts: none yet.** `deployments/56.json` holds zero addresses until you deploy. The earlier app's deployed contracts live on a different chain and do not exist on BSC, so none are copied.
 
-- **Live price:** read on chain from pinned DEX pools (Uniswap v3 for WAVAX, BTC.b, WETH.e, LINK.e; LFJ v1 for JOE), cached for 30 seconds.
-- **24h change and charts:** GeckoTerminal for the same pools, cached for 60 seconds. Its free tier allows about 30 requests a minute.
-- The LINK and JOE pools are thin; the pack contract prices fills with Chainlink, not these pools.
+Third-party contracts, all read on chain 56 on 2026-11-26 (`lib/tokens.ts`, `lib/quotes.ts`, `contracts/script/MainnetConfig.sol`):
 
-### Swaps (`/trade`)
-
-KyberSwap routes each trade across Avalanche DEXes. `GET /api/swap/quote` returns the route; `POST /api/swap/build` returns calldata (beta cookie required, slippage capped at 5%). The user's wallet signs; the server never signs or sends. Every swap must target KyberSwap's router, checked on the server and in the browser. No platform fee is taken.
-
-### Beta gate
-
-Anyone can browse and use demo mode. **Connecting a wallet needs a beta code.** The code is checked on the server, which sets a signed httpOnly cookie for 90 days; wallets that connect without it are disconnected. This is a UI gate: contracts on a public chain can still be called directly.
-
-## Setup
-
-```bash
-git clone --recurse-submodules <repo-url>   # or: git submodule update --init --recursive
-cp .env.example .env.local                  # fill in the values below
-npm install
-npm run dev
-```
-
-| Variable | Needed for |
+| What | Address |
 | --- | --- |
-| `NEXT_PUBLIC_PRIVY_APP_ID` | Sign-in (Privy: email, Google or a wallet; makes a wallet for people without one). Free at dashboard.privy.io; enable Avalanche and add your domain. Without it, local dev uses a browser wallet |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional: mobile wallet apps via WalletConnect in the sign-in list (free at cloud.reown.com) |
-| `BETA_ACCESS_CODES`, `BETA_COOKIE_SECRET` | The beta gate |
-| `RELAYER_KEY` | Free chat posting (a dedicated wallet with a little AVAX) |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Shared chat-relay limits (or Vercel KV's `KV_REST_API_URL`/`TOKEN`). Required in production: without it the relay refuses to post |
-| `NEXT_PUBLIC_AVALANCHE_RPC_URL` | Optional: your own RPC instead of the public one |
+| USDC (Binance-Peg, **18 decimals**) | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
+| WBNB | `0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c` |
+| BTCB | `0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c` |
+| ETH (Binance-Peg) | `0x2170Ed0880ac9A755fd29B2688956BD959F933F8` |
+| LINK | `0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD` |
+| CAKE | `0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82` |
+| Chainlink BTC/USD, ETH/USD, BNB/USD, LINK/USD, CAKE/USD | `0x2649…5Ebf`, `0x9ef1…5b2e`, `0x0567…2aeE`, `0xca23…fac8`, `0xB606…65a1` (full addresses in `MainnetConfig.sol`) |
+| PancakeSwap v3 SmartRouter / v2 Router | `0x13f4EA83D0bd40E75C8222255bc855a974568Dd4` / `0x10ED43C718714eb63d5aA57B78B54704E256024E` |
+| KyberSwap MetaAggregationRouterV2 (swaps may only go here) | `0x6131B5fae19EA4f9D964eAc0408E4408b66337b5` |
+| Price pools (PancakeSwap v3) | WBNB/USDC 0.01% `0xf268…12C4`, BTCB/WBNB 0.05% `0x6bbc…d636`, ETH/WBNB 0.05% `0xD0e2…8CBA`, LINK/WBNB 0.25% `0x0E18…94b9`, CAKE/WBNB 0.25% `0x133B…96BF` |
 
-Network settings live in `lib/chain.ts`. Tests: `npm run lint`, `node --test tests/*.mjs`, and `cd contracts && forge test`.
+The swap-fee treasury wallet in `lib/swap-fee.ts` (`SWAP_FEE_TREASURY`) is carried over from the earlier app; change it to your own wallet before taking swaps.
 
-**Deploying the contracts** (spends real AVAX): see [contracts/README.md](contracts/README.md). The deploy script writes every address into `deployments/43114.json`; rebuild the app afterwards.
+## What is left for you
+
+1. **Make the pack contract work with 18-decimal USDC.** The contracts were written for 6-decimal USDC; BNB Chain's has 18. `MainnetConfig.deploy` refuses to run until this is done (see `contracts/README.md`). This is a contract change for real money: have it reviewed.
+2. **Deploy the contracts yourself** (spends real BNB): the exact commands are in [`contracts/README.md`](contracts/README.md#deploy-you-run-this-it-spends-real-bnb-and-usdc). The script writes every address into `deployments/56.json`; rebuild the app afterwards and seed the pack pool with USDC.
+3. **Fill in `.env.local`** (or your host's env): Privy app ID with BNB Smart Chain enabled, beta codes and cookie secret, an Etherscan API v2 key, and optionally a relayer wallet with a little BNB plus Upstash.
+4. **Set `SWAP_FEE_TREASURY`** in `lib/swap-fee.ts` to your wallet.
+5. **Optional: outside NFTs as profile pictures.** BNB Chain has no keyless NFT index, so the picker offers Grailio cards only. Plug an NFT indexer into `lib/nft-metadata.ts` to bring this back.
+
+## What changed from the earlier app
+
+Branding is now Grailio. Behaviour is the same, moved to BNB Chain: chain, RPC and explorer (BscScan); tokens and price pools (PancakeSwap v3 instead of the old chain's DEXes); KyberSwap's BSC endpoint; contract logs through the Etherscan v2 API; USD amounts formatted with USDC's on-chain decimals; gas top-ups sized for BSC fees; token icons for BNB and CAKE; outside-NFT avatars switched off.
 
 ## Stack
 
-Next.js 16 (App Router), React 19, wagmi 2, viem 2, Privy, Tailwind CSS 4, Foundry, OpenZeppelin 5. This Next version has breaking changes: read `AGENTS.md` first.
+Next.js 16 (App Router), React 19, wagmi 2, viem 2, Privy, Tailwind CSS 4, Foundry, OpenZeppelin 5.4.
