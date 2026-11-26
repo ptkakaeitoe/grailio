@@ -85,7 +85,7 @@ export function CollectionPanel() {
                     <span className={cardBack.foot}>SIMULATED · BSC TESTNET</span>
                   </>}
                 />
-                {card.listedUsd && <p className="mt-2 text-sm text-muted">Listed · <span className="text-black tabular-nums">{usd(card.listedUsd)}</span></p>}
+                <p className="mt-2 h-5 text-sm text-muted">{card.listedUsd ? <>Listed · <span className="text-black tabular-nums">{usd(card.listedUsd)}</span></> : null}</p>
                 <div className="mt-2.5 grid grid-cols-2 gap-1.5">
                   {card.listedUsd ? (
                     <button type="button" className={smallAction} onClick={() => listCard(card.id, 0)}>Unlist</button>
