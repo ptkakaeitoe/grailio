@@ -1,6 +1,5 @@
 "use client";
 
-import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useState } from "react";
 import { cleanButton, cn } from "@/components/clean-ui";
@@ -117,11 +116,8 @@ export function StakingPoolPanel({ rows, claim }: { rows: CoinRow[]; claim: { on
         ))}
       </dl>
 
-      <details className="group mt-3 border-t border-border">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-[13px] text-muted transition-colors hover:text-black [&::-webkit-details-marker]:hidden">
-          <span>Per coin · next {STREAM_DAYS} days</span>
-          <CaretDownIcon aria-hidden="true" className="transition-transform group-open:rotate-180" />
-        </summary>
+      <div className="mt-3 border-t border-border">
+        <p className="flex min-h-11 items-center text-[13px] text-muted">Per coin · next {STREAM_DAYS} days</p>
         <ul className="flex flex-col">
           {rows.map((r) => (
             <li key={r.coin.slug} className="flex items-center justify-between gap-3 border-b border-border py-2">
@@ -136,7 +132,7 @@ export function StakingPoolPanel({ rows, claim }: { rows: CoinRow[]; claim: { on
           ))}
         </ul>
         <PoolChart rows={rows} share={share} />
-      </details>
+      </div>
     </section>
   );
 }
