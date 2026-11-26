@@ -310,6 +310,33 @@
   .side-drawer, .side-drawer::backdrop, .drop-panel, .pop-dialog, .pop-dialog::backdrop { transition: none; }
 }
 
+/* The top bar stays see-through and never changes. Instead the page content fades out as it scrolls up under it:
+   a mask on <main> that stays pinned to the bar's bottom edge. --scroll-y follows the page scroll exactly (a
+   scroll-driven animation over a 100000px range, so progress × range = scroll offset), and since <main> starts right
+   under the bar, the bar's bottom edge sits at --scroll-y in <main>. The fade is a long, gentle 100px (a smoothstep
+   curve, so it has no visible edge): from just under the bar's bottom edge, content dissolves gradually up to near
+   the top of the screen. It grows in with the first 100px of scroll, so at the top of the page nothing is faded. Without
+   scroll-driven animations the content simply isn't faded. */
+@property --scroll-y { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@keyframes scroll-y { from { --scroll-y: 0px; } to { --scroll-y: 100000px; } }
+@supports (animation-timeline: scroll()) {
+  #main-content {
+    animation: scroll-y linear both; animation-timeline: scroll(root); animation-range: 0px 100000px;
+    mask-image: linear-gradient(to bottom,
+    transparent calc(var(--scroll-y) + -0.7 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.028) calc(var(--scroll-y) + -0.6 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.104) calc(var(--scroll-y) + -0.5 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.216) calc(var(--scroll-y) + -0.4 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.352) calc(var(--scroll-y) + -0.3 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.5) calc(var(--scroll-y) + -0.2 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.648) calc(var(--scroll-y) + -0.1 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.784) calc(var(--scroll-y) + 0.0 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.896) calc(var(--scroll-y) + 0.1 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.972) calc(var(--scroll-y) + 0.2 * min(var(--scroll-y), 100px)),
+    #000 calc(var(--scroll-y) + 0.3 * min(var(--scroll-y), 100px)));
+  }
+}
+
 html:has(dialog:modal) { overflow: hidden; scrollbar-gutter: stable; }
 
 

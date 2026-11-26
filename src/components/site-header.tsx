@@ -41,7 +41,7 @@ export function SiteHeader() {
   const path = usePathname();
   const demo = useDemo();
   return (
-    <header className="sticky top-0 z-40 border-b border-hair bg-[rgb(17_17_17/.82)] pt-[env(safe-area-inset-top)] backdrop-blur-[14px]">
+    <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-[var(--header-h)] max-w-[1600px] items-center gap-4 px-[var(--gutter)] desk:grid desk:grid-cols-[1fr_auto_1fr] desk:gap-6">
         <Link href="/" className="inline-flex shrink-0 items-center gap-2 desk:justify-self-start">
           <span className="wordmark text-[24px] desk:text-[26px]">grailio</span>
