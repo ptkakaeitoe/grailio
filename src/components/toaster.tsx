@@ -10,7 +10,7 @@ export function Toaster() {
   const toasts = useSyncExternalStore(subscribeToasts, readToasts, serverToasts);
   return (
     <div
-      className="pointer-events-none fixed inset-x-4 bottom-[calc(var(--tabbar-h)+max(16px,env(safe-area-inset-bottom)))] z-[60] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:items-end"
+      className="pointer-events-none fixed inset-x-4 top-[calc(var(--header-h)+12px)] z-[60] flex flex-col items-center gap-2 sm:inset-x-auto sm:top-auto sm:right-6 sm:bottom-6 sm:items-end"
       aria-live="polite"
       aria-label="Notifications"
     >
