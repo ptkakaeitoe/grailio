@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, RefreshCw, Search, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import type { AtlasSnapshot } from "@/lib/atlas";
 import { underlying } from "@/lib/atlas-feeds";
+import { stockOf } from "@/lib/stocks";
 import { usePack } from "@/lib/pack";
 import { compactUsd, gapPct, useCmc } from "@/lib/use-cmc";
 import { usd } from "@/lib/format";
@@ -152,7 +154,8 @@ export function StockList() {
         {rows.map((r) => {
           const tick = underlying(r.symbol);
           return (
-            <li key={r.id} className="flex min-h-16 items-center gap-3 border-b border-border py-3 last:border-b-0">
+            <li key={r.id} className="border-b border-border last:border-b-0">
+              <Link href={stockOf(tick) ? `/app/trade/stock/${tick}` : "#"} aria-disabled={!stockOf(tick)} className="flex min-h-16 items-center gap-3 py-3 transition-colors hover:bg-surface-muted aria-disabled:pointer-events-none">
               <StockLogo ticker={r.symbol} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2">
@@ -165,6 +168,7 @@ export function StockList() {
                 <p className="num text-base">{usd(r.price, r.price < 1 ? 4 : 2)}</p>
                 <p className={cn("num text-[13px]", changeTone(r.changePct))}>{changeText(r.changePct)}</p>
               </div>
+              </Link>
             </li>
           );
         })}
@@ -197,7 +201,7 @@ export function StockList() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <StockLogo ticker={r.symbol} size={24} />
-                      <span className="num">{r.symbol}</span>
+                      {stockOf(tick) ? <Link href={`/app/trade/stock/${tick}`} className="num underline-offset-4 hover:underline">{r.symbol}</Link> : <span className="num">{r.symbol}</span>}
                       {inPack.has(tick) && <span className="rounded-[4px] bg-surface-muted px-1.5 py-0.5 text-[11px] text-muted">in pack</span>}
                     </div>
                     <span className="text-[12px] text-muted">{tick === r.symbol ? "token" : `${tick} · bStock`}</span>

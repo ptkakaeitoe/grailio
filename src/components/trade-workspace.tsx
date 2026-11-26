@@ -7,7 +7,7 @@ import { NftMarket } from "@/components/nft-market";
 import { cn } from "@/components/clean-ui";
 
 const TABS = [
-  { id: "stocks", label: "Stocks" },
+  { id: "stocks", label: "bStocks" },
   { id: "tokens", label: "Tokens" },
   { id: "nfts", label: "NFTs" },
 ] as const;
