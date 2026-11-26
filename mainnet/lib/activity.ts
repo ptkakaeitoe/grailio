@@ -47,7 +47,7 @@ export type ActivityItem = {
   inAvax?: boolean;
 };
 
-/** An eth_getLogs-style log as Routescan returns it (hex strings). */
+/** An eth_getLogs-style log as the explorer logs API returns it (hex strings). */
 export type RawLog = { address: string; topics: string[]; data: string; timeStamp: string; transactionHash: string; logIndex: string };
 
 /**

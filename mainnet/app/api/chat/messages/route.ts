@@ -2,13 +2,13 @@ import { numberToHex, padHex, toEventSelector } from "viem";
 import { recentMessages, type RecentMessage } from "@/lib/chat-recent";
 import { chatAddress, chatFromBlock, chatLive } from "@/lib/contracts";
 import { limitStore } from "@/lib/relay-limits";
-import { latestBlock, ROUTESCAN_API } from "@/lib/routescan";
+import { latestBlock, logsUrl } from "@/lib/explorer-logs";
 
 /**
  * A chat room's Message events: /api/chat/messages?room=1&from=101184339
  *
- * Public RPCs cap log queries at ~100 blocks, so the room history comes from
- * Routescan's free logs API (the Snowtrace backend). Returns raw logs; the
+ * Public BSC RPCs cap log queries at a few thousand blocks, so the room history comes from
+ * the explorer logs API (Etherscan v2, BNB Chain). Returns raw logs; the
  * browser decodes (and, for holder rooms, decrypts) them. Public data only.
  */
 const MESSAGE = toEventSelector("Message(uint256,address,bytes,uint64)");
@@ -34,13 +34,13 @@ export async function GET(req: Request) {
     return Response.json({ error: "Bad block" }, { status: 400 });
   }
 
-  // Up to the current block, not "latest": Routescan caches identical URLs (lib/routescan.ts).
+  // Up to the current block, not "latest", so cached answers stay fresh (lib/explorer-logs.ts).
   const query = new URLSearchParams({
     module: "logs", action: "getLogs", address: chatAddress, fromBlock: from.toString(), toBlock: await latestBlock(),
     topic0: MESSAGE, topic1: padHex(numberToHex(room), { size: 32 }), topic0_1_opr: "and", page: "1", offset: "1000",
   });
   try {
-    const [res, pending] = await Promise.all([fetch(`${ROUTESCAN_API}?${query}`, { cache: "no-store" }), recent(room)]);
+    const [res, pending] = await Promise.all([fetch(logsUrl(Object.fromEntries(query)), { cache: "no-store" }), recent(room)]);
     const body = (await res.json()) as { message: string; result: RawChatLog[] | string };
     if (Array.isArray(body.result)) {
       const logs = body.result.map(({ topics, data, blockNumber, transactionHash, logIndex }) => ({ topics, data, blockNumber, transactionHash, logIndex }));

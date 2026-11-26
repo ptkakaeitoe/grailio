@@ -1,14 +1,20 @@
 import { rpcUrl } from "@/lib/chain";
 
 /**
- * Routescan's free logs API (the Snowtrace backend), used where public RPCs
- * cap log queries at ~100 blocks. Server-side only.
+ * Explorer logs API (Etherscan API v2, BNB Chain), used where public BSC RPCs
+ * cap log queries at a few thousand blocks. Server-side only: the key in
+ * ETHERSCAN_API_KEY never reaches the browser.
  *
- * Its CDN caches identical URLs, so `toBlock=latest` can serve a stale answer
- * for a while. Queries go up to the current block number instead: the URL
- * changes every block, so results are always fresh.
+ * Queries go up to the current block number instead of "latest", so cached
+ * answers for an identical URL never go stale.
  */
-export const ROUTESCAN_API = "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/api";
+const LOGS_API = "https://api.etherscan.io/v2/api";
+
+/** Full logs-API URL for `params` (module, action, address, topics…). */
+export function logsUrl(params: Record<string, string>): string {
+  const query = new URLSearchParams({ chainid: "56", ...params, apikey: process.env.ETHERSCAN_API_KEY ?? "" });
+  return `${LOGS_API}?${query}`;
+}
 
 /** The chain's current block, or "latest" if the RPC can't be reached. */
 export async function latestBlock(): Promise<string> {
