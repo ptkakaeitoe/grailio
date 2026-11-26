@@ -11,7 +11,6 @@ export default function StudioPage() {
         label="pack studio"
         title="Design your pack."
         subtitle="Every trade fills it."
-        intro="Choose the stocks, the look and the rarity tiers before the memecoin launches. Trading fees buy the basket and holders get the packs."
       />
       <Studio />
     </div>

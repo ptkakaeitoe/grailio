@@ -38,8 +38,8 @@ const subLabel = "mb-2 block text-sm text-muted";
 const range = "range h-11 cursor-pointer desk:h-8";
 const box = "overflow-hidden rounded-md border border-border";
 
-/** Section opener: a thin rule, the bracketed step label on the left, a two-tone heading and intro beside it. */
-function Section({ n, label, title, sub, intro, children }: { n: number; label: string; title: string; sub: string; intro: string; children: ReactNode }) {
+/** Section opener: a thin rule, the bracketed step label on the left, a two-tone heading beside it. */
+function Section({ n, label, title, sub, children }: { n: number; label: string; title: string; sub: string; children: ReactNode }) {
   return (
     <section className="border-t border-border pt-6 pb-10 desk:pb-14">
       <div className="mb-7 grid grid-cols-1 gap-3 desk:grid-cols-[132px_minmax(0,1fr)] desk:gap-6">
@@ -50,7 +50,6 @@ function Section({ n, label, title, sub, intro, children }: { n: number; label: 
             <br />
             <span className="text-muted">{sub}</span>
           </h2>
-          <p className="mt-3 max-w-[560px] text-sm leading-relaxed text-muted">{intro}</p>
         </div>
       </div>
       <div className="min-w-0 desk:pl-[156px]">{children}</div>
@@ -155,7 +154,7 @@ export function Studio() {
   return (
     <div className="grid grid-cols-1 gap-10 wide:grid-cols-[minmax(0,1fr)_400px] wide:gap-12">
       <div className="min-w-0">
-        <Section n={1} label="basket" title="Pick the stocks." sub="Fees buy them in this mix." intro="Trading fees buy these, in this mix. Up to six per pack, from every bStock live on BNB Chain. Greyed-out ones have no Atlas price yet, so the vault can't buy them.">
+        <Section n={1} label="basket" title="Pick the stocks." sub="Fees buy them in this mix.">
           <div className="mb-5 flex flex-wrap gap-1.5">
             {BASKET_PRESETS.map((p) => (
               <button key={p.id} className={chip} aria-pressed={JSON.stringify(p.basket) === JSON.stringify(c.basket)} onClick={() => updatePack({ basket: p.basket })}>{p.name}</button>
@@ -238,7 +237,7 @@ export function Studio() {
           )}
         </Section>
 
-        <Section n={2} label="look" title="Design the pack." sub="The sleeve holders open." intro="Name it after the memecoin. Holders see this sleeve before they open it.">
+        <Section n={2} label="look" title="Design the pack." sub="The sleeve holders open.">
           <div className="grid grid-cols-1 gap-4 phone:grid-cols-[minmax(0,1fr)_160px]">
             <Field label="Pack name"><input className={field} value={c.name} maxLength={28} onChange={(e) => updatePack({ name: e.target.value })} /></Field>
             <Field label="Memecoin ticker"><input className={cn(field, "uppercase")} value={c.ticker} maxLength={10} onChange={(e) => updatePack({ ticker: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") })} /></Field>
@@ -274,7 +273,7 @@ export function Studio() {
           </div>
         </Section>
 
-        <Section n={3} label="cards" title="Design the cards." sub="One for each rarity." intro="Each rarity gets its own card: name, color and art. Every card also has a serial number that shifts its art, so no two cards look exactly alike.">
+        <Section n={3} label="cards" title="Design the cards." sub="One for each rarity.">
           <div className="grid grid-cols-2 gap-3 phone:grid-cols-4">
             {RARITIES.map((r, i) => (
               <button key={r} onClick={() => setRarity(i)} aria-pressed={rarity === i} aria-label={`Edit ${r} card`}
@@ -325,7 +324,7 @@ export function Studio() {
           </div>
         </Section>
 
-        <Section n={4} label="rarity" title="Set the rarity tiers." sub="Balanced to the pack value." intro="Every pack draws a rarity. Rarer packs hold more stock, commons hold less, and on average a pack is worth exactly its value, so the vault never over- or under-spends.">
+        <Section n={4} label="rarity" title="Set the rarity tiers." sub="Balanced to the pack value.">
           <div className="mb-5 flex flex-wrap items-center gap-1.5">
             {TIER_PRESETS.map((p) => (
               <button key={p.id} className={chip} aria-pressed={JSON.stringify(p.tiers) === JSON.stringify(c.tiers)} onClick={() => updatePack({ tiers: p.tiers })}>
@@ -360,7 +359,7 @@ export function Studio() {
           </div>
         </Section>
 
-        <Section n={5} label="fees & drops" title="Fund the packs." sub="Trading tax fills the vault." intro="The memecoin's trading tax fills the vault. When a drop triggers, the vault buys the basket, seals packs and sends them to holders by balance.">
+        <Section n={5} label="fees & drops" title="Fund the packs." sub="Trading tax fills the vault.">
           <p className={subLabel}>Launch on</p>
           <div className="mb-6 grid grid-cols-1 gap-1.5 phone:grid-cols-2">
             {([["flap", "Flap · Pool Launch"], ["four", "Four.meme · OpenFour"]] as const).map(([id, label]) => (
@@ -406,7 +405,7 @@ export function Studio() {
           </div>
         </Section>
 
-        <Section n={6} label="sale" title="Sell packs too." sub="Every sold pack is fully backed." intro="Besides the free drops to holders, anyone can buy a pack. The payment buys the same basket, so every sold pack is fully backed; the premium is the margin.">
+        <Section n={6} label="sale" title="Sell packs too." sub="Every sold pack is fully backed.">
           <label className="mb-6 flex min-h-12 cursor-pointer items-center gap-3 rounded-md border border-border px-4 text-base transition-colors hover:border-border-strong has-[:checked]:border-black">
             <input type="checkbox" className="size-5 accent-[var(--ink)]" checked={c.sale.enabled} onChange={(e) => setSale({ enabled: e.target.checked })} />
             Open pack sales
@@ -433,9 +432,6 @@ export function Studio() {
                 <button className={option} aria-pressed={c.sale.premiumTo === "creator"} onClick={() => setSale({ premiumTo: "creator" })}>Creator</button>
                 <button className={option} aria-pressed={c.sale.premiumTo === "burn"} onClick={() => setSale({ premiumTo: "burn" })}>Buy back &amp; burn ${c.ticker || "TOKEN"}</button>
               </div>
-              <p className="mt-4 max-w-[560px] text-[13px] leading-relaxed text-muted">
-                Token payments are sold into the pool for BNB to buy the basket, so token buyers also add trading volume (and tax). Rarity works like drops: the vault covers the swing between a common and a legendary, which averages out because the tiers are balanced.
-              </p>
             </>
           )}
         </Section>
