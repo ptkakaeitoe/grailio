@@ -37,9 +37,9 @@ export const OPENFOUR = {
  */
 export const FLAP = {
   portal: "0x000042108465206185A077Edc3F3fd2b49060000" as Address,
-  launcherFactory: "0xBD8fd9B24054A4332B54e43f77c14304C0cA6B61" as Address,
-  vaultFactory: "0x975CB1bAEAA498B276EdC455681dEFe605Ca2EF7" as Address,
-  market: "0x014497A15e5e16eBf12E6c6aA763fa0cCFa87B37" as Address,
+  launcherFactory: "0xeCEce195efEbFCb22064b4B621f2E7c68F5ecd72" as Address,
+  vaultFactory: "0x3362D7C576223FD9B96276BcdDD072f6e399E85f" as Address,
+  market: "0x99AC96c9a468DfAb571e0C562d455CA3678391c0" as Address,
   /** Flap's free-mint testnet USD (faucet: abc.flap.sh/faucet), usable as a coin's quote. */
   usd: "0x190C989D5665a0e404B444b53CAE9AbCfb600157" as Address,
 };
