@@ -151,7 +151,7 @@ export function LaunchFlow() {
   }
 
   return (
-    <div className="mx-auto max-w-[560px] pt-4 desk:grid desk:max-w-[1000px] desk:grid-cols-[minmax(0,1fr)_320px] desk:items-start desk:gap-12 desk:pt-8">
+    <div className="mx-auto max-w-[560px] pt-4 desk:pt-8">
       <div className="flex min-w-0 flex-col gap-6">
         <header className="flex items-center justify-between gap-3">
           <h1 className="text-[22px] leading-tight">{classic ? "Create collection" : "Create coin"}</h1>
@@ -185,9 +185,6 @@ export function LaunchFlow() {
           ))}
         </ol>
 
-        {/* Phones: the coin as it will look on the marketplace, compact, above the later steps. */}
-        {/* On Design with the default art, the full preview shows the packs it will sell. */}
-        {step > 0 && <div className="desk:hidden"><CoinPreview c={c} name={name} compact={!(step === 2 && c.design !== "custom")} /></div>}
 
         {step === 0 && <>
           <div className="grid grid-cols-[104px_minmax(0,1fr)] items-start gap-4 desk:grid-cols-[128px_minmax(0,1fr)]">
@@ -264,10 +261,6 @@ export function LaunchFlow() {
             </div>
           </div>
 
-          <div className="desk:hidden">
-            <span className={label}>Preview</span>
-            <CoinPreview c={c} name={name} compact />
-          </div>
         </>}
 
         {step === 1 && <>
@@ -353,6 +346,12 @@ export function LaunchFlow() {
               </p>
             )}
           </div>}
+
+          {/* The one preview, at the end: the coin or collection as it will list. */}
+          <div>
+            <span className={label}>Preview</span>
+            <CoinPreview c={c} name={name} />
+          </div>
         </>}
 
         {/* Phones: the actions stick to the bottom of the screen, just above the tab bar. */}
@@ -370,11 +369,6 @@ export function LaunchFlow() {
         </div>
       </div>
 
-      {/* Desktop: the live preview in a right-hand column. */}
-      <aside className="sticky top-[calc(var(--header-h)+32px)] flex flex-col gap-2 max-desk:hidden" aria-label="Preview">
-        <span className="text-sm text-muted">Preview</span>
-        <CoinPreview c={c} name={name} />
-      </aside>
     </div>
   );
 }
