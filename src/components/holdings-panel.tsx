@@ -17,13 +17,13 @@ export function HoldingsPanel() {
       </div>
       <p className="mt-4 text-[40px] leading-[1.2] tracking-tight tabular-nums">{loaded ? usd(walletValue) : "—"}</p>
       {loaded ? (
-        <ul className="mt-6 border-t border-border" aria-label="Holdings">
+        <ul className="mt-4 flex flex-col" aria-label="Holdings">
           {holdings.map((h) => (
-            <li key={h.key} className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-3 border-b border-border py-3 text-base">
+            <li key={h.key} className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-3 py-2.5 text-base">
               {h.ticker ? <StockLogo ticker={h.ticker} size={28} className="row-span-2" /> : (
                 <span className="row-span-2 grid size-7 place-items-center rounded-full bg-[#f0b90b] text-[11px] font-semibold text-[#111]" aria-hidden="true">BNB</span>
               )}
-              <span className="truncate">{h.label} <span className="text-sm text-muted">{h.name}</span></span>
+              <span className="truncate">{h.ticker || h.label}</span>
               <span className="text-right tabular-nums">{h.price === null ? "—" : usd(h.amount * h.price)}</span>
               <span className="text-sm text-muted tabular-nums">{amount(h.amount)}</span>
             </li>
