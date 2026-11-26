@@ -167,30 +167,30 @@ function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClos
 
   return (
     <Dialog title={`${size.name} · ${risk.name} risk · simulated`} onClose={onClose} className="w-[min(440px,calc(100%-32px))]">
-      <div className="relative isolate grid min-h-[300px] place-items-center overflow-hidden bg-surface-muted py-6 phone:min-h-[340px] phone:py-8" aria-hidden="true">
+      <div className="relative isolate grid min-h-[220px] place-items-center overflow-hidden bg-surface-muted py-4 phone:min-h-[260px] phone:py-5" aria-hidden="true">
         {phase === "revealed" && pull ? (
-          <div className="w-[180px] animate-[card-unveil_.65s_ease-out_both]">
+          <div className="w-[140px] animate-[card-unveil_.65s_ease-out_both] phone:w-[160px]">
             <div {...tilt} className="holo-card relative overflow-hidden rounded-[4px] shadow-[0_12px_24px_-12px_rgba(0,0,0,.4)]">
-              <StockCardFront art={cardArt(pull.ticker, pull.rarity, SET_FOR_SIZE[size.id] ?? "fable")} rarity={pull.rarity} brand={coin} decorative sizes="180px" className="w-full" />
+              <StockCardFront art={cardArt(pull.ticker, pull.rarity, SET_FOR_SIZE[size.id] ?? "fable")} rarity={pull.rarity} brand={coin} decorative sizes="160px" className="w-full" />
               <Holo rarity={pull.rarity} />
               <span className="holo-glare" aria-hidden="true" />
             </div>
           </div>
         ) : (
-          <div className={cn("w-[190px]", phase === "opening" && "animate-[pack-shake_.18s_ease-in-out_5_alternate,pack-fade_.3s_.9s_forwards]")}>
+          <div className={cn("w-[190px] [zoom:0.62] phone:[zoom:0.72]", phase === "opening" && "animate-[pack-shake_.18s_ease-in-out_5_alternate,pack-fade_.3s_.9s_forwards]")}>
             <SealedPack size={size} coin={coin} color={color} />
           </div>
         )}
-        <span className="absolute -z-10 size-[280px] rounded-full" style={{ background: `radial-gradient(circle, ${halo}, transparent 70%)` }} />
+        <span className="absolute -z-10 size-[220px] rounded-full" style={{ background: `radial-gradient(circle, ${halo}, transparent 70%)` }} />
       </div>
-      <div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] phone:p-6">
+      <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] phone:p-5">
         <div role="status" aria-live="polite">
-          <h2 className="text-[28px] leading-[1.2] font-normal tracking-tight">
+          <h2 className="text-[22px] leading-[1.2] font-normal tracking-tight">
             {phase === "ready" ? `${left} ${left === 1 ? "pack" : "packs"} ready` : phase === "opening" ? "Opening…" : <span className="capitalize">{RARITIES[pull!.rarity]}</span>}
           </h2>
           {phase === "revealed" && pull && <p className="num mt-1 text-sm text-muted">Holds {usd(pull.value)} of {pull.ticker ? `${pull.ticker}B` : "bStocks"} · {risk.tiers[pull.rarity].mult}× the price</p>}
         </div>
-        <div className="mt-6 flex flex-col gap-2.5">
+        <div className="mt-4 flex flex-col gap-2">
           {phase !== "opening" && (
             <button type="button" className={cn(solid, "w-full justify-between")} disabled={left < 1} onClick={open}>
               {phase === "ready" ? "Open pack" : left > 0 ? `Open another · ${left} left` : "No packs left"} <ArrowUpRight className="size-4" />
@@ -345,7 +345,7 @@ export function PackShop({ market, initialSize }: { market?: MarketCoin; initial
       <div className="min-w-0 pb-8 desk:pt-[60px]" aria-live="polite">
         <div className="mb-5 desk:mb-6">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-[28px] leading-[1.2] font-normal tracking-tight">{size.name}</h2>
+            <h2 className="text-[22px] leading-[1.2] font-normal tracking-tight">{size.name}</h2>
             <span className="num shrink-0 text-sm text-muted">[ {String(index + 1).padStart(2, "0")} / {String(sizes.length).padStart(2, "0")} · {usd(size.price, 0)} ]</span>
           </div>
           <div className="mt-1 flex items-center justify-between gap-3">
