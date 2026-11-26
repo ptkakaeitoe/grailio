@@ -6,6 +6,9 @@ import { cn } from "@/components/clean-ui";
 import { customPack } from "@/lib/design";
 import { DEFAULT_SIZES, type PackConfig } from "@/lib/pack";
 import { PRESALE_PACKS } from "@/lib/demo-launch";
+import { SealedPack } from "@/components/pack-shop";
+import { ClassicPack } from "@/components/classic-pack-shop";
+import type { MarketCoin } from "@/lib/market";
 
 /*
  * Live preview of the coin being launched, in the marketplace's look: picture (or colour and initial), name,
@@ -31,6 +34,36 @@ export function CoinAvatar({ c, name, className }: { c: PackConfig; name: string
 function Meta({ classic }: { classic: boolean }) {
   if (classic) return <>Classic · <span className="num">{DEFAULT_SIZES.length}</span> packs</>;
   return <>Presale · <span className="num">{PRESALE_PACKS}</span> packs</>;
+}
+
+/** SealedPack is laid out at 228×384; the preview shows three, scaled down and fanned like the marketplace card. */
+const PACK_W = 228;
+const PACK_H = 384;
+const SCALE = 0.46;
+const FAN = [{ r: -9, x: -66 }, { r: 0, x: 0 }, { r: 9, x: 66 }];
+
+function PackFan({ c, name }: { c: PackConfig; name: string }) {
+  const custom = customPack(c);
+  const classic = c.kind === "classic";
+  const sizes = (c.sizes?.length ? c.sizes : DEFAULT_SIZES).slice(0, 3);
+  // ClassicPack only reads the collection's name and config.
+  const asCoin = { name: name || "Collection", config: c } as unknown as MarketCoin;
+  return (
+    <div className="relative isolate h-[230px] overflow-hidden bg-[radial-gradient(120%_90%_at_50%_100%,var(--hair),transparent)]" aria-hidden="true">
+      {sizes.map((s, i) => {
+        const f = sizes.length === 1 ? FAN[1] : FAN[i];
+        return (
+          <div key={s.id} className="absolute top-1/2 left-1/2" style={{ width: PACK_W * SCALE, height: PACK_H * SCALE, marginLeft: (-PACK_W * SCALE) / 2 + f.x, marginTop: (-PACK_H * SCALE) / 2 + 8, rotate: `${f.r}deg`, zIndex: f.r === 0 ? 2 : 1 }}>
+            <div className="overflow-hidden rounded-[4px] shadow-[0_14px_24px_-14px_#000c]" style={{ width: PACK_W, height: PACK_H, transform: `scale(${SCALE})`, transformOrigin: "top left" }}>
+              {classic
+                ? <ClassicPack size={s} coin={custom ? asCoin : undefined} className="h-full justify-between shadow-none" />
+                : <SealedPack size={s} coin={name || "Coin"} color={custom?.color} style={custom?.style} className="h-full justify-between shadow-none" />}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 const badge = "inline-flex h-6 shrink-0 items-center rounded-full border border-border px-2 text-xs text-muted";
@@ -67,9 +100,10 @@ export function CoinPreview({ c, name, compact = false }: { c: PackConfig; name:
 
   return (
     <article className="overflow-hidden rounded-md border border-border bg-surface-muted" aria-label={what}>
-      <CoinAvatar c={c} name={name} className="aspect-square w-full text-[72px]" />
-      <div className="flex flex-col gap-3 p-4">
-        <div className="flex items-start gap-3">
+      <PackFan c={c} name={name} />
+      <div className="flex flex-col gap-3 border-t border-border p-4">
+        <div className="flex items-center gap-3">
+          <CoinAvatar c={c} name={name} className="size-11 rounded-full text-lg" />
           <div className="min-w-0 flex-1">
             <p className={cn("truncate text-xl leading-tight tracking-tight", !name && "text-muted")}>{shownName}</p>
             {!classic && <p className={cn("num mt-0.5 truncate text-sm", c.ticker ? "text-muted" : "text-muted/60")}>{ticker}</p>}
