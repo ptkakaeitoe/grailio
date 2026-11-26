@@ -2,31 +2,28 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, Lock, Minus, Plus, TrendingUp, X } from "lucide-react";
+import { ArrowUpRight, Lock, Minus, Plus, TrendingUp, X } from "lucide-react";
 import { Holo, StockCardFront, tilt } from "@/components/stock-card-front";
+import { coverStyle, designedCard } from "@/components/launch-design";
+import { StakePanel } from "@/components/stake-panel";
 import { SET_FOR_SIZE, cardArt } from "@/lib/cards";
 import { addCard } from "@/lib/collection";
-import { stockOf } from "@/lib/stocks";
+import { startDemo, useDemo } from "@/lib/demo";
 import {
-  DEFAULT_RISKS, DEFAULT_SIZES, DEFAULT_UNLOCKS, DEMO_TOKENS_PER_BNB, RARITIES, RARITY_DOT,
-  canSell, tierReturn, unlockAt, usePack, type PackSize, type RiskId, type RiskTier,
-} from "@/lib/pack";
+  BUYERS_SUPPLY, SEED_SHARE, TABLES, TAX_SPLIT, TIERS, buyPresale, buyTier, canBuyTier, openBought, openPresale, otherBuysPresale,
+  packSizeOf, poolNeeded, presalePacksOf, simulateTax, topMult, useLaunchSim, type LaunchSim, type Opened, type Tier,
+} from "@/lib/demo-launch";
+import { stockOf } from "@/lib/stocks";
+import { RARITIES, type PackSize } from "@/lib/pack";
 import { amount, usd } from "@/lib/format";
 import { cleanButton, cleanDialog, cn, dialogClose, dialogHeader } from "@/components/clean-ui";
 import type { MarketCoin, PackColor } from "@/lib/market";
-import type { RiskDecision } from "@/lib/risk";
-import { RiskPanel } from "@/components/risk-panel";
 
 /*
- * The app's pack shop, laid out like the stonks app's pack panel: a carousel of sealed packs on the left
- * (one per size), and on the right the risk picker, odds, checkout and the opening reveal.
- * Purchases are simulated until the contracts are on testnet. Mobile first: on phones it reads top to bottom (pack,
- * risk picker, risk check, checkout) and the price and Buy button stick above the tab bar.
- * Used for one coin's page in the pack marketplace (/app/packs/[coin]); without a coin it shows the local pack draft.
+ * One coin's pack page in demo mode (/app/packs/[coin]), simulating the pack launch model end to end (lib/demo-launch):
+ * presale progress and presale packs, then the launched coin's Low / Medium / High packs, the stock pool, the
+ * trading-tax split and card staking. Paid from the demo wallet. Mobile first: the buy bar sticks above the tab bar.
  */
-
-/** Demo stock pool for the local draft (no coin given). Medium is unlocked (pool passed $1,000); High unlocks at $5,000. */
-const DEMO_POOL_USD = 1240;
 
 /** Flat pack colors per size (the stonks pack palette). */
 const PALETTE: Record<string, { bg: string; ink: string; halo: string }> = {
@@ -36,15 +33,16 @@ const PALETTE: Record<string, { bg: string; ink: string; halo: string }> = {
 };
 export const SUBTITLE: Record<string, string> = { starter: "Your first pull", standard: "The everyday pack", grail: "For the chase" };
 
+/** Used only if the BNB price feed can't be reached, so the demo still works. */
+const FALLBACK_BNB_USD = 600;
 const solid = cn(cleanButton.solid, "px-5 disabled:hover:bg-black disabled:hover:text-white");
 const outline = cn(cleanButton.outline, "px-5");
 const stepperButton = "grid size-11 place-items-center disabled:cursor-default disabled:opacity-30";
-/** Carousel arrows, level with the centred pack (340px tall on phones, 380px from 481px, 520px from 801px). */
-/** The Cournot risk check panel is hidden for now; flip this to bring it back. */
-const SHOW_RISK_CHECK = false;
-const stepButton = "absolute top-[168px] z-[3] grid size-11 place-items-center rounded-full border border-border-strong bg-white text-black transition-colors hover:border-black phone:top-[188px] desk:top-[238px]";
 const seal = "h-[15px] bg-[repeating-linear-gradient(90deg,transparent_0_3px,currentColor_3px_4px)] opacity-20";
-const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
+const statLabel = "text-[13px] text-muted";
+const statValue = "num mt-0.5 block truncate text-base";
+const pctOf = (v: number) => `${Math.round(v * 100)}%`;
+const sticky = "mt-6 flex items-center justify-between gap-3 border-t border-border pt-5 max-desk:sticky max-desk:bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] max-desk:z-20 max-desk:-mx-[var(--gutter)] max-desk:bg-white max-desk:px-[var(--gutter)] max-desk:py-3";
 
 export function SealedPack({ size, coin, color, className, style }: { size: PackSize; coin: string; color?: PackColor; className?: string; style?: CSSProperties }) {
   const p = color ?? PALETTE[size.id] ?? PALETTE.standard;
@@ -101,32 +99,31 @@ function Dialog({ title, onClose, className, children }: { title: string; onClos
   );
 }
 
-function OddsDialog({ size, risk, onClose }: { size: PackSize; risk: RiskTier; onClose: () => void }) {
-  const total = risk.tiers.reduce((s, t) => s + t.odds, 0);
+/** Ten equally likely outcomes per tier, grouped. Presale packs: their share of the presale reserve × the Medium spread / 0.9. */
+function OddsDialog({ price, onClose }: { price: number; onClose: () => void }) {
+  const rows = (t: number[]) => [...new Set(t)].map((m) => ({ m, odds: t.filter((x) => x === m).length / t.length }));
   return (
-    <Dialog title={`Odds · ${size.name} · ${risk.name} risk`} onClose={onClose} className="w-[min(520px,calc(100%-24px))]">
-      <div className="p-5 phone:p-6">
-        <table className="w-full text-sm">
-          <thead className="text-left text-muted">
-            <tr><th className="border-b border-border py-3 font-normal">Rarity</th><th className="border-b border-border py-3 font-normal">Odds</th><th className="border-b border-border py-3 text-right font-normal">Card holds</th></tr>
-          </thead>
-          <tbody className="num">
-            {risk.tiers.map((t, i) => (
-              <tr key={RARITIES[i]}>
-                <td className="border-b border-border py-3 capitalize"><span className="mr-2 inline-block size-1.5 rounded-full align-middle" style={{ background: RARITY_DOT[RARITIES[i]] }} />{RARITIES[i]}</td>
-                <td className="border-b border-border py-3">{pct(t.odds / total)}</td>
-                <td className="border-b border-border py-3 text-right">{usd(size.price * t.mult)} <span className="text-muted">({t.mult}×)</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="mt-4 text-sm leading-relaxed text-muted">Pays back {pct(tierReturn(risk))} on average, in bStocks. Burn the card to redeem them.</p>
+    <Dialog title="Odds · simulated" onClose={onClose} className="w-[min(520px,calc(100%-24px))]">
+      <div className="flex flex-col gap-5 p-5 phone:p-6">
+        {TIERS.map((t) => (
+          <section key={t.id}>
+            <h3 className="mb-1 flex justify-between text-base font-normal"><span>{t.name}</span><span className="num text-sm text-muted">avg {pctOf(TABLES[t.id].reduce((a, b) => a + b, 0) / 10)}</span></h3>
+            <table className="num w-full text-sm">
+              <tbody>
+                {rows(TABLES[t.id]).map((r) => (
+                  <tr key={r.m}><td className="border-b border-border py-2">{pctOf(r.m)}</td><td className="border-b border-border py-2 text-muted">{pctOf(r.odds)}</td><td className="border-b border-border py-2 text-right">{usd(price * r.m)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ))}
+        <p className="text-sm text-muted">Presale packs: share of the presale prizes × {TABLES[1].map((m) => Math.round((m / 0.9) * 100) / 100).filter((v, i, a) => a.indexOf(v) === i).join(" · ")}</p>
       </div>
     </Dialog>
   );
 }
 
-type Pull = { rarity: number; value: number; ticker: string };
+type Pull = { rarity: number; value: number; ticker: string; note: string };
 
 /** Picks a basket stock by weight. */
 function drawStock(basket: { ticker: string; weight: number }[]) {
@@ -134,16 +131,15 @@ function drawStock(basket: { ticker: string; weight: number }[]) {
   return (basket.find((b) => (roll -= b.weight) < 0) ?? basket[0])?.ticker ?? "";
 }
 
-function drawRarity(r: RiskTier) {
-  let roll = Math.random() * r.tiers.reduce((s, t) => s + t.odds, 0);
-  const i = r.tiers.findIndex((t) => (roll -= t.odds) < 0);
-  return i === -1 ? 0 : i;
-}
+/** Card rarity from the roll (a multiple of the price, or of the presale share). */
+const rarityOf = (mult: number) => (mult >= 2 ? 3 : mult >= 1.2 ? 2 : mult >= 1 ? 1 : 0);
 
-function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClose }: { size: PackSize; risk: RiskTier; count: number; coin: string; coinSlug: string; color?: PackColor; basket: { ticker: string; weight: number }[]; onClose: () => void }) {
+function RevealDialog({ title, count, size, market, onOpen, onClose }: { title: string; count: number; size: PackSize; market: MarketCoin; onOpen: () => Pull | null; onClose: () => void }) {
   const [left, setLeft] = useState(count);
   const [phase, setPhase] = useState<"ready" | "opening" | "revealed">("ready");
   const [pull, setPull] = useState<Pull | null>(null);
+  const color = market.packs.find((p) => p.size === size.id)?.color;
+  const custom = market.config.design === "custom";
   const halo = color ? `${color.bg}55` : (PALETTE[size.id] ?? PALETTE.standard).halo;
 
   useEffect(() => {
@@ -154,31 +150,28 @@ function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClos
 
   function open() {
     if (left < 1) return;
-    const rarity = drawRarity(risk);
-    const value = size.price * risk.tiers[rarity].mult;
-    const ticker = drawStock(basket);
-    setPull({ rarity, value, ticker });
-    // Simulated until the vault is on testnet: the card goes into this browser's collection.
-    const price = stockOf(ticker)?.price;
-    addCard({ coin: coinSlug, coinName: coin, size: size.id, set: SET_FOR_SIZE[size.id] ?? "fable", ticker, rarity, usd: value, shares: price ? value / price : 0 });
+    const next = onOpen();
+    if (!next) { setLeft(0); return; }
+    setPull(next);
     setLeft((n) => n - 1);
     setPhase("opening");
   }
 
+  const art = pull && (custom ? designedCard(market.config.cards[pull.rarity], pull.rarity, pull.ticker, size.id) : cardArt(pull.ticker, pull.rarity, SET_FOR_SIZE[size.id] ?? "fable"));
   return (
-    <Dialog title={`${size.name} · ${risk.name} risk · simulated`} onClose={onClose} className="w-[min(440px,calc(100%-32px))]">
+    <Dialog title={`${title} · simulated`} onClose={onClose} className="w-[min(440px,calc(100%-32px))]">
       <div className="relative isolate grid min-h-[220px] place-items-center overflow-hidden bg-surface-muted py-4 phone:min-h-[260px] phone:py-5" aria-hidden="true">
-        {phase === "revealed" && pull ? (
+        {phase === "revealed" && pull && art ? (
           <div className="w-[140px] animate-[card-unveil_.65s_ease-out_both] phone:w-[160px]">
             <div {...tilt} className="holo-card relative overflow-hidden rounded-[4px] shadow-[0_12px_24px_-12px_rgba(0,0,0,.4)]">
-              <StockCardFront art={cardArt(pull.ticker, pull.rarity, SET_FOR_SIZE[size.id] ?? "fable")} rarity={pull.rarity} brand={coin} decorative sizes="160px" className="w-full" />
+              <StockCardFront art={art} rarity={pull.rarity} brand={market.name} decorative sizes="160px" className="w-full" />
               <Holo rarity={pull.rarity} />
               <span className="holo-glare" aria-hidden="true" />
             </div>
           </div>
         ) : (
           <div className={cn("w-[190px] [zoom:0.62] phone:[zoom:0.72]", phase === "opening" && "animate-[pack-shake_.18s_ease-in-out_5_alternate,pack-fade_.3s_.9s_forwards]")}>
-            <SealedPack size={size} coin={coin} color={color} />
+            <SealedPack size={size} coin={market.name} color={color} style={custom ? coverStyle(market.config.tone, market.config.pattern, market.config.cover) : undefined} />
           </div>
         )}
         <span className="absolute -z-10 size-[220px] rounded-full" style={{ background: `radial-gradient(circle, ${halo}, transparent 70%)` }} />
@@ -188,7 +181,7 @@ function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClos
           <h2 className="text-[22px] leading-[1.2] font-normal tracking-tight">
             {phase === "ready" ? `${left} ${left === 1 ? "pack" : "packs"} ready` : phase === "opening" ? "Opening…" : <span className="capitalize">{RARITIES[pull!.rarity]}</span>}
           </h2>
-          {phase === "revealed" && pull && <p className="num mt-1 text-sm text-muted">Holds {usd(pull.value)} of {pull.ticker || "stocks"} · {risk.tiers[pull.rarity].mult}× the price</p>}
+          {phase === "revealed" && pull && <p className="num mt-1 text-sm text-muted">Holds {usd(pull.value)} of {pull.ticker || "stocks"} · {pull.note}</p>}
         </div>
         <div className="mt-4 flex flex-col gap-2">
           {phase !== "opening" && (
@@ -203,80 +196,204 @@ function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClos
   );
 }
 
-export function PackShop({ market, initialSize }: { market?: MarketCoin; initialSize?: string } = {}) {
-  const draft = usePack();
-  // A marketplace pack uses its own design from the Launch flow; without one, the local draft.
-  const c = market?.config ?? draft;
-  const allSizes = c.sizes?.length ? c.sizes : DEFAULT_SIZES;
-  // A marketplace coin sells only the sizes it launched with, in its own colors.
-  const sizes = market ? allSizes.filter((s) => market.packs.some((p) => p.size === s.id)) : allSizes;
-  const colorOf = (id: string) => market?.packs.find((p) => p.size === id)?.color;
-  const poolUsd = market?.poolUsd ?? DEMO_POOL_USD;
-  const risks = c.risks?.length ? c.risks : DEFAULT_RISKS;
-  const unlocks = c.unlocks ?? DEFAULT_UNLOCKS;
-  const coin = market?.name ?? (c.name || "Your meme");
+function Stepper({ value, max, onChange }: { value: number; max: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex h-11 shrink-0 items-center rounded-md border border-border">
+      <button type="button" className={stepperButton} aria-label="Fewer packs" disabled={value <= 1} onClick={() => onChange(Math.max(1, value - 1))}><Minus className="size-4" /></button>
+      <span className="num w-[30px] text-center text-base" aria-label="Pack quantity">{value}</span>
+      <button type="button" className={stepperButton} aria-label="More packs" disabled={value >= max} onClick={() => onChange(Math.min(max, value + 1))}><Plus className="size-4" /></button>
+    </div>
+  );
+}
 
-  const startAt = sizes.findIndex((s) => s.id === initialSize);
-  const [index, setIndex] = useState(startAt >= 0 ? startAt : Math.min(1, sizes.length - 1));
-  const [prevIndex, setPrevIndex] = useState(index);
-  // Hold and drag a pack sideways to change it (graily's carousel); a tap opens the odds.
-  const [drag, setDrag] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const dragFrom = useRef<number | null>(null);
-  const [riskId, setRiskId] = useState<RiskId>("low");
-  const [currency, setCurrency] = useState<"bnb" | "coin">("bnb");
+function Stat({ label, value }: { label: string; value: string }) {
+  return <div className="min-w-0"><dt className={statLabel}>{label}</dt><dd className={statValue}>{value}</dd></div>;
+}
+
+/** Price in BNB and USD, the quantity stepper and the action; sticks above the tab bar on phones. */
+function BuyBar({ totalUsd, bnbUsd, quantity, max, setQuantity, label, disabled, onBuy }: {
+  totalUsd: number; bnbUsd: number | null; quantity: number; max: number; setQuantity: (n: number) => void; label: string; disabled: boolean; onBuy: () => void;
+}) {
+  const demo = useDemo();
+  return (
+    <div className={sticky}>
+      <div className="min-w-0">
+        <strong className="num block truncate text-[20px] leading-none font-normal tracking-[-0.02em] phone:text-[26px]">{bnbUsd ? amount(totalUsd / bnbUsd, 4) : "…"}</strong>
+        <p className="num mt-1.5 truncate text-[13px] text-muted">BNB · ≈ {usd(totalUsd, 0)}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {demo.active && <Stepper value={quantity} max={Math.max(1, max)} onChange={setQuantity} />}
+        {demo.active ? (
+          <button type="button" className={cn(solid, "shrink-0 gap-2 px-4")} disabled={disabled} onClick={onBuy}>{label}</button>
+        ) : (
+          <button type="button" className={cn(solid, "shrink-0 gap-2 px-4")} onClick={startDemo}>Try the demo <ArrowUpRight className="size-4" /></button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PresalePanel({ market, sim, bnbUsd }: { market: MarketCoin; sim: LaunchSim; bnbUsd: number | null }) {
+  const demo = useDemo();
   const [quantity, setQuantity] = useState(1);
+  const [filling, setFilling] = useState(false);
+  const left = sim.packsForSale - sim.packsSold;
+  const raise = sim.price * sim.packsForSale;
+  const q = Math.min(quantity, Math.max(1, left));
+  const short = demo.active && bnbUsd !== null && (q * sim.price) / bnbUsd > demo.bnb + 1e-12;
+
+  // Simulated other buyers take a pack every 400ms until it sells out.
+  useEffect(() => {
+    if (!filling) return;
+    const t = setInterval(() => { if (!otherBuysPresale(market)) setFilling(false); }, 400);
+    return () => clearInterval(t);
+  }, [filling, market]);
+
+  return (
+    <>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-[22px] leading-[1.2] font-normal tracking-tight">Presale</h2>
+        <span className="num text-sm text-muted">[ {sim.packsSold} / {sim.packsForSale} sold ]</span>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-muted" role="progressbar" aria-label="Presale packs sold" aria-valuemin={0} aria-valuemax={sim.packsForSale} aria-valuenow={sim.packsSold}>
+        <div className="h-full rounded-full bg-black transition-[width] duration-300" style={{ width: `${(sim.packsSold / sim.packsForSale) * 100}%` }} />
+      </div>
+      <p className="num mt-2 text-sm text-muted">Raised {usd(sim.packsSold * sim.price, 0)} of {usd(raise, 0)} · simulated</p>
+
+      <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
+        <Stat label="Your packs" value={String(sim.mine)} />
+        <Stat label="Pack" value={usd(sim.price, 0)} />
+        <Stat label="Left" value={String(left)} />
+      </dl>
+      <p className="mt-5 text-[13px] text-muted">At launch</p>
+      <dl className="mt-2 grid grid-cols-3 gap-3 rounded-md border border-border p-3">
+        <Stat label="Liquidity" value={usd(raise * (1 - SEED_SHARE), 0)} />
+        <Stat label="Presale prizes" value={usd(raise * SEED_SHARE, 0)} />
+        <Stat label="Your coins" value={amount((sim.mine * BUYERS_SUPPLY) / sim.packsForSale, 0)} />
+      </dl>
+
+      <button type="button" className={cn(outline, "mt-5 w-full justify-between")} disabled={filling || left < 1} onClick={() => setFilling(true)}>
+        {filling ? "Other buyers joining…" : "Simulate other buyers"} <ArrowUpRight className="size-4" />
+      </button>
+
+      <BuyBar
+        totalUsd={q * sim.price} bnbUsd={bnbUsd} quantity={q} max={left} setQuantity={setQuantity}
+        label={short ? "Not enough BNB" : q === 1 ? "Buy pack" : `Buy ${q}`}
+        disabled={!bnbUsd || left < 1 || short || filling}
+        onBuy={() => { if (bnbUsd) buyPresale(market, q, bnbUsd); setQuantity(1); }}
+      />
+    </>
+  );
+}
+
+function LivePanel({ market, sim, bnbUsd, onOpen }: { market: MarketCoin; sim: LaunchSim; bnbUsd: number | null; onOpen: (kind: Tier | "presale", count: number) => void }) {
+  const demo = useDemo();
+  const [tier, setTier] = useState<Tier>(0);
+  const [quantity, setQuantity] = useState(1);
+  const presale = presalePacksOf(sim);
+  const ok = canBuyTier(sim, tier, quantity);
+  const short = demo.active && bnbUsd !== null && (quantity * sim.price) / bnbUsd > demo.bnb + 1e-12;
+  const taxTotal = sim.tax.pool + sim.tax.stakers + sim.tax.creator + sim.tax.platform;
+  const unopened = TIERS.filter((t) => sim.bought[t.id] > 0);
+
+  return (
+    <>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-[22px] leading-[1.2] font-normal tracking-tight">Live</h2>
+        <span className="num text-sm text-muted">[ presale sold out ]</span>
+      </div>
+      <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 border-t border-border pt-4 phone:grid-cols-4">
+        <Stat label="Stock pool" value={usd(sim.pool)} />
+        <Stat label="Liquidity" value={usd(sim.liquidity, 0)} />
+        <Stat label="Presale prizes" value={usd(sim.presaleReserve)} />
+        <Stat label="Your coins" value={amount(sim.tokens, 0)} />
+      </dl>
+
+      {(presale > 0 || unopened.length > 0) && (
+        <div className="mt-5 flex flex-col gap-1.5">
+          {presale > 0 && (
+            <button type="button" className={cn(solid, "w-full justify-between")} onClick={() => onOpen("presale", presale)}>
+              Open presale packs · {presale} <ArrowUpRight className="size-4" />
+            </button>
+          )}
+          {unopened.map((t) => (
+            <button key={t.id} type="button" className={cn(outline, "w-full justify-between")} onClick={() => onOpen(t.id, sim.bought[t.id])}>
+              Open {t.name} · {sim.bought[t.id]} <ArrowUpRight className="size-4" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-5 grid grid-cols-3 gap-1.5" role="group" aria-label="Pack risk">
+        {TIERS.map((t) => {
+          const open = canBuyTier(sim, t.id, 1);
+          const lo = Math.min(...TABLES[t.id]), hi = topMult(t.id);
+          return (
+            <button key={t.id} type="button" aria-pressed={tier === t.id} disabled={!open} onClick={() => { setTier(t.id); setQuantity(1); }}
+              className="flex min-h-16 min-w-0 flex-col gap-0.5 rounded-md border border-border px-3 py-2.5 text-left transition-colors hover:border-black aria-pressed:border-black disabled:cursor-not-allowed disabled:border-dashed disabled:hover:border-border">
+              <strong className="flex items-center gap-1.5 text-base font-normal">{!open && <Lock className="size-3.5 shrink-0 text-muted" />}{t.name}</strong>
+              <span className="num text-[12px] leading-snug text-muted phone:text-[13px]">{!open ? `Pool ${usd(poolNeeded(sim, t.id), 0)}` : lo === hi ? `Pays ${pctOf(lo)}` : `${pctOf(lo)}–${pctOf(hi)}`}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <BuyBar
+        totalUsd={quantity * sim.price} bnbUsd={bnbUsd} quantity={quantity} max={10} setQuantity={setQuantity}
+        label={!ok ? "Pool too small" : short ? "Not enough BNB" : quantity === 1 ? "Buy pack" : `Buy ${quantity}`}
+        disabled={!bnbUsd || !ok || short}
+        onBuy={() => { if (bnbUsd && buyTier(market, tier, quantity, bnbUsd)) { onOpen(tier, sim.bought[tier] + quantity); setQuantity(1); } }}
+      />
+
+      <section className="mt-8 border-t border-border pt-5" aria-labelledby="tax-title">
+        <div className="flex items-center justify-between gap-3">
+          <h3 id="tax-title" className="text-base font-normal">Trading tax <span className="text-muted">· simulated</span></h3>
+          <button type="button" className={cn(cleanButton.small, "min-h-11")} onClick={() => simulateTax(market, Math.round((3 + Math.random() * 5) * 100) / 100)}>Simulate trading</button>
+        </div>
+        <ul className="mt-3 flex flex-col">
+          {([["Stock pool", "pool"], ["Card stakers", "stakers"], ["Creator", "creator"], ["Platform", "platform"]] as const).map(([label, k]) => (
+            <li key={k} className="num flex items-center justify-between gap-3 border-b border-border py-2.5 text-sm">
+              <span><span className="inline-block w-10 text-muted">{pctOf(TAX_SPLIT[k])}</span>{label}</span>
+              <span>{usd(sim.tax[k])}</span>
+            </li>
+          ))}
+          <li className="num flex justify-between py-2.5 text-sm text-muted"><span>Total</span><span>{usd(taxTotal)}</span></li>
+        </ul>
+      </section>
+
+      <StakePanel market={market} sim={sim} bnbUsd={bnbUsd} />
+    </>
+  );
+}
+
+export function PackShop({ market }: { market: MarketCoin }) {
+  const sim = useLaunchSim(market);
+  const size = packSizeOf(market);
+  const color = market.packs.find((p) => p.size === size.id)?.color;
+  const custom = market.config.design === "custom";
   const [bnbUsd, setBnbUsd] = useState<number | null>(null);
   const [showOdds, setShowOdds] = useState(false);
-  const [bought, setBought] = useState<number | null>(null);
-  const [riskDecision, setRiskDecision] = useState<RiskDecision | null>(null);
-  const tiltPack = useRef<HTMLDivElement>(null);
+  const [opening, setOpening] = useState<{ kind: Tier | "presale"; count: number } | null>(null);
+  const tiltPack = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    fetch("/api/bnb").then((r) => r.json()).then((d) => typeof d.price === "number" && d.price > 0 && setBnbUsd(d.price)).catch(() => {});
+    fetch("/api/bnb").then((r) => r.json())
+      .then((d) => setBnbUsd(typeof d.price === "number" && d.price > 0 ? d.price : FALLBACK_BNB_USD))
+      .catch(() => setBnbUsd(FALLBACK_BNB_USD));
   }, []);
 
-  const size = sizes[index];
-  const risk = risks.find((r) => r.id === riskId) ?? risks[0];
-  const unlocked = (r: RiskTier) => poolUsd >= unlockAt(unlocks, r.id);
-  // The Cournot risk check can pause Medium and High; Low is self-funded and always sells.
-  const riskOpen = (r: RiskTier) => r.id === "low" || !riskDecision || (r.id === "high" ? riskDecision.highOpen : riskDecision.mediumOpen);
-  const sellable = unlocked(risk) && riskOpen(risk) && canSell(risk, size.price * quantity, poolUsd);
-  const totalUsd = size.price * quantity;
-  const totalBnb = bnbUsd ? totalUsd / bnbUsd : null;
-  const total = totalBnb === null ? null : currency === "bnb" ? totalBnb : totalBnb * DEMO_TOKENS_PER_BNB;
-  const nextUnlock = risks.filter((r) => !unlocked(r)).sort((a, b) => unlockAt(unlocks, a.id) - unlockAt(unlocks, b.id))[0];
-
-  const goTo = (next: number) => {
-    const target = ((next % sizes.length) + sizes.length) % sizes.length;
-    if (target === index) return;
-    setPrevIndex(index);
-    setIndex(target);
-  };
-
-  const SWIPE_PX = 60, CLICK_PX = 6, FREE_DRAG_PX = 160;
-  function onPointerDown(e: React.PointerEvent) {
-    if (!e.isPrimary || e.button !== 0) return;
-    untilt();
-    dragFrom.current = e.clientX;
-    setDragging(true);
-    e.currentTarget.setPointerCapture(e.pointerId);
+  function onOpen(): Pull | null {
+    if (!opening) return null;
+    const res: Opened | null = opening.kind === "presale" ? openPresale(market) : openBought(market, opening.kind);
+    if (!res) return null;
+    const rarity = rarityOf(res.roll);
+    const ticker = drawStock(market.basket);
+    const set = (custom ? market.config.cards[rarity]?.set : undefined) ?? SET_FOR_SIZE[size.id] ?? "fable";
+    const price = stockOf(ticker)?.price;
+    addCard({ coin: market.slug, coinName: market.name, size: size.id, set, ticker, rarity, usd: res.value, shares: price ? res.value / price : 0 });
+    const note = opening.kind === "presale" ? `${amount(res.roll, 2)}× its share` : `${pctOf(res.roll)} of the price`;
+    return { rarity, value: res.value, ticker, note };
   }
-  function onPointerMove(e: React.PointerEvent) {
-    if (dragFrom.current === null) return tiltTo(e);
-    const dx = e.clientX - dragFrom.current, d = Math.abs(dx);
-    // Past FREE_DRAG_PX the pack still follows, with resistance.
-    setDrag(Math.sign(dx) * (d <= FREE_DRAG_PX ? d : FREE_DRAG_PX + (d - FREE_DRAG_PX) * 0.3));
-  }
-  function onPointerUp() {
-    if (dragFrom.current === null) return;
-    if (Math.abs(drag) > SWIPE_PX && sizes.length > 1) goTo(index + (drag < 0 ? 1 : -1));
-    else if (Math.abs(drag) < CLICK_PX) setShowOdds(true);
-    dragFrom.current = null;
-    setDragging(false);
-    setDrag(0);
-  }
-  function onPointerCancel() { dragFrom.current = null; setDragging(false); setDrag(0); }
 
   function tiltTo(e: React.PointerEvent) {
     const el = tiltPack.current;
@@ -295,123 +412,37 @@ export function PackShop({ market, initialSize }: { market?: MarketCoin; initial
   }
 
   return (
-    <div className="grid grid-cols-1 items-start gap-4 desk:grid-cols-2 desk:gap-12">
-      <div className="relative flex min-w-0 touch-pan-y flex-col items-center overflow-hidden pb-2 select-none desk:pb-5">
-        <button type="button" className={cn(stepButton, "left-2", sizes.length < 2 && "hidden")} onClick={() => goTo(index - 1)} aria-label={`Show the ${sizes[(index - 1 + sizes.length) % sizes.length].name} pack`}><ArrowLeft className="size-5" /></button>
-        <div className="relative h-[380px] w-full overflow-hidden phone:h-[420px] desk:h-[520px]">
-          {sizes.map((s, i) => {
-            const n = sizes.length;
-            const offset = n === 1 ? 0 : ((i - index + 1 + n) % n) - 1;
-            const before = n === 1 ? 0 : ((i - prevIndex + 1 + n) % n) - 1;
-            const motion = dragging || Math.abs(offset - before) > 1 ? "none" : undefined;
-            const current = offset === 0;
-            return (
-              <div
-                key={s.id}
-                className={cn("pointer-events-none absolute inset-0 grid place-items-center transition-transform duration-[550ms] ease-[cubic-bezier(.22,.75,.25,1)]", current && "z-[1]")}
-                style={{ transform: `translateX(calc(${offset} * (50% + 200px) + ${drag}px))`, transition: motion }}
-                aria-hidden={!current}
-              >
-                <div
-                  ref={current ? tiltPack : undefined}
-                  role="img"
-                  aria-label={`${s.name} pack`}
-                  className={cn("pack-tilt relative w-[260px] max-w-[68%] touch-pan-y max-desk:scale-[0.8]", current && cn("pointer-events-auto", dragging ? "cursor-grabbing" : "cursor-grab"))}
-                  {...(current && { onPointerDown, onPointerMove, onPointerUp, onPointerLeave: untilt, onLostPointerCapture: onPointerUp, onPointerCancel })}
-                >
-                  <SealedPack
-                    size={s}
-                    coin={coin}
-                    color={colorOf(s.id)}
-                    className="origin-[center_65%] transition-transform duration-[550ms] ease-[cubic-bezier(.22,.75,.25,1)]"
-                    style={{ transform: `rotate(${offset * 18 + drag / 18}deg)`, transition: motion }}
-                  />
-                  <span className="holo-glare rounded-[4px]" aria-hidden="true" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <button type="button" className={cn(stepButton, "right-2", sizes.length < 2 && "hidden")} onClick={() => goTo(index + 1)} aria-label={`Show the ${sizes[(index + 1) % sizes.length].name} pack`}><ArrowRight className="size-5" /></button>
-        <div className={cn("flex", sizes.length < 2 && "hidden")} role="group" aria-label="Pack size">
-          {sizes.map((s, i) => (
-            <button key={s.id} type="button" aria-pressed={i === index} aria-label={s.name} onClick={() => goTo(i)}
-              className="relative size-11 after:absolute after:inset-[18px] after:rounded-full after:border after:border-border-strong aria-pressed:after:border-black aria-pressed:after:bg-black desk:size-8 desk:after:inset-3" />
-          ))}
-        </div>
-      </div>
-
-      {/* Desktop: starts level with the top of the pack (centred 400px tall in the 520px carousel, so 60px down). */}
-      <div className="min-w-0 pb-8 desk:pt-[60px]" aria-live="polite">
-        <div className="mb-5 desk:mb-6">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-[22px] leading-[1.2] font-normal tracking-tight">{size.name}</h2>
-            <span className="num shrink-0 text-sm text-muted">[ {String(index + 1).padStart(2, "0")} / {String(sizes.length).padStart(2, "0")} · {usd(size.price, 0)} ]</span>
-          </div>
-          <div className="mt-1 flex items-center justify-between gap-3">
-            <p className="min-w-0 text-base text-muted">{SUBTITLE[size.id] ?? ""}</p>
-            <button type="button" aria-haspopup="dialog" className="-mr-1 inline-flex min-h-11 shrink-0 items-center gap-1 px-1 text-base underline-offset-4 hover:underline" onClick={() => setShowOdds(true)}>
-              Odds &amp; rewards <ArrowUpRight className="size-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-3 grid grid-cols-3 gap-1.5" role="group" aria-label="Pack risk">
-          {risks.map((r) => {
-            const open = unlocked(r);
-            const paused = open && !riskOpen(r);
-            return (
-              <button key={r.id} type="button" aria-pressed={riskId === r.id} disabled={!open || paused} onClick={() => setRiskId(r.id)}
-                className="flex min-h-16 min-w-0 flex-col gap-0.5 rounded-md border border-border px-3 py-2.5 text-left transition-colors hover:border-black aria-pressed:border-black disabled:cursor-not-allowed disabled:border-dashed disabled:hover:border-border">
-                <strong className="flex items-center gap-1.5 text-base font-normal">{(!open || paused) && <Lock className="size-3.5 shrink-0 text-muted" />}{r.name}</strong>
-                <span className="text-[12px] leading-snug text-muted phone:text-[13px]">{!open ? `Pool ${usd(unlockAt(unlocks, r.id), 0)}` : paused ? "Paused by risk check" : `Pays ${pct(tierReturn(r))} avg`}</span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="num mb-5 text-[13px] text-muted desk:mb-6">
-          Stock pool {usd(poolUsd, 0)}{nextUnlock ? ` · ${nextUnlock.name} unlocks at ${usd(unlockAt(unlocks, nextUnlock.id), 0)}` : " · all tiers unlocked"}
-        </p>
-        {SHOW_RISK_CHECK && market?.seed && <RiskPanel coin={market.slug} onDecision={setRiskDecision} />}
-
-        <div className="flex items-center justify-between gap-4">
-          <details className="group relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }}>
-            <summary aria-label={`Pay with ${currency === "bnb" ? "BNB" : coin}`} className="flex h-11 max-w-[180px] cursor-pointer list-none items-center gap-2 rounded-md border border-border px-3 text-base transition-colors hover:border-border-strong group-open:border-black [&::-webkit-details-marker]:hidden">
-              <span className="truncate">{currency === "bnb" ? "BNB" : coin}</span>
-              <ChevronDown className="ml-1 size-4 shrink-0 text-muted transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="absolute top-[calc(100%+8px)] left-0 z-30 w-[220px] animate-[popover-in_.15s_ease-out] rounded-md border border-border bg-white/90 p-1.5 shadow-[0_12px_30px_#0000004d] backdrop-blur-[14px]" role="group" aria-label="Payment">
-              {([["bnb", "BNB"], ["coin", coin]] as const).map(([id, label]) => (
-                <button key={id} type="button" aria-pressed={currency === id} className="flex min-h-11 w-full items-center rounded px-2.5 py-2 text-sm transition-colors hover:bg-surface-muted aria-pressed:bg-surface-muted desk:min-h-9"
-                  onClick={(e) => { setCurrency(id); const d = e.currentTarget.closest("details"); if (d) d.open = false; }}>{label}</button>
-              ))}
-            </div>
-          </details>
-          <div className="flex h-11 items-center rounded-md border border-border">
-            <button type="button" className={stepperButton} aria-label="Fewer packs" disabled={quantity <= 1} onClick={() => setQuantity((q) => Math.max(1, q - 1))}><Minus className="size-4" /></button>
-            <span className="num w-[34px] text-center text-base" aria-label="Pack quantity">{quantity}</span>
-            <button type="button" className={stepperButton} aria-label="More packs" disabled={quantity >= 10} onClick={() => setQuantity((q) => Math.min(10, q + 1))}><Plus className="size-4" /></button>
-          </div>
-        </div>
-
-        {/* Phones: price and Buy stick to the bottom of the screen, just above the tab bar, so buying needs no scrolling. */}
-        <div className="mt-6 flex items-center justify-between gap-3 border-t border-border pt-6 phone:gap-4 max-desk:sticky max-desk:bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] max-desk:z-20 max-desk:-mx-[var(--gutter)] max-desk:bg-white max-desk:px-[var(--gutter)] max-desk:py-3">
-          <div className="min-w-0">
-            <strong className="block truncate text-[24px] leading-none font-normal tracking-[-0.02em] phone:text-[28px]">
-              <span className="num">{total === null ? "…" : amount(total, currency === "bnb" ? 4 : 0)}</span> <span className="text-sm tracking-normal text-muted">{currency === "bnb" ? "BNB" : coin}</span>
-            </strong>
-            <p className="num mt-2 text-[13px] text-muted">≈ {usd(totalUsd, 0)} · simulated</p>
-          </div>
-          <button type="button" className={cn(solid, "shrink-0 gap-2 phone:gap-3")} disabled={!sellable} onClick={() => setBought(quantity)}>
-            {!unlocked(risk) ? "Locked" : !sellable ? "Paused" : `Buy ${quantity === 1 ? "pack" : `${quantity} packs`}`} <ArrowUpRight className="size-4" />
+    <div className="grid grid-cols-1 items-start gap-5 desk:grid-cols-2 desk:gap-12">
+      {/* Phones: a small pack beside the name, so the presale progress shows without scrolling. */}
+      <div className="flex items-center gap-4 desk:flex-col desk:justify-center desk:gap-6 desk:py-10">
+        <button ref={tiltPack} type="button" aria-label="Odds" aria-haspopup="dialog" onClick={() => setShowOdds(true)} onPointerMove={tiltTo} onPointerLeave={untilt}
+          className="pack-tilt relative w-[190px] shrink-0 [zoom:0.5] desk:[zoom:1.2]">
+          <SealedPack size={size} coin={market.name} color={color} style={custom ? coverStyle(market.config.tone, market.config.pattern, market.config.cover) : undefined} />
+          <span className="holo-glare rounded-[4px]" aria-hidden="true" />
+        </button>
+        <div className="min-w-0 desk:text-center">
+          <p className="truncate text-[22px] leading-tight">{market.name}</p>
+          <p className="num mt-1 text-sm text-muted">{sim.phase === "presale" ? "Presale" : "Live"} · {usd(sim.price, 0)} pack · simulated</p>
+          <button type="button" aria-haspopup="dialog" className="-ml-1 inline-flex min-h-11 items-center gap-1 px-1 text-sm underline-offset-4 hover:underline" onClick={() => setShowOdds(true)}>
+            Odds <ArrowUpRight className="size-4" />
           </button>
         </div>
-        {unlocked(risk) && !riskOpen(risk) && <p className="mt-3.5 text-sm leading-relaxed text-muted" role="status">The risk check paused {risk.name} packs. Low is still on sale.</p>}
-        {unlocked(risk) && riskOpen(risk) && !sellable && <p className="mt-3.5 text-sm leading-relaxed text-muted" role="status">The pool can&apos;t cover this pack&apos;s top prize yet. Try fewer packs or Low risk.</p>}
       </div>
 
-      {showOdds && <OddsDialog size={size} risk={risk} onClose={() => setShowOdds(false)} />}
-      {bought !== null && <RevealDialog size={size} risk={risk} count={bought} coin={coin} color={colorOf(size.id)} basket={market?.basket ?? c.basket} coinSlug={market?.slug ?? "draft"} onClose={() => setBought(null)} />}
+      <div className="min-w-0 pb-8 desk:pt-10" aria-live="polite">
+        {sim.phase === "presale"
+          ? <PresalePanel market={market} sim={sim} bnbUsd={bnbUsd} />
+          : <LivePanel market={market} sim={sim} bnbUsd={bnbUsd} onOpen={(kind, count) => setOpening({ kind, count })} />}
+      </div>
+
+      {showOdds && <OddsDialog price={sim.price} onClose={() => setShowOdds(false)} />}
+      {opening && (
+        <RevealDialog
+          key={`${String(opening.kind)}-${opening.count}`}
+          title={opening.kind === "presale" ? "Presale pack" : `${TIERS[opening.kind].name} risk`}
+          count={opening.count} size={size} market={market} onOpen={onOpen} onClose={() => setOpening(null)}
+        />
+      )}
     </div>
   );
 }
