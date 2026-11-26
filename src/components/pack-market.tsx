@@ -38,7 +38,12 @@ function Shelf({ coin }: { coin: MarketCoin }) {
   return (
     <section className="border-t border-border pt-6 pb-7 desk:pt-8 desk:pb-10" aria-labelledby={`coin-${coin.slug}`}>
       <div className="mb-4 flex items-center gap-3 desk:mb-6">
-        <span className="grid size-11 shrink-0 place-items-center rounded-full text-lg text-[#111]" style={{ background: coin.tone }} aria-hidden="true">{coin.name[0]}</span>
+        <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full text-lg text-[#fff]" style={{ background: coin.tone }} aria-hidden="true">
+          {coin.config.image ? (
+            // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
+            <img src={coin.config.image} alt="" className="size-full object-cover" />
+          ) : coin.name[0]}
+        </span>
         <div className="min-w-0 flex-1">
           <h2 id={`coin-${coin.slug}`} className="truncate text-xl leading-[1.25] font-normal tracking-tight desk:text-[22px]">
             <Link href={href} className="underline-offset-4 hover:underline">{coin.name}</Link>
@@ -114,7 +119,7 @@ export function PackMarket() {
       </div>
 
       {shown.length ? shown.map((c) => <Shelf key={c.slug} coin={c} />) : (
-        <p className="border-t border-border py-12 text-center text-base text-muted">{query.trim() ? <>No coins match &ldquo;{query.trim()}&rdquo;.</> : <>No packs yet. <Link href="/studio" className="text-black underline underline-offset-4">Design one in Pack studio</Link>.</>}</p>
+        <p className="border-t border-border py-12 text-center text-base text-muted">{query.trim() ? <>No coins match &ldquo;{query.trim()}&rdquo;.</> : <>No packs yet. <Link href="/launch" className="text-black underline underline-offset-4">Launch a coin</Link>.</>}</p>
       )}
     </div>
   );
