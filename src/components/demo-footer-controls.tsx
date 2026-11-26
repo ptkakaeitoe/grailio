@@ -4,6 +4,7 @@ import { LogOut, RotateCcw } from "lucide-react";
 import { DEMO_START_BNB, exitDemo, resetDemo, useDemo } from "@/lib/demo";
 import { clearDemoCoins } from "@/lib/published-packs";
 import { clearBoughtListings } from "@/lib/nft-market";
+import { NetworkSwitch } from "@/components/network-switch";
 
 const control = "inline-flex min-h-11 items-center gap-1.5 text-sm text-muted underline-offset-4 transition-colors hover:text-black hover:underline";
 
@@ -19,6 +20,8 @@ export function DemoFooterControls() {
       <button type="button" className={control} onClick={exitDemo}>
         <LogOut className="size-3.5" /> Exit demo
       </button>
+      {/* Phones: the footer row above is hidden, and Connect (which has the switch) is replaced by the demo badge. */}
+      <NetworkSwitch className="desk:hidden" />
     </div>
   );
 }

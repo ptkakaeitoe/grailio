@@ -3,8 +3,9 @@ import { ArrowUpRightIcon } from "@phosphor-icons/react/ssr";
 import { cleanLink } from "@/components/clean-ui";
 import { REPO_URL } from "@/lib/site";
 import { DemoFooterControls } from "@/components/demo-footer-controls";
+import { NetworkSwitch } from "@/components/network-switch";
 
-/** Site footer: wordmark, page links, network and source. Phones have the tab bar, so they only get the demo controls. */
+/** Site footer: wordmark, page links, source and the Testnet / Mainnet switch. Phones have the tab bar, so they only get the demo controls (with the switch). */
 export function SiteFooter() {
   return (
     <footer className="mx-auto w-full max-w-[1440px] px-[var(--gutter)] desk:mt-32 desk:border-t desk:border-border">
@@ -16,7 +17,7 @@ export function SiteFooter() {
           <Link href="/launch" className={cleanLink}>launch</Link>
           <a href={REPO_URL} target="_blank" rel="noreferrer" className={cleanLink}>source <ArrowUpRightIcon weight="bold" /></a>
         </nav>
-        <a href="https://testnet.bscscan.com" target="_blank" rel="noreferrer" className={cleanLink}>bnb chain · testnet <ArrowUpRightIcon weight="bold" /></a>
+        <NetworkSwitch />
       </div>
       <DemoFooterControls />
     </footer>
