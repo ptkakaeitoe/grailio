@@ -10,17 +10,19 @@ const MAINNET_URL = process.env.NEXT_PUBLIC_MAINNET_URL ?? "";
 
 const pill = "inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm transition-colors";
 
-export function NetworkSwitch({ className }: { className?: string }) {
+/** `wide`: two equal halves across the full width (the connect modal). */
+export function NetworkSwitch({ className, wide = false }: { className?: string; wide?: boolean }) {
+  const half = wide ? "justify-center min-h-10" : "";
   return (
-    <div role="group" aria-label="Network" className={cn("inline-flex items-center gap-1 rounded-full border border-border p-1", className)}>
-      <span aria-current="true" className={cn(pill, "bg-black text-white")}>
+    <div role="group" aria-label="Network" className={cn(wide ? "grid w-full grid-cols-2" : "inline-flex items-center", "gap-1 rounded-full border border-border p-1", className)}>
+      <span aria-current="true" className={cn(pill, half, "bg-black text-white")}>
         <span className="size-1.5 rounded-full bg-up" aria-hidden="true" />
         Testnet
       </span>
       {MAINNET_URL ? (
-        <a href={MAINNET_URL} className={cn(pill, "text-muted hover:text-black")}>Mainnet beta</a>
+        <a href={MAINNET_URL} className={cn(pill, half, "text-muted hover:text-black")}>Mainnet beta</a>
       ) : (
-        <span className={cn(pill, "text-muted")} aria-disabled="true" title="Mainnet beta is coming soon">
+        <span className={cn(pill, half, "text-muted")} aria-disabled="true" title="Mainnet beta is coming soon">
           Mainnet beta
         </span>
       )}

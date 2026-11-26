@@ -10,7 +10,6 @@ import { startDemo } from "@/lib/demo";
 import { useWalletAuth } from "@/lib/wallet-auth";
 import { NetworkSwitch } from "@/components/network-switch";
 
-const note = "mt-4 block text-[13px] text-muted";
 
 /** Opens a drop panel just under the button that opened it (on phones, centred: `.drop-panel` in globals.css). */
 function useDropPanel() {
@@ -37,32 +36,55 @@ function DropPanel({ panel, label, title, children }: { panel: ReturnType<typeof
   );
 }
 
-/** "Connect": opens the get-started panel under the button. */
+const walletRow = "flex min-h-[72px] w-full items-center gap-3.5 rounded-lg border border-border px-4 text-left transition-colors hover:border-black disabled:opacity-40 disabled:hover:border-border";
+const rowIcon = "grid size-10 shrink-0 place-items-center rounded-full bg-surface-muted";
+
+/** "Connect": a centred wallet-connect modal with the network switch and the ways in. */
 export function WalletEntry({ className = "btn btn-ghost shrink-0", disabled = false }: { className?: string; disabled?: boolean }) {
   const { mode, available, login } = useWalletAuth();
-  const panel = useDropPanel();
-  const { open, close } = panel;
+  const dialog = useRef<HTMLDialogElement>(null);
+  const close = () => dialog.current?.close();
 
   return <>
-    <button type="button" className={className} disabled={disabled} aria-haspopup="dialog" onClick={(e) => open(e.currentTarget)}>
+    <button type="button" className={className} disabled={disabled} aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
       <Wallet className="size-4 max-phone:hidden" aria-hidden="true" /><span>Connect<span className="max-phone:hidden"> wallet</span></span>
     </button>
-    <DropPanel panel={panel} label={<NetworkSwitch />} title="Connect a wallet">
-      <div className="p-6">
-        <h2 className="display text-3xl">Your next move.</h2>
-        <div className="mt-6 grid grid-cols-2 gap-2.5">
-          <button type="button" className="flex min-h-24 flex-col items-start justify-between gap-3 rounded-md bg-black p-4 text-left text-base text-white transition-opacity hover:opacity-90 disabled:opacity-40" disabled={!available} onClick={() => { close(); login(); }}>
-            <Wallet className="size-5" aria-hidden="true" />
-            Connect wallet
-          </button>
-          <button type="button" className="flex min-h-24 flex-col items-start justify-between gap-3 rounded-md border border-border-strong p-4 text-left text-base transition-colors hover:border-black" onClick={() => { close(); startDemo(); }}>
-            <Play className="size-5" aria-hidden="true" />
-            Try the demo
+    <dialog ref={dialog} aria-label="Connect a wallet" className={cn(cleanDialog, "w-[min(460px,calc(100vw-24px))] max-h-[calc(100dvh-48px)]")} onClick={(event) => { if (event.target === event.currentTarget) close(); }}>
+      <header className={dialogHeader}>
+        <h2 className="text-lg leading-tight font-normal">Connect</h2>
+        <button type="button" className={dialogClose} aria-label="Close" onClick={close}><X className="size-5" /></button>
+      </header>
+      <div className="flex flex-col gap-6 p-5 phone:p-6">
+        <NetworkSwitch wide />
+        <div className="flex flex-col gap-2.5">
+          {mode === "privy" ? (
+            <button type="button" className={walletRow} onClick={() => { close(); login(); }}>
+              <span className={rowIcon}><Wallet className="size-5" aria-hidden="true" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-base">Email, Google or wallet</span></span>
+              <ArrowUpRight className="size-4 text-muted" aria-hidden="true" />
+            </button>
+          ) : (
+            <button type="button" className={walletRow} disabled={!available} onClick={() => { close(); login(); }}>
+              <span className={rowIcon}><Wallet className="size-5" aria-hidden="true" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-base">Browser wallet</span>
+                <span className="block truncate text-[13px] text-muted">MetaMask, Rabby</span>
+              </span>
+              <span className={cn("shrink-0 text-[13px]", available ? "text-up" : "text-muted")}>{available ? "Detected" : "Not found"}</span>
+            </button>
+          )}
+          <button type="button" className={walletRow} onClick={() => { close(); startDemo(); }}>
+            <span className={rowIcon}><Play className="size-5" aria-hidden="true" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base">Try the demo</span>
+              <span className="block text-[13px] text-muted">No wallet needed</span>
+            </span>
+            <ArrowUpRight className="size-4 text-muted" aria-hidden="true" />
           </button>
         </div>
-        {mode !== "privy" && !available && <small className={note}>No browser wallet found.</small>}
       </div>
-    </DropPanel>
+      <p className="border-t border-border px-5 py-4 text-[13px] text-muted phone:px-6">{appChain.name}</p>
+    </dialog>
   </>;
 }
 
