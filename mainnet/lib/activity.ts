@@ -8,7 +8,7 @@ import { decodeEventLog, parseAbi, type Address, type Hex } from "viem";
 export const activityAbi = parseAbi([
   // CollectPacks
   "event PacksBought(address indexed buyer, uint256 indexed tierId, uint256 firstPackId, uint256 quantity, uint256 paid)",
-  "event PackOpened(uint256 indexed packId, uint256 indexed cardId, address indexed owner, uint8 asset, uint8 rarity, uint64 usd, bool expired)",
+  "event PackOpened(uint256 indexed packId, uint256 indexed cardId, address indexed owner, uint8 asset, uint8 rarity, uint128 usd, bool expired)",
   "event CardRedeemed(uint256 indexed cardId, address indexed to, bool filled, uint256 amount)",
   "event GiftBought(uint256 indexed giftId, address indexed from, uint256 indexed tierId, uint256 quantity, address signer)",
   "event GiftClaimed(uint256 indexed giftId, address indexed to, uint256 firstPackId)",
@@ -38,7 +38,7 @@ export type ActivityItem = {
   cardId?: string;
   tier?: number;
   quantity?: number;
-  /** USDC, 6 decimals (paid, claimed, refunded, card value at opening). */
+  /** USDC in its on-chain decimals, 18 on BNB Chain (paid, claimed, refunded, card value at opening). */
   usdc?: string;
   asset?: number;
   rarity?: number;

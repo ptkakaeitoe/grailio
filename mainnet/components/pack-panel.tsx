@@ -97,7 +97,7 @@ export function PackPanel() {
   const [confirmBuy, setConfirmBuy] = useState(false);
   const [giftMade, setGiftMade] = useState<{ code: string; tier: number; quantity: number; demo: boolean } | null>(null);
 
-  // Live packs are paid in USDC (6 decimals) at the tier price ($1, $3 or $5).
+  // Live packs are paid in USDC (USDC_DECIMALS, 18 on BNB Chain) at the tier price ($1, $3 or $5).
   const payToken = "USDC";
   const { data: usdcRaw, refetch: refetchUsdc } = useReadContract({
     address: TOKENS.USDC.address,

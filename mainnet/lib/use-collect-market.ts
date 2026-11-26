@@ -25,7 +25,7 @@ export type CardInfo = {
   rarity: number;
   /** True: holds `amount` of the token. False: holds `usd` USDC until filled. */
   filled: boolean;
-  /** Card value at opening, USDC 6 decimals. */
+  /** Card value at opening, in USDC base units (USDC_DECIMALS, 18 on BNB Chain). */
   usd: bigint;
   /** Tokens inside, as a number in whole tokens. */
   amount: number;

@@ -38,7 +38,7 @@ export const collectPacksTreasuryAbi = [
 
 /** Card side of CollectPacks: ERC-721 (enumerable) cards that hold tokens. */
 export const collectCardsAbi = [
-  { type: "function", name: "cards", inputs: [{ type: "uint256" }], outputs: [{ type: "uint8", name: "asset" }, { type: "uint8", name: "tier" }, { type: "uint8", name: "rarity" }, { type: "bool", name: "filled" }, { type: "uint64", name: "usd" }, { type: "uint256", name: "amount" }], stateMutability: "view" },
+  { type: "function", name: "cards", inputs: [{ type: "uint256" }], outputs: [{ type: "uint8", name: "asset" }, { type: "uint8", name: "tier" }, { type: "uint8", name: "rarity" }, { type: "bool", name: "filled" }, { type: "uint128", name: "usd" }, { type: "uint256", name: "amount" }], stateMutability: "view" },
   { type: "function", name: "balanceOf", inputs: [{ type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "tokenOfOwnerByIndex", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "ownerOf", inputs: [{ type: "uint256" }], outputs: [{ type: "address" }], stateMutability: "view" },
@@ -107,7 +107,7 @@ export const collectPacksAbi = [
   { type: "function", name: "claimGift", inputs: [{ type: "uint256", name: "giftId" }, { type: "bytes", name: "signature" }], outputs: [{ type: "uint256" }], stateMutability: "nonpayable" },
   { type: "function", name: "cancelGift", inputs: [{ type: "uint256", name: "giftId" }], outputs: [{ type: "uint256" }], stateMutability: "nonpayable" },
   { type: "function", name: "giftMessage", inputs: [{ type: "uint256", name: "giftId" }, { type: "address", name: "to" }], outputs: [{ type: "bytes32" }], stateMutability: "view" },
-  { type: "function", name: "gifts", inputs: [{ type: "uint256" }], outputs: [{ type: "address", name: "from" }, { type: "address", name: "signer" }, { type: "uint8", name: "tier" }, { type: "uint8", name: "quantity" }, { type: "bool", name: "done" }, { type: "uint64", name: "paid" }], stateMutability: "view" },
+  { type: "function", name: "gifts", inputs: [{ type: "uint256" }], outputs: [{ type: "address", name: "from" }, { type: "address", name: "signer" }, { type: "uint8", name: "tier" }, { type: "uint8", name: "quantity" }, { type: "bool", name: "done" }, { type: "uint128", name: "paid" }], stateMutability: "view" },
   { type: "event", name: "GiftBought", inputs: [{ type: "uint256", name: "giftId", indexed: true }, { type: "address", name: "from", indexed: true }, { type: "uint256", name: "tierId", indexed: true }, { type: "uint256", name: "quantity", indexed: false }, { type: "address", name: "signer", indexed: false }] },
   { type: "error", name: "GiftDone", inputs: [] },
   { type: "error", name: "BadGiftCode", inputs: [] },
@@ -122,12 +122,12 @@ export const collectPacksAbi = [
   { type: "error", name: "NotYourCard", inputs: [] },
   { type: "error", name: "AlreadyFilled", inputs: [] },
   { type: "function", name: "packIdsOf", inputs: [{ type: "address" }], outputs: [{ type: "uint256[]" }], stateMutability: "view" },
-  { type: "function", name: "packs", inputs: [{ type: "uint256" }], outputs: [{ type: "address", name: "owner" }, { type: "uint64", name: "revealBlock" }, { type: "uint8", name: "tier" }, { type: "bool", name: "done" }, { type: "uint64", name: "paid" }], stateMutability: "view" },
+  { type: "function", name: "packs", inputs: [{ type: "uint256" }], outputs: [{ type: "address", name: "owner" }, { type: "uint64", name: "revealBlock" }, { type: "uint8", name: "tier" }, { type: "bool", name: "done" }, { type: "uint128", name: "paid" }], stateMutability: "view" },
   { type: "function", name: "capacity", inputs: [{ type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "paused", inputs: [], outputs: [{ type: "bool" }], stateMutability: "view" },
   { type: "event", name: "PackOpened", inputs: [
     { type: "uint256", name: "packId", indexed: true }, { type: "uint256", name: "cardId", indexed: true }, { type: "address", name: "owner", indexed: true },
-    { type: "uint8", name: "asset", indexed: false }, { type: "uint8", name: "rarity", indexed: false }, { type: "uint64", name: "usd", indexed: false }, { type: "bool", name: "expired", indexed: false },
+    { type: "uint8", name: "asset", indexed: false }, { type: "uint8", name: "rarity", indexed: false }, { type: "uint128", name: "usd", indexed: false }, { type: "bool", name: "expired", indexed: false },
   ] },
   { type: "event", name: "CardFilled", inputs: [{ type: "uint256", name: "cardId", indexed: true }, { type: "uint256", name: "amount", indexed: false }] },
   { type: "error", name: "PoolTooSmall", inputs: [{ type: "uint256" }, { type: "uint256" }] },
@@ -147,7 +147,7 @@ export const collectPacksTierAbi = [
   {
     type: "function", name: "tier", stateMutability: "view", inputs: [{ type: "uint256" }],
     outputs: [{ type: "tuple", components: [
-      { type: "uint64", name: "price" }, { type: "uint16[4]", name: "oddsBps" }, { type: "uint64[4]", name: "backing" }, { type: "bool", name: "active" },
+      { type: "uint128", name: "price" }, { type: "uint16[4]", name: "oddsBps" }, { type: "uint128[4]", name: "backing" }, { type: "bool", name: "active" },
     ] }],
   },
 ] as const;
