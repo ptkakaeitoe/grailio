@@ -1,7 +1,8 @@
 import type { SeedPack } from "@/lib/market";
-import chipRush from "./chip-rush.json";
 import orbitClub from "./orbit-club.json";
-import steadyStack from "./steady-stack.json";
 
-/** Seed packs for the marketplace, each designed in the Launch flow and exported with its config. */
-export const SEED_PACKS = [chipRush, orbitClub, steadyStack] as SeedPack[];
+/**
+ * Coins that ship with the app. Only Orbit Club, which is live on our OpenFour testnet; everything else on the
+ * marketplace is launched by people (saved in their browser until it's on-chain).
+ */
+export const SEED_PACKS = [orbitClub] as SeedPack[];
