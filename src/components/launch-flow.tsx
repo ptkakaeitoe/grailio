@@ -18,13 +18,16 @@ import { appChain } from "@/lib/chain";
 import { useDemo } from "@/lib/demo";
 import { OPENFOUR, STOCK_ADDRESSES, coreAbi, migrateModuleAbi } from "@/lib/onchain";
 import { txErrorMessage } from "@/lib/tx-error";
+import { FLAP_LAUNCHER_FACTORY, FLAP_PORTAL, FLAP_STOCKS, encodePackConfig, flapPackPrice, launcherFactoryAbi, minePackSalt, portalAbi } from "@/lib/flap";
+import { useFlapEnabled } from "@/lib/use-flap";
 
 /*
  * Launch a coin with its pack, in three steps: 1 the coin (image, name, ticker, description, links, colour), 2 up to four bStocks for
  * its pack, 3 design (the default pack and card art, or a custom cover and one card per rarity) and launchpad. Buyers
  * pick the Low / Medium / High risk tier per pack, so the creator doesn't. On Four.meme with a wallet connected, launching creates the coin on our
- * OpenFour testnet (the app server signs the create request for the wallet, which sends it). Flap, or demo mode, lists
- * the pack in this browser only, simulated, until Flap enables our launcher factory.
+ * OpenFour testnet (the app server signs the create request for the wallet, which sends it). On Flap, once Flap has
+ * enabled our factories, launching creates a PackLauncher whose presale is priced in Flap's free-mint test USD (no tBNB
+ * raise; the salt lock costs 0.005 tBNB). Otherwise, or in demo mode, the pack is listed in this browser, simulated.
  *
  * "Without coin" mode makes a classic pack collection instead: 1 details (cover, name, description), 2 stocks,
  * 3 design, then publish (simulated, this browser only). No coin, ticker, launchpad, presale or tax. The mode is kept
@@ -95,8 +98,15 @@ export function LaunchFlow() {
   const { writeContractAsync } = useWriteContract();
   const demo = useDemo();
   const [busy, setBusy] = useState("");
-  const onchain = !classic && c.launchpad === "four" && isConnected && !demo.active;
-  const unlisted = c.basket.filter((b) => !STOCK_ADDRESSES[b.ticker]).map((b) => b.ticker);
+  const flapEnabled = useFlapEnabled();
+  const onchainFour = !classic && c.launchpad === "four" && isConnected && !demo.active;
+  const onchainFlap = !classic && c.launchpad === "flap" && isConnected && !demo.active && flapEnabled === true;
+  const onchain = onchainFour || onchainFlap;
+  const listed = onchainFlap ? FLAP_STOCKS : STOCK_ADDRESSES;
+  const unlisted = c.basket.filter((b) => !listed[b.ticker]).map((b) => b.ticker);
+  // Flap presale in test USD: the coin's pack count, at a price that clears the Portal's liquidity floor.
+  const flapPacks = c.presalePacks ?? PRESALE_PACKS;
+  const flapPrice = flapPackPrice(standardPrice(c), flapPacks);
 
   const setMode = (kind: "coin" | "classic") => { updatePack({ kind }); setStep(0); };
   /** Start over keeps the chosen mode. */
@@ -111,7 +121,8 @@ export function LaunchFlow() {
 
   const launch = () => {
     if (classic) { publishCollection(); return; }
-    if (onchain) { void launchOnchain(); return; }
+    if (onchainFlap) { void launchFlap(); return; }
+    if (onchainFour) { void launchOnchain(); return; }
     const slug = publishPack({ ...c, ...designPatch(c), name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
     showToast({ kind: "success", title: `${name} · presale open`, detail: `Simulated on ${padName} · BSC testnet` });
     resetPack();
@@ -141,6 +152,35 @@ export function LaunchFlow() {
         onchain: { pad: "four", token: created.args.token, saleVault: created.args.vault, packVault, createTx: hash },
       });
       showToast({ kind: "success", title: `${name} is live`, detail: "Four.meme · BSC testnet" });
+      resetPack();
+      router.push(`/app/packs/${slug}`);
+    } catch (e) {
+      showToast({ kind: "error", title: "Launch failed", detail: txErrorMessage(e) });
+    } finally {
+      setBusy("");
+    }
+  }
+
+  /** Flap: mine a 7777 salt, create the PackLauncher through the Portal (the wallet pays the salt lock), list the coin. */
+  async function launchFlap() {
+    if (!address || !publicClient) return;
+    try {
+      setBusy("Preparing…");
+      const salt = await minePackSalt(`${address}:${c.ticker}:${Date.now()}`);
+      const data = encodePackConfig({ name, symbol: c.ticker, meta: "", salt, packPriceUsd: flapPrice, packs: flapPacks, basket: c.basket });
+      const fee = await publicClient.readContract({ address: FLAP_PORTAL, abi: portalAbi, functionName: "SALT_LOCK_FEE" });
+      setBusy("Confirm in your wallet…");
+      const hash = await writeContractAsync({ chainId: appChain.id, address: FLAP_PORTAL, abi: portalAbi, functionName: "newLauncher", args: [FLAP_LAUNCHER_FACTORY, data], value: fee });
+      setBusy("Creating…");
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const created = parseEventLogs({ abi: launcherFactoryAbi, logs: receipt.logs, eventName: "PackLauncherCreated" })[0];
+      if (receipt.status !== "success" || !created) throw new Error("The presale wasn't created");
+      const none = "0x0000000000000000000000000000000000000000" as const;
+      const slug = publishPack({
+        ...c, ...designPatch(c), name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES, presalePacks: flapPacks,
+        onchain: { pad: "flap", launcher: created.args.launcher, token: none, saleVault: created.args.launcher, packVault: none, createTx: hash },
+      });
+      showToast({ kind: "success", title: `${name} presale is open`, detail: "Flap · BSC testnet" });
       resetPack();
       router.push(`/app/packs/${slug}`);
     } catch (e) {
@@ -342,7 +382,12 @@ export function LaunchFlow() {
               <p className="mt-2 text-sm text-down" role="alert">Not on testnet yet: {unlisted.join(", ")}</p>
             ) : (
               <p className="mt-2 text-sm text-muted">
-                {onchain ? "On-chain · 0.05 BNB sale, 10 packs" : c.launchpad === "four" && !demo.active ? "Simulated · connect a wallet to launch on-chain" : "Simulated"}
+                {onchainFlap ? `On-chain · presale of ${flapPacks} packs × $${flapPrice} test USD · 0.005 tBNB to create`
+                  : onchainFour ? "On-chain · 0.05 BNB sale, 10 packs"
+                  : demo.active ? "Simulated"
+                  : !isConnected ? "Simulated · connect a wallet to launch on-chain"
+                  : c.launchpad === "flap" && flapEnabled === false ? "Simulated · Flap hasn't enabled our launcher on testnet yet"
+                  : "Simulated"}
               </p>
             )}
           </div>}

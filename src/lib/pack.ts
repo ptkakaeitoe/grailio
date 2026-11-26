@@ -124,7 +124,15 @@ export type PackConfig = {
   presalePacks?: number;
   points: Points;
   /** Set once the coin exists on-chain (BSC testnet): its token, sale vault and pack vault. */
-  onchain?: { pad: Launchpad; token: `0x${string}`; saleVault: `0x${string}`; packVault: `0x${string}`; createTx: `0x${string}` };
+  onchain?: {
+    pad: Launchpad;
+    token: `0x${string}`;
+    saleVault: `0x${string}`;
+    packVault: `0x${string}`;
+    createTx: `0x${string}`;
+    /** Flap only: the PackLauncher running the presale. Token and vault are read from it once it launches. */
+    launcher?: `0x${string}`;
+  };
   /** Percent of every trade's tax that goes to the platform, before the pool/creator split. */
   platformCut: number;
   /** Average payout of a pack as a percent of its price (fixed amounts by rarity average to this). */
