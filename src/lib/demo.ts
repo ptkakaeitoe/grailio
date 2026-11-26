@@ -88,6 +88,20 @@ export function tradeDemo(side: "buy" | "sell", asset: string, amount: number, a
   return true;
 }
 
+/**
+ * Buys `asset` paying `amount` of BNB or USDT from the demo wallet (the Trade list's quick Buy). False if demo is off,
+ * a price is missing or the balance is short.
+ */
+export function buyDemo(asset: string, amount: number, currency: "BNB" | "USDT", assetUsd: number, bnbUsd: number) {
+  if (currency === "BNB") return tradeDemo("buy", asset, amount, assetUsd, bnbUsd);
+  const s = read();
+  if (!s.active || !(amount > 0) || !(assetUsd > 0) || amount > s.usdt + 1e-9) return false;
+  const assets = { ...(s.assets ?? {}) };
+  assets[asset] = (assets[asset] ?? 0) + amount / assetUsd;
+  write({ ...s, usdt: Math.max(0, s.usdt - amount), assets });
+  return true;
+}
+
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 export const useDemo = () => useSyncExternalStore(subscribe, read, () => OFF);
 

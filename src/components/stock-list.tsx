@@ -7,6 +7,8 @@ import type { AtlasSnapshot } from "@/lib/atlas";
 import { underlying } from "@/lib/atlas-feeds";
 import { stockOf } from "@/lib/stocks";
 import { usePack } from "@/lib/pack";
+import { buyDemo, startDemo, useDemo } from "@/lib/demo";
+import { showToast } from "@/lib/toast";
 import { compactUsd, gapPct, useCmc } from "@/lib/use-cmc";
 import { ago, usd } from "@/lib/format";
 import { cn } from "@/components/clean-ui";
@@ -19,6 +21,10 @@ type View = "all" | "pack" | "movers";
 type Consensus = "any" | "healthy" | "degraded";
 type Sort = "featured" | "symbol" | "price" | "change" | "score" | "volume" | "gap";
 const AGREE_PCT = 1;
+type QuickCurrency = "BNB" | "USDT";
+const QUICK_KEY = "bsctemp.quickbuy.v1";
+/** Default quick-buy size per currency. */
+const QUICK_DEFAULT: Record<QuickCurrency, string> = { BNB: "0.1", USDT: "10" };
 
 /**
  * Every bStock Atlas prices, in one dense list (no pages: about a hundred rows, refreshed every 30 s). Featured order
@@ -39,6 +45,48 @@ export function StockList() {
   const [consensus, setConsensus] = useState<Consensus>("any");
   const [sort, setSort] = useState<Sort>("featured");
   const cmc = useCmc();
+  const demo = useDemo();
+
+  // Quick buy: one size for every row's Buy button (e.g. 0.1 BNB or 10 USDT), remembered in this browser.
+  const [quick, setQuick] = useState<{ amount: string; currency: QuickCurrency }>({ amount: QUICK_DEFAULT.BNB, currency: "BNB" });
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { const saved = JSON.parse(localStorage.getItem(QUICK_KEY) ?? "null"); if (saved?.amount && (saved.currency === "BNB" || saved.currency === "USDT")) setQuick(saved); } catch { /* keep default */ }
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+  const saveQuick = (next: { amount: string; currency: QuickCurrency }) => {
+    setQuick(next);
+    try { localStorage.setItem(QUICK_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+  };
+  const [bnbUsd, setBnbUsd] = useState<number | null>(null);
+  useEffect(() => {
+    fetch("/api/bnb").then((r) => r.json()).then((d) => { if (typeof d.price === "number" && d.price > 0) setBnbUsd(d.price); }).catch(() => {});
+  }, []);
+  const quickAmount = Number(quick.amount);
+  const quickOk = Number.isFinite(quickAmount) && quickAmount > 0;
+  /** Simulated buy of `tick` at its Atlas price with the quick-buy size (starts the demo wallet if needed). */
+  function quickBuy(tick: string, price: number) {
+    if (!quickOk || !bnbUsd) return;
+    if (!demo.active) startDemo();
+    if (buyDemo(tick, quickAmount, quick.currency, price, bnbUsd)) {
+      const got = quick.currency === "BNB" ? (quickAmount * bnbUsd) / price : quickAmount / price;
+      showToast({ kind: "success", title: `Bought ${got.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${tick}`, detail: `${quick.amount} ${quick.currency} · simulated · BSC testnet` });
+    } else {
+      showToast({ kind: "error", title: `Not enough ${quick.currency}`, detail: "Lower the quick-buy amount or reset the demo wallet." });
+    }
+  }
+  const buyButton = (tick: string, price: number) => (
+    <button
+      type="button"
+      className={cn(toolbarChip, "relative z-10 min-h-9 px-3 desk:min-h-8")}
+      disabled={!quickOk || !bnbUsd || !stockOf(tick)}
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); quickBuy(tick, price); }}
+      aria-label={`Buy ${tick} with ${quick.amount} ${quick.currency}`}
+    >
+      Buy
+    </button>
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,6 +187,23 @@ export function StockList() {
         searchLabel="Search by ticker, name or feed ID"
         upper
         actions={<>
+          <div className="flex h-11 shrink-0 items-center overflow-hidden rounded-md border border-border desk:h-10" role="group" aria-label="Quick buy amount">
+            <input
+              className="num h-full w-16 bg-transparent px-2.5 text-right text-sm outline-none"
+              inputMode="decimal"
+              value={quick.amount}
+              onChange={(e) => { if (/^\d*\.?\d{0,8}$/.test(e.target.value)) saveQuick({ ...quick, amount: e.target.value }); }}
+              aria-label="Amount per Buy"
+            />
+            <button
+              type="button"
+              className="h-full border-l border-border px-2.5 text-sm transition-colors hover:bg-surface-muted"
+              onClick={() => { const currency = quick.currency === "BNB" ? "USDT" : "BNB"; saveQuick({ currency, amount: QUICK_DEFAULT[currency] }); }}
+              aria-label={`Pay with ${quick.currency}; switch currency`}
+            >
+              {quick.currency}
+            </button>
+          </div>
           <details className="group relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape") e.currentTarget.open = false; }}>
             <summary className={cn(chip, "inline-flex list-none items-center gap-1.5 group-open:border-black desk:min-h-10 [&::-webkit-details-marker]:hidden")} aria-label="Filter and sort">
               <SlidersHorizontal className="size-4" aria-hidden="true" /><span className="max-phone:sr-only">Filter</span>
@@ -177,8 +242,8 @@ export function StockList() {
         {rows.map((r) => {
           const tick = underlying(r.symbol);
           return (
-            <li key={r.id} className={tradeList.item}>
-              <Link href={stockOf(tick) ? `/app/trade/stock/${tick}` : "#"} aria-disabled={!stockOf(tick)} className={cn(tradeList.link, "aria-disabled:pointer-events-none")}>
+            <li key={r.id} className={cn(tradeList.item, "flex items-center gap-2")}>
+              <Link href={stockOf(tick) ? `/app/trade/stock/${tick}` : "#"} aria-disabled={!stockOf(tick)} className={cn(tradeList.link, "min-w-0 flex-1 aria-disabled:pointer-events-none")}>
               <StockLogo ticker={r.symbol} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2">
@@ -192,6 +257,7 @@ export function StockList() {
                 <p className={cn("num text-[13px]", changeTone(r.changePct))}>{changeText(r.changePct)}</p>
               </div>
               </Link>
+              {buyButton(tick, r.price)}
             </li>
           );
         })}
@@ -209,11 +275,12 @@ export function StockList() {
               <th className="px-4 py-2.5 text-right font-normal">CoinMarketCap</th>
               <th className="hidden px-4 py-2.5 text-right font-normal wide:table-cell">Volume</th>
               <th className="px-4 py-2.5 font-normal">Consensus</th>
+              <th className="px-4 py-2.5 text-right font-normal"><span className="sr-only">Buy</span>{quickOk ? `${quick.amount} ${quick.currency}` : ""}</th>
             </tr>
           </thead>
           <tbody>
             {empty && (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-muted">{empty}</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-muted">{empty}</td></tr>
             )}
             {rows.map((r) => {
               const tick = underlying(r.symbol);
@@ -250,6 +317,7 @@ export function StockList() {
                       </div>
                     )}
                   </td>
+                  <td className="px-4 py-2 text-right">{buyButton(tick, r.price)}</td>
                 </tr>
               );
             })}
