@@ -1,0 +1,199 @@
+{
+  "meta": {
+    "poolUsd": 2400,
+    "volumeUsd": 38000,
+    "ageDays": 3
+  },
+  "config": {
+    "name": "Orbit Club",
+    "ticker": "ORBITC",
+    "tagline": "",
+    "tone": "#3a1f5c",
+    "pattern": "stripes",
+    "basket": [
+      {
+        "ticker": "SPCX",
+        "weight": 34
+      },
+      {
+        "ticker": "RKLB",
+        "weight": 33
+      },
+      {
+        "ticker": "TSLA",
+        "weight": 33
+      }
+    ],
+    "tiers": [
+      {
+        "odds": 72,
+        "mult": 0.352
+      },
+      {
+        "odds": 18,
+        "mult": 0.88
+      },
+      {
+        "odds": 7,
+        "mult": 2.749
+      },
+      {
+        "odds": 3,
+        "mult": 13.196
+      }
+    ],
+    "packValue": 10,
+    "buyTax": 3,
+    "sellTax": 3,
+    "stockShare": 80,
+    "trigger": {
+      "kind": "vault",
+      "usd": 500
+    },
+    "minHolding": 10000,
+    "launchpad": "four",
+    "sale": {
+      "enabled": true,
+      "currencies": [
+        "bnb",
+        "token"
+      ],
+      "premium": 10,
+      "tokenDiscount": 5,
+      "premiumTo": "creator"
+    },
+    "cards": [
+      {
+        "title": "Spark",
+        "color": "#8a9183",
+        "art": "chart",
+        "image": null
+      },
+      {
+        "title": "Circuit",
+        "color": "#3b82c4",
+        "art": "grid",
+        "image": null
+      },
+      {
+        "title": "Neon",
+        "color": "#9c36b5",
+        "art": "waves",
+        "image": null
+      },
+      {
+        "title": "Crown",
+        "color": "#c8930f",
+        "art": "rays",
+        "image": null
+      }
+    ],
+    "season": 1,
+    "presale": {
+      "packs": 300,
+      "liquidityUsd": 1500,
+      "poolTokenPct": 50
+    },
+    "points": {
+      "perUsdTraded": 1,
+      "perDayPer100k": 1,
+      "perPack": 100
+    },
+    "platformCut": 5,
+    "payoutRate": 95,
+    "marginToPlatform": 50,
+    "sizes": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 5
+      },
+      {
+        "id": "standard",
+        "name": "Standard",
+        "price": 10
+      },
+      {
+        "id": "grail",
+        "name": "Grail",
+        "price": 25
+      }
+    ],
+    "risks": [
+      {
+        "id": "low",
+        "name": "Low",
+        "blurb": "a steady glow",
+        "tiers": [
+          {
+            "odds": 50,
+            "mult": 0.95
+          },
+          {
+            "odds": 25,
+            "mult": 0.95
+          },
+          {
+            "odds": 20,
+            "mult": 0.95
+          },
+          {
+            "odds": 5,
+            "mult": 0.95
+          }
+        ]
+      },
+      {
+        "id": "medium",
+        "name": "Medium",
+        "blurb": "some sparks",
+        "tiers": [
+          {
+            "odds": 50,
+            "mult": 0.24
+          },
+          {
+            "odds": 25,
+            "mult": 0.75
+          },
+          {
+            "odds": 20,
+            "mult": 1.64
+          },
+          {
+            "odds": 5,
+            "mult": 5.54
+          }
+        ]
+      },
+      {
+        "id": "high",
+        "name": "High",
+        "blurb": "chase the grail",
+        "tiers": [
+          {
+            "odds": 60,
+            "mult": 0.04
+          },
+          {
+            "odds": 25,
+            "mult": 0.39
+          },
+          {
+            "odds": 12,
+            "mult": 3.3
+          },
+          {
+            "odds": 3,
+            "mult": 12.99
+          }
+        ]
+      }
+    ],
+    "unlocks": {
+      "medium": 1000,
+      "high": 5000
+    },
+    "image": null
+  }
+}
