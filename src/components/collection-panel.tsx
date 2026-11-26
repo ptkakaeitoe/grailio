@@ -62,7 +62,7 @@ export function CollectionPanel() {
     <>
       <CollectionStaking />
       {held.length > 0 ? (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-5 gap-y-7 phone:grid-cols-[repeat(auto-fill,minmax(175px,230px))] desk:grid-cols-[repeat(auto-fill,minmax(205px,255px))] desk:gap-x-8 desk:gap-y-12">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-8 phone:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] desk:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] desk:gap-x-6 desk:gap-y-10 wide:grid-cols-6">
           {held.map((card) => {
             const art = cardArt(card);
             const isFlipped = flipped === card.id;

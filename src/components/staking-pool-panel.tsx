@@ -94,40 +94,48 @@ export function StakingPoolPanel({ rows, claim }: { rows: CoinRow[]; claim: { on
   ];
 
   return (
-    <section className="mb-8 rounded-md border border-border" aria-labelledby="staking-title">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
+    <section className="mb-10 rounded-md border border-border" aria-labelledby="staking-title">
+      {/* Claimable + Claim, then four even stats. */}
+      <div className="flex items-end justify-between gap-4 px-5 pt-4">
         <div className="min-w-0">
-          <h2 id="staking-title" className="text-sm text-muted">Staking · {STREAM_DAYS} days = {Math.round(STREAM_MS / 1000)}s</h2>
-          <p className="num text-[22px] leading-tight">{money(claimable)} <span className="text-sm text-muted">claimable</span></p>
+          <h2 id="staking-title" className="text-sm text-muted">Staking <span className="text-[12px]">· {STREAM_DAYS} days = {Math.round(STREAM_MS / 1000)}s</span></h2>
+          <p className="num mt-1 text-[28px] leading-none">{money(claimable)}</p>
+          <p className="mt-1 text-[13px] text-muted">claimable</p>
         </div>
-        <dl className="flex min-w-0 flex-1 flex-wrap gap-x-6 gap-y-1">
-          {stats.map((st) => (
-            <div key={st.label} className="min-w-0">
-              <dt className="text-[12px] text-muted">{st.label}</dt>
-              <dd className="num text-sm">{st.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <button type="button" className={cn(cleanButton.solid, "min-h-10 shrink-0 px-5 disabled:hover:bg-black disabled:hover:text-white")} disabled={claim.disabled} onClick={claim.onClick}>
+        <button type="button" className={cn(cleanButton.solid, "min-h-11 shrink-0 px-6 disabled:hover:bg-black disabled:hover:text-white")} disabled={claim.disabled} onClick={claim.onClick}>
           Claim
         </button>
       </div>
+      <dl className="mt-4 grid grid-cols-2 border-t border-border desk:grid-cols-4">
+        {stats.map((st, i) => (
+          <div key={st.label} className={cn("min-w-0 px-5 py-3", i % 2 === 1 && "border-l border-border", i >= 2 && "max-desk:border-t desk:border-l border-border")}>
+            <dt className="text-[12px] text-muted">{st.label}</dt>
+            <dd className="num mt-0.5 truncate text-base">{st.value}</dd>
+          </div>
+        ))}
+      </dl>
 
-      <div className="border-t border-border px-4 py-3">
-        <p className="mb-2 text-[13px] text-muted">{staked.length > 0 ? `Staked cards · ${staked.length}` : "No cards staked. Stake a card below to earn its coin's trading tax."}</p>
+      {/* Which cards are staked: one row each, nothing cut off. */}
+      <div className="border-t border-border">
+        <p className="px-5 pt-3 pb-2 text-[13px] text-muted">{staked.length > 0 ? `Staked cards · ${staked.length}` : "No cards staked yet. Stake a card below to earn its coin's trading tax."}</p>
         {staked.length > 0 && (
-          <ul className="flex gap-2.5 overflow-x-auto pb-1">
+          <ul className="divide-y divide-border border-t border-border">
             {staked.map(({ card, coin, earns }) => (
-              <li key={card.id} className="flex w-[220px] shrink-0 items-center gap-2.5 rounded-md border border-border p-2">
-                <span className="relative block w-10 shrink-0 overflow-hidden rounded-[3px]">
-                  <StockCardFront art={cardArt(card)} rarity={card.rarity} brand={card.coinName} decorative sizes="40px" className="w-full" />
+              <li key={card.id} className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-4 px-5 py-2.5 desk:grid-cols-[36px_minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+                <span className="relative block w-9 overflow-hidden rounded-[3px]">
+                  <StockCardFront art={cardArt(card)} rarity={card.rarity} brand={card.coinName} decorative sizes="36px" className="w-full" />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm">#{card.id} · {card.ticker}</span>
-                  <span className="block truncate text-[12px] capitalize text-muted">{RARITIES[card.rarity]} · {coin.name}</span>
-                  <span className="num block truncate text-[12px]">{money(card.usd)} · <span className="text-up">{money(earns)}/day</span></span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm">{cardArt(card).name} <span className="text-muted">#{card.id}</span></span>
+                  <span className="block truncate text-[12px] capitalize text-muted">{RARITIES[card.rarity]} · {card.ticker} · {coin.name}</span>
                 </span>
-                <CardStakeButton card={card} className="!min-h-8 !w-auto shrink-0 px-2.5 text-[12px]" />
+                <span className="num hidden text-sm desk:block">
+                  <span className="block text-[12px] text-muted">Holds</span>{money(card.usd)}
+                </span>
+                <span className="num hidden text-sm desk:block">
+                  <span className="block text-[12px] text-muted">Earns</span><span className="text-up">{money(earns)}/day</span>
+                </span>
+                <CardStakeButton card={card} className="!min-h-9 !w-auto px-4 text-sm" />
               </li>
             ))}
           </ul>
