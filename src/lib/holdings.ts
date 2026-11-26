@@ -6,18 +6,20 @@ import { useDemo } from "@/lib/demo";
 import { stockOf } from "@/lib/stocks";
 import { demoTokenPrice } from "@/lib/market";
 import { useMarketCoins } from "@/lib/published-packs";
+import { simTokenPrice, useDemoLaunches } from "@/lib/demo-launch";
 
 /*
  * What the demo wallet holds: BNB, bStocks and tokens bought in Trade, the bStocks paid out by redeemed cards, and the
  * bStocks still sealed inside the cards you keep. Valued at live prices: BNB from the Atlas BNB/USD feed (/api/bnb), bStocks from signed Atlas prices (/api/atlas).
  */
 
-export type Holding = { key: string; label: string; name: string; ticker: string | null; amount: number; price: number | null };
+export type Holding = { key: string; label: string; name: string; ticker: string | null; amount: number; price: number | null; image?: string | null };
 
 export function useHoldings() {
   const demo = useDemo();
   const cards = useCollection();
   const coins = useMarketCoins();
+  const sims = useDemoLaunches();
   const assets = useMemo(() => demo.assets ?? {}, [demo.assets]);
   const [bnbUsd, setBnbUsd] = useState<number | null>(null);
   const [prices, setPrices] = useState<Map<number, number>>(new Map());
@@ -52,13 +54,13 @@ export function useHoldings() {
   for (const [k, amount] of Object.entries(assets)) if (!k.startsWith("token:") && amount > 0) redeemed.set(k, (redeemed.get(k) ?? 0) + amount);
   const tokens = Object.entries(assets).flatMap(([k, amount]) => {
     const coin = k.startsWith("token:") && amount > 0 ? coins.find((c) => c.slug === k.slice(6)) : undefined;
-    return coin ? [{ key: k, label: coin.name, name: "Token", ticker: null, amount, price: demoTokenPrice(coin) }] : [];
+    return coin ? [{ key: k, label: coin.config.ticker || coin.name, name: coin.name, image: coin.config.image, ticker: null, amount, price: simTokenPrice(sims, coin) ?? demoTokenPrice(coin) }] : [];
   });
 
   const holdings: Holding[] = [
     { key: "bnb", label: "BNB", name: "BNB Chain testnet", ticker: null, amount: demo.bnb, price: bnbUsd },
     ...(demo.active && demo.usdt > 0 ? [{ key: "usdt", label: "USDT", name: "Demo USDT", ticker: null, amount: demo.usdt, price: 1 }] : []),
-    ...[...redeemed].map(([ticker, amount]) => ({ key: ticker, label: `${ticker}B`, name: stockOf(ticker)?.name ?? ticker, ticker, amount, price: priceOf(ticker) })),
+    ...[...redeemed].map(([ticker, amount]) => ({ key: ticker, label: ticker, name: stockOf(ticker)?.name ?? ticker, ticker, amount, price: priceOf(ticker) })),
     ...tokens,
   ];
 

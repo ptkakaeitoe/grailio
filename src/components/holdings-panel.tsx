@@ -31,6 +31,9 @@ export function HoldingsPanel() {
                   <span className="row-span-2 grid size-7 place-items-center rounded-full bg-[#f0b90b] text-[11px] font-semibold text-[#111]" aria-hidden="true">BNB</span>
                 ) : h.key === "usdt" ? (
                   <span className="row-span-2 grid size-7 place-items-center rounded-full bg-[#26a17b] text-[13px] font-semibold text-[#fff]" aria-hidden="true">₮</span>
+                ) : h.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- small data URL from the launch flow
+                  <img src={h.image} alt="" className="row-span-2 size-7 rounded-full object-cover" />
                 ) : (
                   <span className="row-span-2 grid size-7 place-items-center rounded-full bg-surface-muted text-sm" aria-hidden="true">{h.label[0]}</span>
                 )}
