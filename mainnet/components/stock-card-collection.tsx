@@ -12,7 +12,7 @@ import { useToastedWrite } from "@/lib/toast";
 
 import { collectCardsAbi, collectMarketAbi, collectMarketAddress, collectPacksAbi, collectPacksAddress, collectPacksTreasuryAbi, collectStakingAbi, collectStakingAddress, collectStakingLive, STAKE_WEIGHTS } from "@/lib/collect-packs";
 import { PACK_TIERS, RARITY_NAMES, SNOWTRACE } from "@/lib/contracts";
-import { TOKENS } from "@/lib/tokens";
+import { TOKENS, USDC_DECIMALS } from "@/lib/tokens";
 import { cleanButton, cn } from "@/components/clean-ui";
 import { CollectionWelcome } from "@/components/collection-welcome";
 import { ListingCard, listingButton, listingButtonOutline, listingGrid } from "@/components/market-parts";
@@ -74,7 +74,7 @@ export function StockCardCollection() {
   const waitingRaw = distributableRead?.status === "success" && bpsRead?.status === "success"
     ? (distributableRead.result as bigint) * BigInt(bpsRead.result as number) / 10_000n
     : 0n;
-  const money6 = (raw: bigint) => `$${Number(formatUnits(raw, 6)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+  const money6 = (raw: bigint) => `$${Number(formatUnits(raw, USDC_DECIMALS)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
 
   const { writeContract, data: hash, isPending, error, reset } = useToastedWrite();
   const receipt = useWaitForTransactionReceipt({ hash });
@@ -141,9 +141,9 @@ export function StockCardCollection() {
 
       {stakeOn && (
         <StakingPoolPanel
-          pool={Number(formatUnits(poolNow, 6))}
-          waiting={Number(formatUnits(waitingRaw, 6))}
-          perDay={Number(formatUnits(payoutPerDay, 6))}
+          pool={Number(formatUnits(poolNow, USDC_DECIMALS))}
+          waiting={Number(formatUnits(waitingRaw, USDC_DECIMALS))}
+          perDay={Number(formatUnits(payoutPerDay, USDC_DECIMALS))}
           totalWeight={Number(totalWeight)}
           myWeight={myWeight}
           stakedCount={stakedCards.length}
@@ -164,7 +164,7 @@ export function StockCardCollection() {
           if (!art) return null;
           const key = String(card.id);
           const working = (name: string) => busy && action === `${name}-${key}`;
-          const listing = card.listPrice !== null ? `${card.listCurrency === "AVAX" ? `${fmt(card.listPrice, 4)} AVAX` : usd(card.listPrice)}` : null;
+          const listing = card.listPrice !== null ? `${card.listCurrency === "BNB" ? `${fmt(card.listPrice, 4)} BNB` : usd(card.listPrice)}` : null;
           const status = card.staked ? "Staked" : listing ? `Listed · ${listing}` : card.filled ? "In wallet" : "In wallet · holding USDC";
           const cardEarned = pendingOf.get(key) ?? 0n;
           return (
@@ -229,7 +229,7 @@ export function StockCardCollection() {
               }
               link={<span className="flex flex-wrap gap-x-4 gap-y-1">
                 {collectStakingLive && card.filled && !card.staked && !listing && <Link className="inline-flex items-center gap-1 hover:text-black" href="/marketplace">Sell on the marketplace <ArrowUpRightIcon weight="bold" /></Link>}
-                <a className="inline-flex items-center gap-1 hover:text-black" href={`${SNOWTRACE}/nft/${collectPacksAddress}/${key}`} target="_blank" rel="noreferrer">View on Snowtrace <ArrowUpRightIcon weight="bold" /></a>
+                <a className="inline-flex items-center gap-1 hover:text-black" href={`${SNOWTRACE}/nft/${collectPacksAddress}/${key}`} target="_blank" rel="noreferrer">View on BscScan <ArrowUpRightIcon weight="bold" /></a>
               </span>}
             />
           );

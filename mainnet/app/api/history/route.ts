@@ -3,7 +3,7 @@ import { fetchHistory, HISTORY_PERIODS, type HistoryPeriod } from "@/lib/quotes"
 import { fetchStockHistory } from "@/lib/stock-quotes";
 
 /**
- * Price history for the trade chart: /api/history?ticker=WAVAX&period=7D for
+ * Price history for the trade chart: /api/history?ticker=WBNB&period=7D for
  * tokens (DEX pools), or a demo stock ticker (Yahoo Finance), e.g. ticker=NVDA.
  */
 export async function GET(req: Request) {

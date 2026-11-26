@@ -22,7 +22,7 @@ const brandFont = Syne({
   weight: "700",
 });
 
-const description = "Open packs, collect token cards and trade them on Avalanche. Public beta.";
+const description = "Open packs, collect token cards and trade them on BNB Chain. Public beta.";
 
 /** Link previews use app/opengraph-image.jpg and app/twitter-image.jpg (the mark on the glow, square). */
 export const metadata: Metadata = {

@@ -27,9 +27,9 @@ const CHAPTERS: { id: string; title: string; lead: string; actions: Action[] }[]
   {
     id: "tokens",
     title: "Tokens",
-    lead: "USDC is the app's money and counts as $1. Token prices come from Avalanche DEX pools.",
+    lead: "USDC is the app's money and counts as $1. Token prices come from BNB Chain DEX pools.",
     actions: [
-      { name: "Swap", what: "Swap USDC or AVAX for BTC.b, WETH.e, WAVAX, LINK.e or JOE, and back. KyberSwap routes each trade across Avalanche DEXes for the best price. Approve a token once; your wallet signs every swap.", call: "KyberSwap router", address: SWAP_ROUTER, cost: "DEX fees + gas", href: "/trade" },
+      { name: "Swap", what: "Swap USDC or BNB for BTCB, ETH, WBNB, LINK or CAKE, and back. KyberSwap routes each trade across BNB Chain DEXes for the best price. Approve a token once; your wallet signs every swap.", call: "KyberSwap router", address: SWAP_ROUTER, cost: "DEX fees + gas", href: "/trade" },
     ],
   },
   {
@@ -45,9 +45,9 @@ const CHAPTERS: { id: string; title: string; lead: string; actions: Action[] }[]
   {
     id: "market",
     title: "Marketplace",
-    lead: "Cards trade peer to peer, priced in AVAX or USDC. Listings stay in the seller's wallet until they sell.",
+    lead: "Cards trade peer to peer, priced in BNB or USDC. Listings stay in the seller's wallet until they sell.",
     actions: [
-      { name: "List a card", what: "Approve the market once, then pick AVAX or USDC, a price and how long. Nothing moves until it sells; cancel any time.", call: "CollectMarket.list()", address: collectMarketAddress, cost: "Gas only", href: "/marketplace" },
+      { name: "List a card", what: "Approve the market once, then pick BNB or USDC, a price and how long. Nothing moves until it sells; cancel any time.", call: "CollectMarket.list()", address: collectMarketAddress, cost: "Gas only", href: "/marketplace" },
       { name: "Buy a card", what: "Pay in the listing's currency. The seller gets 99%; 1% goes to the treasury.", call: "CollectMarket.buy()", address: collectMarketAddress, cost: "1% fee", href: "/marketplace" },
     ],
   },
@@ -63,7 +63,7 @@ const CHAPTERS: { id: string; title: string; lead: string; actions: Action[] }[]
   {
     id: "community",
     title: "Community",
-    lead: "Chat lives on Avalanche. The lounge is public; each token's room is encrypted for its card holders.",
+    lead: "Chat lives on BNB Chain. The lounge is public; each token's room is encrypted for its card holders.",
     actions: [
       { name: "Enable chat", what: "Two signatures create your chat key and authorise this device.", call: "CollectChat.register()", address: chatAddress, cost: "Free · no gas", href: "/community" },
       { name: "Post", what: "Signed in your browser, relayed on-chain. Token rooms need a card of that token to read and post.", call: "CollectChat.postFor()", address: chatAddress, cost: "Free · no gas", href: "/community" },
@@ -76,7 +76,7 @@ const SHOWN_CHAPTERS = CHAPTERS.filter((c) => DAO_VISIBLE || c.id !== "dao");
 
 const CONTRACTS = [
   { name: "CollectPacks", role: "$1 packs, the USDC prize pool, and the cards (ERC-721)", address: collectPacksAddress },
-  { name: "CollectMarket", role: "Card trading in AVAX or USDC, non-custodial", address: collectMarketAddress },
+  { name: "CollectMarket", role: "Card trading in BNB or USDC, non-custodial", address: collectMarketAddress },
   { name: "CollectPoints", role: "Non-transferable collector points, 1 per pack", address: pointsAddress },
   ...(DAO_VISIBLE ? [{ name: "CollectDAO", role: "Proposals and points-weighted votes", address: daoAddress }] : []),
   { name: "CollectChat", role: "On-chain chat, card-gated encrypted rooms", address: chatAddress },
@@ -119,7 +119,7 @@ export default function InfoPage() {
               </a>
             ))}
           </nav>
-          <p className="mt-7 text-xs text-muted max-desk:hidden">Built on Avalanche · beta</p>
+          <p className="mt-7 text-xs text-muted max-desk:hidden">Built on BNB Chain · beta</p>
         </aside>
 
         <div className="min-w-0 max-w-[760px]">
@@ -128,8 +128,8 @@ export default function InfoPage() {
             <h2 className={chapterTitle}>Three steps.</h2>
             <ol className="mt-2 mb-5 grid list-none grid-cols-1 border-t border-border phone:grid-cols-3">
               {[
-                ["Connect", <>Any wallet, on Avalanche C-Chain.</>],
-                ["Hold a little AVAX", <>It pays network gas on Avalanche C-Chain.</>],
+                ["Connect", <>Any wallet, on BNB Smart Chain.</>],
+                ["Hold a little BNB", <>It pays network gas on BNB Smart Chain.</>],
                 ["Open a pack", <>Start on <Link className={inlineLink} href="/packs">/packs</Link>, or try the demo first.</>],
               ].map(([title, body], i) => (
                 <li key={i} className="pt-5 pr-5">
@@ -139,7 +139,7 @@ export default function InfoPage() {
                 </li>
               ))}
             </ol>
-            <p className={chapterBody}>Public beta. Cards are collectibles backed by Avalanche tokens.</p>
+            <p className={chapterBody}>Public beta. Cards are collectibles backed by BNB Chain tokens.</p>
           </section>
 
           {SHOWN_CHAPTERS.map((ch, ci) => (
@@ -189,7 +189,7 @@ export default function InfoPage() {
           <section id="contracts" className={chapter}>
             <p className={chapterLabel}>[ {String(CHAPTERS.length + 2).padStart(2, "0")} / under the hood ]</p>
             <h2 className={chapterTitle}>The contracts.</h2>
-            <p className={chapterBody}>All on Avalanche C-Chain. Prices come from Avalanche DEX pools (Uniswap v3, LFJ).</p>
+            <p className={chapterBody}>All on BNB Smart Chain. Prices come from BNB Chain DEX pools (PancakeSwap v3, PancakeSwap).</p>
             <ul className="mt-3 list-none border-t border-border">
               {CONTRACTS.map((c) => (
                 <li key={c.name} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border py-3.5">

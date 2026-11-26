@@ -7,7 +7,7 @@ import { GIFT_GAS_AMOUNT, GIFT_GAS_MAX_AGE, GIFT_GAS_THRESHOLD, giftGasMessage }
 import { limitStore, withSendLock } from "@/lib/relay-limits";
 
 /**
- * POST { signer, recipient, issuedAt, signature }: a small AVAX top-up from the
+ * POST { signer, recipient, issuedAt, signature }: a small BNB top-up from the
  * relayer so a gift recipient can pay to claim and open their packs.
  *
  * Only when: the gift code's key signed giftGasMessage(recipient, issuedAt)
@@ -57,18 +57,18 @@ export async function POST(request: Request) {
     // Once per gift and once per wallet, and a daily cap.
     const day = new Date().toISOString().slice(0, 10);
     const [today] = await store.incr([[`giftgas:day:${day}`, 2 * 86_400]]);
-    if (today > DAILY_CAP) return no("Gas help is used up for today. Add a little AVAX to claim.", 429);
+    if (today > DAILY_CAP) return no("Gas help is used up for today. Add a little BNB to claim.", 429);
     const giftKey = `giftgas:gift:${signer.toLowerCase()}`;
     if (!(await store.lock(giftKey, recipient.toLowerCase(), ONCE_MS))) {
       // Usually the same person signed in a different way (email vs Google), which gives another wallet.
       const earlier = await store.holder(giftKey);
       const where = earlier && earlier !== recipient.toLowerCase() ? ` (${earlier.slice(0, 6)}…${earlier.slice(-4)})` : "";
-      return no(`This gift's free gas already went to another wallet${where}. Sign in the same way as last time to claim it there, or add a little AVAX to this wallet.`, 409);
+      return no(`This gift's free gas already went to another wallet${where}. Sign in the same way as last time to claim it there, or add a little BNB to this wallet.`, 409);
     }
     if (!(await store.lock(`giftgas:wallet:${recipient.toLowerCase()}`, signer.toLowerCase(), ONCE_MS))) {
       // Refused for this wallet: don't use up the gift's one top-up.
       await store.unlock(giftKey, recipient.toLowerCase()).catch(() => {});
-      return no("This wallet already got free gas for another gift. Add a little AVAX to claim.", 409);
+      return no("This wallet already got free gas for another gift. Add a little BNB to claim.", 409);
     }
 
     // If sending fails, free the once-only keys so the person can try again.

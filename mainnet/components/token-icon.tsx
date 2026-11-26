@@ -2,7 +2,7 @@ import { cn } from "@/components/clean-ui";
 
 /**
  * Token and demo-stock marks drawn as inline SVG (no network requests), in
- * each brand's colour. Keys accept both card tickers (BTC) and token symbols (BTC.b).
+ * each brand's colour. Keys accept both card tickers (BTC) and token symbols (BTCB).
  */
 const MARKS: Record<string, { bg: string; mark: React.ReactNode }> = {
   USDC: {
@@ -17,13 +17,17 @@ const MARKS: Record<string, { bg: string; mark: React.ReactNode }> = {
       </>
     ),
   },
-  AVAX: {
-    bg: "#E84142",
+  // BNB's mark: a centre diamond with four smaller diamonds around it, drawn here.
+  BNB: {
+    bg: "#F0B90B",
     mark: (
-      <path
-        fill="#fff"
-        d="M15.1 8.6 8.3 20.6c-.4.7.1 1.6.9 1.6h4.4c.6 0 1.1-.3 1.4-.8l4-6.9c.3-.5.3-1.1 0-1.6l-2.1-4.3c-.4-.8-1.4-.8-1.8 0ZM20.8 16.9l-2.6 4.6c-.4.7.1 1.6.9 1.6h5.2c.8 0 1.3-.9.9-1.6l-2.6-4.6c-.4-.7-1.4-.7-1.8 0Z"
-      />
+      <g fill="#fff" transform="rotate(45 16 16)">
+        <rect x="13.4" y="13.4" width="5.2" height="5.2" />
+        <rect x="14.2" y="6.6" width="3.6" height="3.6" />
+        <rect x="14.2" y="21.8" width="3.6" height="3.6" />
+        <rect x="6.6" y="14.2" width="3.6" height="3.6" />
+        <rect x="21.8" y="14.2" width="3.6" height="3.6" />
+      </g>
     ),
   },
   BTC: {
@@ -55,10 +59,16 @@ const MARKS: Record<string, { bg: string; mark: React.ReactNode }> = {
     bg: "#2A5ADA",
     mark: <path fill="none" stroke="#fff" strokeWidth="2.8" strokeLinejoin="miter" d="M16 7.2 23.6 11.6v8.8L16 24.8l-7.6-4.4v-8.8Z" />,
   },
-  // LFJ's official JOE logo (lfj-gg/joe-tokenlists, MIT), already round with a transparent edge.
-  JOE: {
-    bg: "transparent",
-    mark: <image href="/tokens/joe.png" x="0" y="0" width="32" height="32" />,
+  // CAKE: PancakeSwap's teal with a simple drawn bunny head (two ears and a face).
+  CAKE: {
+    bg: "#1FC7D4",
+    mark: (
+      <g fill="#fff">
+        <ellipse cx="12.4" cy="10.6" rx="2" ry="4.6" />
+        <ellipse cx="19.6" cy="10.6" rx="2" ry="4.6" />
+        <ellipse cx="16" cy="19" rx="7.4" ry="5.6" />
+      </g>
+    ),
   },
   // KyberSwap's mark, cut from its official header logo (kyberswap.com/logo-dark.svg), colours unchanged.
   KYBER: {
@@ -101,11 +111,9 @@ const MARKS: Record<string, { bg: string; mark: React.ReactNode }> = {
 };
 
 const ALIASES: Record<string, string> = {
-  WAVAX: "AVAX",
-  "BTC.B": "BTC",
-  "WETH.E": "ETH",
+  WBNB: "BNB",
+  BTCB: "BTC",
   WETH: "ETH",
-  "LINK.E": "LINK",
 };
 
 /** `color`: background for symbols without a mark (e.g. demo stocks), drawn as their first letter. */

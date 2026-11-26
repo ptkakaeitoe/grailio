@@ -42,7 +42,7 @@ export function PackContentsDialog({
   // Only this pack's risks: Fable shows Low / Medium / High, not every pack's tiers.
   const edition = editionForTier(tierId);
   const options = edition.tiers ?? [edition.tier];
-  // The cards a pack can hold: stocks in demo mode, Avalanche tokens otherwise.
+  // The cards a pack can hold: stocks in demo mode, BNB Chain tokens otherwise.
   const { cards } = useCards();
 
   useEffect(() => {

@@ -59,7 +59,7 @@ export function MarketplaceWorkspace({ mode = "both" }: { mode?: MarketMode }) {
           submitLabel="Coming soon"
           submitDisabled
           onSubmit={() => {}}
-          note="Selling opens when cards go live on Avalanche."
+          note="Selling opens when cards go live on BNB Chain."
         />
       ) : <>
             <div className="mb-6 flex items-baseline justify-between gap-3">

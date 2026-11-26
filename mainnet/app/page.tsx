@@ -14,7 +14,7 @@ import { EDITIONS } from "@/lib/editions";
 const FLOW = [
   {
     title: "Connect a wallet",
-    body: "Core or MetaMask, on Avalanche C-Chain.",
+    body: "MetaMask or Trust Wallet, on BNB Smart Chain.",
   },
   {
     title: "Choose a pack",
@@ -54,7 +54,7 @@ const CARD_ACTIONS = [
 const MORE = [
   {
     title: "Trade the tokens",
-    body: "Swap USDC or AVAX for tokens that follow real share prices.",
+    body: "Swap USDC or BNB for tokens that follow real share prices.",
     href: "/trade",
     cta: "start trading",
   },
@@ -136,7 +136,7 @@ export default function Home() {
               <span className="absolute inset-0 animate-ping rounded-full bg-up opacity-60 motion-reduce:animate-none" />
               <span className="relative size-2 rounded-full bg-up" />
             </span>
-            Live on <TokenIcon symbol="AVAX" className="size-5" /> <span className="text-black">Avalanche</span>
+            Live on <TokenIcon symbol="BNB" className="size-5" /> <span className="text-black">BNB Chain</span>
           </li>
           {(
             [
@@ -370,8 +370,8 @@ export default function Home() {
         </ul>
         <div className="mt-10 flex flex-col items-start justify-between gap-6 desk:mt-14 desk:flex-row desk:items-end">
           <p className="max-w-[540px] text-sm leading-normal text-muted">
-            Avalanche C-Chain, public beta. Cards are collectibles backed by
-            Avalanche tokens, priced from DEX pools. Not investment products.
+            BNB Smart Chain, public beta. Cards are collectibles backed by
+            BNB Chain tokens, priced from DEX pools. Not investment products.
           </p>
           <Link
             href="/packs"

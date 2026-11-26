@@ -6,7 +6,7 @@ import { cardArt, artOf, FABLE_CARDS } from '../lib/cards.ts';
 test('all Fable risk tiers use the four approved designs regardless of coin', async () => {
   const names = ['Coal Worker', 'Flame Smith', 'Cinder Knight', 'Ember King'];
   for (const tier of [0, 1, 2]) {
-    for (const ticker of ['BTC', 'ETH', 'WAVAX', 'LINK', 'JOE', 'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN']) {
+    for (const ticker of ['BTC', 'ETH', 'WBNB', 'LINK', 'CAKE', 'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN']) {
       for (let rarity = 0; rarity < 4; rarity++) {
         const art = cardArt(ticker, rarity, tier);
         assert.equal(art.name, names[rarity]);
@@ -22,7 +22,7 @@ test('all Fable risk tiers use the four approved designs regardless of coin', as
 test('Saga uses its own four designs for every risk and the retired duplicate tier', async () => {
   const names = ['Deckhand', 'Raider', 'Captain', 'Pirate Lord'];
   for (const tier of [3, 4, 6, 7]) {
-    for (const ticker of ['BTC', 'ETH', 'WAVAX', 'LINK', 'JOE', 'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN']) {
+    for (const ticker of ['BTC', 'ETH', 'WBNB', 'LINK', 'CAKE', 'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN']) {
       for (let rarity = 0; rarity < names.length; rarity++) {
         const art = cardArt(ticker, rarity, tier);
         assert.equal(art.name, names[rarity]);
@@ -40,7 +40,7 @@ test('Saga uses its own four designs for every risk and the retired duplicate ti
 test('Mythos uses its own creatures for all risks and coins', async () => {
   const names = ['Imp', 'Gargoyle', 'Wyrm', 'Ancient Dragon'];
   for (const tier of [5, 8, 9]) {
-    for (const ticker of ['BTC', 'ETH', 'WAVAX', 'LINK', 'JOE', 'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN']) {
+    for (const ticker of ['BTC', 'ETH', 'WBNB', 'LINK', 'CAKE', 'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN']) {
       for (let rarity = 0; rarity < names.length; rarity++) {
         const art = cardArt(ticker, rarity, tier);
         assert.equal(art.name, names[rarity]);

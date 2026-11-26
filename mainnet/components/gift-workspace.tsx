@@ -189,7 +189,7 @@ function ClaimForm({ onSignIn, onClose, onOpenPacks }: { onSignIn?: () => void; 
   const [signingIn, setSigningIn] = useState(false);
   const { address } = useAccount();
   const client = usePublicClient();
-  // New wallets have no AVAX: the relayer adds a little before the claim (app/api/gift/gas).
+  // New wallets have no BNB: the relayer adds a little before the claim (app/api/gift/gas).
   const [gasStep, setGasStep] = useState<"idle" | "adding" | "failed">("idle");
   const [gasError, setGasError] = useState<string | null>(null);
 
@@ -245,7 +245,7 @@ function ClaimForm({ onSignIn, onClose, onOpenPacks }: { onSignIn?: () => void; 
   const blocker = !parsed ? null
     : parsed.kind === "demo" && !demo.active ? <>This is a demo gift. <button type="button" className="text-black underline underline-offset-4" onClick={demo.start}>Try the demo</button> to claim it.</>
     : parsed.kind === "live" && demo.active ? "This is a real gift. Exit demo mode and connect your wallet to claim it."
-    : parsed.kind === "live" && !collectPacksLive ? "Real gifts open when packs launch on Avalanche."
+    : parsed.kind === "live" && !collectPacksLive ? "Real gifts open when packs launch on BNB Chain."
     : null;
   const needsWallet = parsed?.kind === "live" && !demo.active && collectPacksLive && !isConnected;
   const done = demoResult?.ok || live.done;

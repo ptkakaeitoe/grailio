@@ -1,11 +1,11 @@
 import { zeroAddress, type Address } from "viem";
 
-import deployment from "@/deployments/43114.json";
+import deployment from "@/deployments/56.json";
 
 /**
  * CollectPacks (contracts/src/CollectPacks.sol): $1 USDC packs whose cards hold
  * real tokens, plus the USDC prize pool and its treasury controls. Written into
- * deployments/43114.json by contracts/script/DeployCollectPacks.s.sol.
+ * deployments/56.json by contracts/script/DeployCollectPacks.s.sol.
  */
 export const collectPacksAddress = ((deployment as { collectPacks?: string }).collectPacks ?? zeroAddress) as Address;
 export const collectPacksLive = collectPacksAddress !== zeroAddress;
@@ -70,9 +70,9 @@ export const collectStakingAbi = [
 ] as const;
 
 /** Card asset index → card ticker, in MainnetConfig.addAssets order. */
-export const ASSET_TICKERS = ["BTC", "ETH", "WAVAX", "LINK", "JOE"] as const;
+export const ASSET_TICKERS = ["BTC", "ETH", "WBNB", "LINK", "CAKE"] as const;
 
-/** CollectMarket (contracts/src/CollectMarket.sol): non-custodial card market, each listing priced in AVAX or USDC. */
+/** CollectMarket (contracts/src/CollectMarket.sol): non-custodial card market, each listing priced in BNB or USDC. */
 export const collectMarketAddress = ((deployment as { collectMarket?: string }).collectMarket ?? zeroAddress) as Address;
 export const collectMarketLive = collectPacksLive && collectMarketAddress !== zeroAddress;
 

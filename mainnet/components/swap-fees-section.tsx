@@ -27,7 +27,7 @@ export function SwapFeesSection() {
   });
   const avax = useBalance({ address: SWAP_FEE_TREASURY, query: { refetchInterval: 60_000 } });
   const held = [
-    ...(avax.data ? [{ symbol: "AVAX", amount: Number(formatUnits(avax.data.value, 18)) }] : []),
+    ...(avax.data ? [{ symbol: "BNB", amount: Number(formatUnits(avax.data.value, 18)) }] : []),
     ...erc20s.map((t, i) => {
       const row = balances.data?.[i];
       return { symbol: t.symbol, amount: row?.status === "success" ? Number(formatUnits(row.result as bigint, t.decimals)) : 0 };

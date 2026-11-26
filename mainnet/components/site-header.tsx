@@ -169,7 +169,7 @@ export function SiteHeader() {
       {wrongNetwork && (
         <div className="border-b border-warning/20 bg-warning-soft">
           <div className="mx-auto max-w-6xl px-4 py-2 text-center text-xs font-medium text-warning">
-            Connected to {chain.name}. Switch to Avalanche C-Chain to interact with
+            Connected to {chain.name}. Switch to BNB Smart Chain to interact with
             these contracts.
           </div>
         </div>

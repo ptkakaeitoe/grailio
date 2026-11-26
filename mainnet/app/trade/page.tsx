@@ -4,7 +4,7 @@ import { SwapWorkspace } from "@/components/swap-workspace";
 
 export const metadata: Metadata = {
   title: "Trade — grailio",
-  description: "Swap USDC and AVAX for Avalanche tokens at DEX prices.",
+  description: "Swap USDC and BNB for BNB Chain tokens at DEX prices.",
 };
 
 export default function TradePage() {

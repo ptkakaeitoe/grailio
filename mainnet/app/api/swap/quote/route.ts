@@ -2,7 +2,7 @@ import { kyberRoute, SwapError } from "@/lib/kyber";
 import { tokenFor } from "@/lib/tokens";
 
 /**
- * Best route across Avalanche DEXes: /api/swap/quote?from=USDC&to=BTC&amount=100000000
+ * Best route across BNB Chain DEXes: /api/swap/quote?from=USDC&to=BTC&amount=100000000
  * `amount` is in the input token's smallest unit. Read-only; open to everyone.
  */
 export async function GET(req: Request) {

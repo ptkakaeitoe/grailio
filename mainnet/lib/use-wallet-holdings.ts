@@ -8,17 +8,17 @@ import { CARD_BY_TICKER, DEMO_STOCK_CARDS } from "@/lib/cards";
 import { TOKENS as REAL_TOKENS } from "@/lib/tokens";
 import { useStockPrices } from "@/lib/use-stock-prices";
 
-/** The real Avalanche tokens a wallet can hold here (AVAX is read separately). Keyed by price ticker. */
+/** The real BNB Chain tokens a wallet can hold here (BNB is read separately). Keyed by price ticker. */
 const TOKENS = Object.entries(REAL_TOKENS)
   .filter(([, t]) => !t.native)
   .map(([key, t]) => ({ key, label: t.symbol, token: t.address, decimals: t.decimals, color: key === "USDC" ? "#2775ca" : CARD_BY_TICKER[key]?.accent ?? "#888" }));
 
-const AVAX_COLOR = "#e84142";
+const AVAX_COLOR = "#f0b90b";
 
 export type Holding = { label: string; color: string; value: number; price: number | null };
 
 /**
- * AVAX plus every token the wallet holds, priced in USD (USDC is $1, the rest
+ * BNB plus every token the wallet holds, priced in USD (USDC is $1, the rest
  * use live DEX prices). The connected wallet unless `account` is given. In
  * demo mode the connected view uses the simulated ledger instead of the chain;
  * another account's is always read live.
@@ -39,7 +39,7 @@ export function useWalletHoldings(account?: Address) {
     query,
   });
 
-  const avaxUsd = byTicker.WAVAX?.price ?? null;
+  const avaxUsd = byTicker.WBNB?.price ?? null;
   const priceOf = (key: string) => (key === "USDC" ? 1 : byTicker[key]?.price ?? null);
 
   let loaded: boolean;
@@ -47,7 +47,7 @@ export function useWalletHoldings(account?: Address) {
   if (demo.active) {
     loaded = true;
     holdings = [
-      { label: "AVAX", color: AVAX_COLOR, value: demo.balances.AVAX ?? 0, price: avaxUsd },
+      { label: "BNB", color: AVAX_COLOR, value: demo.balances.BNB ?? 0, price: avaxUsd },
       ...[{ label: "USDC", color: "#2775ca", key: "USDC" }, ...DEMO_STOCK_CARDS.map((card) => ({ label: card.ticker, color: card.accent, key: card.ticker }))]
         .flatMap((t) => {
           const value = demo.balances[t.label] ?? 0;
@@ -58,7 +58,7 @@ export function useWalletHoldings(account?: Address) {
     loaded = avax.data !== undefined && tokens.data !== undefined;
     holdings = loaded
       ? [
-          { label: "AVAX", color: AVAX_COLOR, value: Number(formatEther(avax.data!.value)), price: avaxUsd },
+          { label: "BNB", color: AVAX_COLOR, value: Number(formatEther(avax.data!.value)), price: avaxUsd },
           ...TOKENS.flatMap((t, i) => {
             const row = tokens.data![i];
             const raw = row?.status === "success" ? (row.result as bigint) : 0n;

@@ -7,7 +7,7 @@ import { cn } from "@/components/clean-ui";
 /** Scrolling price ticker; the list renders twice so the loop is seamless. */
 export function LivePrices() {
   const { byTicker, failed } = useStockPrices();
-  // Stocks in demo mode, Avalanche tokens otherwise.
+  // Stocks in demo mode, BNB Chain tokens otherwise.
   const { cards } = useCards();
 
   const items = cards.map((card) => {

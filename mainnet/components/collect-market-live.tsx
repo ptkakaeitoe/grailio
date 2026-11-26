@@ -35,15 +35,15 @@ import { TokenIcon } from "@/components/token-icon";
 import { appChain, explorerUrl } from "@/lib/chain";
 import { collectMarketAbi, collectMarketAddress, collectPacksAddress } from "@/lib/collect-packs";
 import { erc20Abi, PACK_TIERS, RARITY_NAMES } from "@/lib/contracts";
-import { TOKENS } from "@/lib/tokens";
+import { TOKENS, USDC_DECIMALS } from "@/lib/tokens";
 import { useApproval, useNftApproval } from "@/lib/use-approval";
 import { priceAmount, useCollectListings, useMyCollectCards, type CardInfo, type CollectListing } from "@/lib/use-collect-market";
 import { useNowSeconds } from "@/lib/use-now";
 import { usd, useStockPrices } from "@/lib/use-stock-prices";
 import { txErrorMessage } from "@/lib/tx-error";
 
-type Currency = "AVAX" | "USDC";
-const money = (raw: bigint) => usd(Number(formatUnits(raw, 6)));
+type Currency = "BNB" | "USDC";
+const money = (raw: bigint) => usd(Number(formatUnits(raw, USDC_DECIMALS)));
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const amountText = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: n < 1 ? 8 : 4 });
 const DURATIONS = [
@@ -60,8 +60,8 @@ function timeLeft(expiresAt: number, now: number) {
   return `${Math.floor(s / 86_400)}d`;
 }
 
-/** A listing's price in its own currency, e.g. "0.75 AVAX" or "$5.00". */
-const priceText = (l: Pick<CollectListing, "price" | "inAvax">) => (l.inAvax ? `${amountText(priceAmount(l))} AVAX` : money(l.price));
+/** A listing's price in its own currency, e.g. "0.75 BNB" or "$5.00". */
+const priceText = (l: Pick<CollectListing, "price" | "inAvax">) => (l.inAvax ? `${amountText(priceAmount(l))} BNB` : money(l.price));
 
 export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
   const { address, chain } = useAccount();
@@ -71,15 +71,15 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
   const { listings, loading, error: loadError, refetch } = useCollectListings();
   const mine = useMyCollectCards();
   const { byTicker } = useStockPrices(60_000, "tokens");
-  const avaxUsd = byTicker.WAVAX?.price ?? null;
+  const avaxUsd = byTicker.WBNB?.price ?? null;
 
   /** What a card holds, at live DEX prices. */
   const worth = (card: CardInfo) => {
-    if (!card.filled) return Number(formatUnits(card.usd, 6));
+    if (!card.filled) return Number(formatUnits(card.usd, USDC_DECIMALS));
     const price = byTicker[card.ticker]?.price;
     return price ? card.amount * price : null;
   };
-  /** A listing's price in USD, so AVAX and USDC listings compare. */
+  /** A listing's price in USD, so BNB and USDC listings compare. */
   const usdOf = (l: CollectListing) => (l.inAvax ? (avaxUsd ? priceAmount(l) * avaxUsd : null) : priceAmount(l));
 
   const [rarity, setRarity] = useState("all");
@@ -101,7 +101,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
     return { card, count: forCard.length, floor: cheapest ? priceText(cheapest) : "—" };
   });
 
-  // One USDC approval covers every USDC listing up to the dearest one. AVAX needs none.
+  // One USDC approval covers every USDC listing up to the dearest one. BNB needs none.
   const maxUsdcPrice = listings.reduce((m, l) => (!l.inAvax && l.price > m ? l.price : m), 0n);
   const usdcApproval = useApproval(address ? TOKENS.USDC.address : null, collectMarketAddress, maxUsdcPrice);
   const nftApproval = useNftApproval(collectPacksAddress, collectMarketAddress);
@@ -137,7 +137,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
   function buy(l: CollectListing) {
     const key = l.id.toString();
     if (l.inAvax) {
-      // AVAX listings: pay the exact price as the transaction value, no approval.
+      // BNB listings: pay the exact price as the transaction value, no approval.
       reset();
       setAction(key);
       writeContract({ address: collectMarketAddress, abi: collectMarketAbi, functionName: "buy", args: [collectPacksAddress, l.id, true, l.price], value: l.price });
@@ -158,7 +158,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
   const [days, setDays] = useState(7);
   let priceRaw = 0n;
   try {
-    priceRaw = price.trim() ? parseUnits(price.trim(), currency === "AVAX" ? 18 : 6) : 0n;
+    priceRaw = price.trim() ? parseUnits(price.trim(), currency === "BNB" ? 18 : USDC_DECIMALS) : 0n;
   } catch {
     priceRaw = 0n;
   }
@@ -166,7 +166,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
   // Suggested price: what the card holds, in the chosen currency.
   const suggestion = selectedWorth === null ? null : currency === "USDC" ? selectedWorth.toFixed(2) : avaxUsd ? (selectedWorth / avaxUsd).toFixed(4) : null;
   const payoutRaw = priceRaw - (priceRaw * BigInt(Math.round(fee * 10_000))) / 10_000n;
-  const payoutText = currency === "AVAX" ? `${amountText(Number(formatUnits(payoutRaw, 18)))} AVAX` : money(payoutRaw);
+  const payoutText = currency === "BNB" ? `${amountText(Number(formatUnits(payoutRaw, 18)))} BNB` : money(payoutRaw);
 
   const SellTitle = mode === "sell" ? "h1" : "h2";
 
@@ -174,7 +174,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
     if (!selected || priceRaw <= 0n) return;
     if (!nftApproval.approved) { nftApproval.approve(); return; }
     const expiresAt = BigInt(now + days * 86_400);
-    run(`list-${selected.id}`, { address: collectMarketAddress, abi: collectMarketAbi, functionName: "list", args: [collectPacksAddress, selected.id, priceRaw, currency === "AVAX", expiresAt] });
+    run(`list-${selected.id}`, { address: collectMarketAddress, abi: collectMarketAbi, functionName: "list", args: [collectPacksAddress, selected.id, priceRaw, currency === "BNB", expiresAt] });
   }
 
   const sellPage = (
@@ -257,7 +257,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
                     title={`card #${key}`}
                     price={
                       <span className="inline-flex items-center gap-1.5">
-                        <TokenIcon symbol={l.inAvax ? "AVAX" : "USDC"} className="size-4" title={l.inAvax ? "Priced in AVAX" : "Priced in USDC"} />
+                        <TokenIcon symbol={l.inAvax ? "BNB" : "USDC"} className="size-4" title={l.inAvax ? "Priced in BNB" : "Priced in USDC"} />
                         {priceText(l)}
                         {l.inAvax && priceUsd !== null && <span className="text-sm text-muted">≈ {usd(priceUsd)}</span>}
                       </span>
@@ -265,12 +265,12 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
                     details={[
                       { label: "Inside", value: l.filled ? `${tokenAmount(l.amount)} ${TOKENS[l.ticker].symbol}` : `${money(l.usd)} USDC (unfilled)` },
                       { label: "Worth now", value: value === null ? "—" : usd(value) },
-                      { label: "Paid in", value: l.inAvax ? "AVAX" : "USDC" },
+                      { label: "Paid in", value: l.inAvax ? "BNB" : "USDC" },
                       { label: "Pack", value: PACK_TIERS[l.tier]?.name ?? "—" },
                       { label: "Seller", value: own ? "You" : short(l.seller) },
                       { label: "Ends in", value: timeLeft(l.expiresAt, now) },
                     ]}
-                    link={<a className="inline-flex items-center gap-1 hover:text-black" href={`${explorerUrl}/nft/${collectPacksAddress}/${key}`} target="_blank" rel="noreferrer">View on Snowtrace <ArrowUpRightIcon weight="bold" /></a>}
+                    link={<a className="inline-flex items-center gap-1 hover:text-black" href={`${explorerUrl}/nft/${collectPacksAddress}/${key}`} target="_blank" rel="noreferrer">View on BscScan <ArrowUpRightIcon weight="bold" /></a>}
                     action={
                       !address ? (
                         <button type="button" className={listingButton} onClick={openConnect}>Connect to buy</button>
@@ -342,7 +342,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
                 <div className="flex flex-col gap-1.5 text-sm text-muted">
                   <span>Get paid in</span>
                   <div className="flex gap-1.5" role="group" aria-label="Listing currency">
-                    {(["USDC", "AVAX"] as const).map((c) => (
+                    {(["USDC", "BNB"] as const).map((c) => (
                       <button key={c} type="button" aria-pressed={currency === c} className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-border px-2 py-2 text-sm text-black transition-colors hover:border-black aria-pressed:border-black" onClick={() => { setCurrency(c); setPrice(""); }}>
                         <TokenIcon symbol={c} className="size-4" /> {c}
                       </button>
@@ -383,7 +383,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
       {(txError || usdcApproval.error || nftApproval.error) && (
         <p className="mt-6 text-sm break-words text-down" role="alert">{txErrorMessage((txError ?? usdcApproval.error ?? nftApproval.error)!)}</p>
       )}
-      {address && !onChain && <p className="mt-6 text-sm text-down" role="alert">Switch your wallet to Avalanche C-Chain.</p>}
+      {address && !onChain && <p className="mt-6 text-sm text-down" role="alert">Switch your wallet to BNB Smart Chain.</p>}
 
       {picking && (
         <CardPickerDialog
@@ -400,9 +400,9 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
         const l = confirming;
         const art = cardArt(l.ticker, l.rarity, l.tier);
         // Your balance of the listing's currency, in whole units.
-        const have = l.inAvax ? (avaxBalance.data ? Number(formatUnits(avaxBalance.data.value, 18)) : null) : usdcBalance.data !== undefined ? Number(formatUnits(usdcBalance.data as bigint, 6)) : null;
+        const have = l.inAvax ? (avaxBalance.data ? Number(formatUnits(avaxBalance.data.value, 18)) : null) : usdcBalance.data !== undefined ? Number(formatUnits(usdcBalance.data as bigint, USDC_DECIMALS)) : null;
         const cost = priceAmount(l);
-        const money = (n: number) => (l.inAvax ? `${amountText(n)} AVAX` : usd(n));
+        const money = (n: number) => (l.inAvax ? `${amountText(n)} BNB` : usd(n));
         const value = worth(l);
         const priceUsd = usdOf(l);
         const key = l.id.toString();
@@ -411,7 +411,7 @@ export function CollectMarketLive({ mode = "both" }: { mode?: MarketMode }) {
           <BuyConfirmDialog
             art={art}
             rarity={l.rarity}
-            inside={l.filled ? `${tokenAmount(l.amount)} ${TOKENS[l.ticker].symbol}` : `${money(Number(formatUnits(l.usd, 6)))} USDC`}
+            inside={l.filled ? `${tokenAmount(l.amount)} ${TOKENS[l.ticker].symbol}` : `${money(Number(formatUnits(l.usd, USDC_DECIMALS)))} USDC`}
             worth={value === null ? "—" : usd(value)}
             price={priceText(l)}
             priceUsd={l.inAvax && priceUsd !== null ? `≈ ${usd(priceUsd)}` : undefined}

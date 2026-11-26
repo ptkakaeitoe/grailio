@@ -16,7 +16,7 @@ import {
   collectStakingAddress,
   collectStakingLive,
 } from "@/lib/collect-packs";
-import { TOKENS } from "@/lib/tokens";
+import { TOKENS, USDC_DECIMALS } from "@/lib/tokens";
 
 export type CardInfo = {
   id: bigint;
@@ -35,14 +35,14 @@ export type CardInfo = {
 
 export type CollectListing = CardInfo & {
   seller: Address;
-  /** In the listing's currency: AVAX wei (18 dec) or USDC (6 dec). */
+  /** In the listing's currency: BNB wei (18 dec) or USDC (6 dec). */
   price: bigint;
   inAvax: boolean;
   expiresAt: number;
 };
 
 /** Price as a number in its own currency. */
-export const priceAmount = (l: Pick<CollectListing, "price" | "inAvax">) => Number(formatUnits(l.price, l.inAvax ? 18 : 6));
+export const priceAmount = (l: Pick<CollectListing, "price" | "inAvax">) => Number(formatUnits(l.price, l.inAvax ? 18 : USDC_DECIMALS));
 
 type RawCard = readonly [number, number, number, boolean, bigint, bigint];
 

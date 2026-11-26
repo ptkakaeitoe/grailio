@@ -36,10 +36,10 @@ import { DEMO_MARKET_FEE, type DemoCard, type DemoCurrency, type DemoListing } f
 import { usd, useStockPrices } from "@/lib/use-stock-prices";
 
 const amountText = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: n < 1 ? 6 : 4 });
-/** AVAX to 4 decimals; dollars to cents. */
-const avaxText = (n: number) => `${n.toLocaleString("en-US", { maximumFractionDigits: 4 })} AVAX`;
+/** BNB to 4 decimals; dollars to cents. */
+const avaxText = (n: number) => `${n.toLocaleString("en-US", { maximumFractionDigits: 4 })} BNB`;
 const dollars = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const priceText = (l: Pick<DemoListing, "price" | "currency">) => (l.currency === "AVAX" ? avaxText(l.price) : dollars(l.price));
+const priceText = (l: Pick<DemoListing, "price" | "currency">) => (l.currency === "BNB" ? avaxText(l.price) : dollars(l.price));
 const DURATIONS = [
   { label: "1 day", days: 1 },
   { label: "7 days", days: 7 },
@@ -51,7 +51,7 @@ export function DemoMarket({ mode = "both" }: { mode?: MarketMode }) {
   const demo = useDemo();
   const { market } = demo;
   const { byTicker } = useStockPrices();
-  const avaxUsd = byTicker.WAVAX?.price ?? null;
+  const avaxUsd = byTicker.WBNB?.price ?? null;
   const prices = Object.fromEntries(DEMO_STOCK_CARDS.map((c) => [c.ticker, byTicker[c.ticker]?.price ?? 0]));
   const pricesReady = avaxUsd !== null && Object.values(prices).every((p) => p > 0);
   const [notice, setNotice] = useState("");
@@ -65,13 +65,13 @@ export function DemoMarket({ mode = "both" }: { mode?: MarketMode }) {
   }, [pricesReady]);
 
   const worth = (card: DemoCard) => (prices[card.ticker] ? card.amount * prices[card.ticker] : null);
-  const usdOf = (l: DemoListing) => (l.currency === "AVAX" ? (avaxUsd ? l.price * avaxUsd : null) : l.price);
+  const usdOf = (l: DemoListing) => (l.currency === "BNB" ? (avaxUsd ? l.price * avaxUsd : null) : l.price);
 
   const [rarity, setRarity] = useState("all");
   const [sort, setSort] = useState<"price" | "recent">("price");
   const shown = useMemo(() => {
     const filtered = rarity === "all" ? market.listings : market.listings.filter((l) => RARITY_NAMES[l.card.rarity] === rarity);
-    const value = (l: DemoListing) => (l.currency === "AVAX" ? l.price * (avaxUsd ?? 0) : l.price);
+    const value = (l: DemoListing) => (l.currency === "BNB" ? l.price * (avaxUsd ?? 0) : l.price);
     return [...filtered].sort((a, b) => (sort === "price" ? value(a) - value(b) : b.id - a.id));
   }, [market.listings, rarity, sort, avaxUsd]);
 
@@ -190,7 +190,7 @@ export function DemoMarket({ mode = "both" }: { mode?: MarketMode }) {
                           <TokenIcon symbol={l.currency} className="size-4 shrink-0" title={`Priced in ${l.currency}`} />
                           {priceText(l)}
                         </span>
-                        {l.currency === "AVAX" && priceUsd !== null && <span className="text-sm text-muted">≈ {dollars(priceUsd)}</span>}
+                        {l.currency === "BNB" && priceUsd !== null && <span className="text-sm text-muted">≈ {dollars(priceUsd)}</span>}
                       </span>
                     }
                     details={[
@@ -253,7 +253,7 @@ export function DemoMarket({ mode = "both" }: { mode?: MarketMode }) {
               <div className="flex flex-col gap-1.5 text-sm text-muted">
                 <span>Get paid in</span>
                 <div className="flex gap-1.5" role="group" aria-label="Listing currency">
-                  {(["USDC", "AVAX"] as const).map((c) => (
+                  {(["USDC", "BNB"] as const).map((c) => (
                     <button key={c} type="button" aria-pressed={currency === c} className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-border px-2 py-2 text-sm text-black transition-colors hover:border-black aria-pressed:border-black" onClick={() => { setCurrency(c); setPrice(""); }}>
                       <TokenIcon symbol={c} className="size-4" /> {c}
                     </button>
@@ -297,7 +297,7 @@ export function DemoMarket({ mode = "both" }: { mode?: MarketMode }) {
         const have = demo.balances[l.currency] ?? 0;
         const value = worth(l.card);
         const priceUsd = usdOf(l);
-        const money = (n: number) => (l.currency === "AVAX" ? avaxText(n) : dollars(n));
+        const money = (n: number) => (l.currency === "BNB" ? avaxText(n) : dollars(n));
         return art ? (
           <BuyConfirmDialog
             art={art}
@@ -305,7 +305,7 @@ export function DemoMarket({ mode = "both" }: { mode?: MarketMode }) {
             inside={`${tokenAmount(l.card.amount)} ${l.card.ticker}`}
             worth={value === null ? "—" : dollars(value)}
             price={priceText(l)}
-            priceUsd={l.currency === "AVAX" && priceUsd !== null ? `≈ ${dollars(priceUsd)}` : undefined}
+            priceUsd={l.currency === "BNB" && priceUsd !== null ? `≈ ${dollars(priceUsd)}` : undefined}
             balance={money(have)}
             after={money(have - l.price)}
             seller={l.seller}

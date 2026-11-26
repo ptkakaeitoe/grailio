@@ -66,7 +66,7 @@ export function ReviewSwapDialog({ from, to, pay, payUsd, receive, receiveUsd, m
           <div className={row}><dt className="text-muted">Slippage</dt><dd className="tabular-nums">{slippage}%</dd></div>
           {collectFee && <div className={row}><dt className="text-muted">Grailio fee</dt><dd className="tabular-nums">{collectFee}</dd></div>}
           {gasUsd && <div className={row}><dt className="text-muted">Network fee</dt><dd className="tabular-nums">≈ {gasUsd}</dd></div>}
-          <div className={row}><dt className="text-muted">Route</dt><dd>KyberSwap · Avalanche</dd></div>
+          <div className={row}><dt className="text-muted">Route</dt><dd>KyberSwap · BNB Chain</dd></div>
         </dl>
         {needsApproval && (
           <p className="mt-2 text-sm text-muted">First, allow KyberSwap&apos;s router to use your {from}. You do this once per token.</p>

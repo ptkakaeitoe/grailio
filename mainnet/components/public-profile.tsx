@@ -72,7 +72,7 @@ function ProfileView({ account }: { account: Address }) {
     <div className="pt-6 pb-16 desk:pt-10">
       <div className="flex items-baseline justify-end gap-3">
         <h1 className="sr-only">Profile</h1>
-        <a className={cn(sectionLabel, "hover:text-black")} href={`${SNOWTRACE}/address/${account}`} target="_blank" rel="noreferrer">[ snowtrace ]</a>
+        <a className={cn(sectionLabel, "hover:text-black")} href={`${SNOWTRACE}/address/${account}`} target="_blank" rel="noreferrer">[ bscscan ]</a>
       </div>
       <ProfileIdentity account={account} isMe={isMe} />
       <div className={marketGrid}>
@@ -112,7 +112,7 @@ function PublicCards({ account }: { account: Address }) {
         if (!art) return null;
         const price = byTicker[card.ticker]?.price;
         const value = card.filled ? (price == null ? null : card.amount * price) : card.usd;
-        const status = card.listPrice !== null ? `Listed · ${card.listCurrency === "AVAX" ? `${fmt(card.listPrice, 4)} AVAX` : usd(card.listPrice)}` : "In wallet";
+        const status = card.listPrice !== null ? `Listed · ${card.listCurrency === "BNB" ? `${fmt(card.listPrice, 4)} BNB` : usd(card.listPrice)}` : "In wallet";
         return (
           <ListingCard
             key={String(card.id)}

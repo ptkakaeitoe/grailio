@@ -21,7 +21,7 @@ import { useAccount, useReadContract, useReadContracts, useWaitForTransactionRec
 
 import { PACK_TIERS, RARITY_NAMES } from "@/lib/contracts";
 import { collectPacksAbi, collectPacksAddress, collectPacksLive, collectPacksTierAbi } from "@/lib/collect-packs";
-import { TOKENS } from "@/lib/tokens";
+import { TOKENS, USDC_DECIMALS } from "@/lib/tokens";
 import { useApproval } from "@/lib/use-approval";
 import { playPurchase, unlockAudio } from "@/lib/sfx";
 
@@ -129,11 +129,11 @@ export function PackPanel() {
   }));
   const tierOff = !demo.active && collectPacksLive && (tierOn[tierId] === false || !editionForTier(tierId).live);
   const needsWallet = !demo.active && collectPacksLive && !isConnected && !tierOff;
-  const liveCost = parseUnits(String(tier.price), 6) * BigInt(quantity);
+  const liveCost = parseUnits(String(tier.price), USDC_DECIMALS) * BigInt(quantity);
   // Contracts pull payments with a standard approval: approve once, then buy.
   const approval = useApproval(live ? TOKENS.USDC.address : null, collectPacksAddress, liveCost);
   const liveBalance = usdcRaw ?? 0n;
-  const liveTotal = Number(formatUnits(liveCost, 6));
+  const liveTotal = Number(formatUnits(liveCost, USDC_DECIMALS));
 
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const receipt = useWaitForTransactionReceipt({ hash });
@@ -148,7 +148,7 @@ export function PackPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [receipt.isSuccess]);
 
-  const selectedBalance = live ? Number(formatUnits(liveBalance, 6)) : demo.active ? demo.balances[paymentToken] ?? 0 : null;
+  const selectedBalance = live ? Number(formatUnits(liveBalance, USDC_DECIMALS)) : demo.active ? demo.balances[paymentToken] ?? 0 : null;
   const insufficient = live ? liveCost > liveBalance : selectedBalance !== null && total !== null && selectedBalance < total;
   const liveSupported = live;
   const payments = live ? PAYMENTS.filter((item) => LIVE_PAYMENTS.includes(item.token)) : PAYMENTS;

@@ -50,7 +50,7 @@ export type TxLabels = { loading: string; success: string; sound?: "success" | "
 
 /**
  * Follows one wagmi transaction with a single toast: "Confirm in your wallet",
- * then "Confirming…", then done (with a Snowtrace link) or the error.
+ * then "Confirming…", then done (with a BscScan link) or the error.
  * Pass `labels: null` to stay quiet.
  */
 export function useTxToast(
@@ -79,7 +79,7 @@ export function useTxToast(
       else if (labels.sound !== "none") playSuccess();
       id.current = null;
     } else if (hash && confirming) {
-      id.current = showToast({ kind: "loading", title: labels.loading, detail: "Confirming on Avalanche…", href }, id.current);
+      id.current = showToast({ kind: "loading", title: labels.loading, detail: "Confirming on BNB Chain…", href }, id.current);
     }
   }, [labels, isPending, hash, confirming, success, error]);
 }
@@ -103,7 +103,7 @@ export function txLabelsFor(functionName: string, args?: readonly unknown[]): Tx
     case "redeem": return { loading: `Redeeming ${card}`, success: `${Card} redeemed` };
     case "distribute": return { loading: "Distributing revenue", success: "Revenue distributed" };
     case "withdraw": case "withdrawAll": return { loading: "Withdrawing", success: "Withdrawn" };
-    case "withdrawAvaxFees": return { loading: "Withdrawing AVAX fees", success: "AVAX fees withdrawn" };
+    case "withdrawAvaxFees": return { loading: "Withdrawing BNB fees", success: "BNB fees withdrawn" };
     case "sync": return { loading: "Starting staking payout", success: "Staking payout started" };
     default: return null;
   }

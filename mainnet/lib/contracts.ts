@@ -2,7 +2,7 @@ import { zeroAddress, type Address } from "viem";
 import { appChain, explorerUrl } from "@/lib/chain";
 import { collectPacksLive } from "@/lib/collect-packs";
 
-import deployment from "@/deployments/43114.json";
+import deployment from "@/deployments/56.json";
 
 export const treasury = deployment.treasury as Address;
 
@@ -37,7 +37,7 @@ export const avatarsAbi = [
     outputs: [{ name: "ok", type: "bool" }, { name: "nft", type: "address" }, { name: "tokenId", type: "uint256" }, { name: "x", type: "uint16" }, { name: "y", type: "uint16" }, { name: "zoom", type: "uint16" }],
   },
   { type: "function", name: "setAvatar", inputs: [{ type: "uint256" }, { type: "uint16" }, { type: "uint16" }, { type: "uint16" }], outputs: [], stateMutability: "nonpayable" },
-  /** Any ERC-721 you own on Avalanche as your picture. */
+  /** Any ERC-721 you own on BNB Chain as your picture. */
   { type: "function", name: "setNftAvatar", inputs: [{ type: "address" }, { type: "uint256" }, { type: "uint16" }, { type: "uint16" }, { type: "uint16" }], outputs: [], stateMutability: "nonpayable" },
   { type: "error", name: "NotYourNft", inputs: [{ type: "address" }, { type: "uint256" }] },
   { type: "error", name: "NotYourCard", inputs: [{ type: "uint256" }] },
@@ -90,7 +90,7 @@ export const tickerForStock = (address: string) =>
 
 /**
  * One StockToken per ticker (StockToken.sol). These supersede the single
- * curve-bound WAVAX: minting authority is a revocable set, so packs, curves and
+ * curve-bound WBNB: minting authority is a revocable set, so packs, curves and
  * oracle-priced minters can all be wired in later.
  */
 export const stockTokens = deployment.stockTokens as Record<string, Address>;

@@ -23,7 +23,7 @@ import { cleanButton, cleanDialog, cleanDrawerLeft, cleanDrawerRight, cleanField
 import { usd, useStockPrices } from "@/lib/use-stock-prices";
 
 /**
- * Community on CollectChat: every message is an event on Avalanche.
+ * Community on CollectChat: every message is an event on BNB Chain.
  * The lounge is public; each token's room is encrypted so only holders of a
  * card of that token can read, and the contract only lets them post.
  * Posting is gasless via the relay.
@@ -165,7 +165,7 @@ export function CommunityWorkspace() {
     profileDialog.current?.showModal();
   }
 
-  const roomLabel = (r: ChatRoom) => (r.encrypted ? r.name : "The lounge");
+  const roomLabel = (r: ChatRoom) => (r.encrypted ? r.name.slice(1) : "The lounge");
   const roomInitial = (r: ChatRoom) => (r.encrypted ? r.name.slice(1, 2) : "#");
   const accentOf = (r: ChatRoom) => (r.encrypted ? STOCK_CARDS.find((card) => card.ticker === r.name.slice(1))?.accent : undefined);
   const isMe = (a: string) => Boolean(chat.address) && a.toLowerCase() === chat.address!.toLowerCase();
@@ -177,7 +177,7 @@ export function CommunityWorkspace() {
   const unlockPanel = (
     <div className={ui.empty}>
       <p className={ui.label}>[ {room?.encrypted ? "holders only" : "public"} ]</p>
-      <h3 className={ui.emptyTitle}>{room?.encrypted ? `Unlock ${room.name} holder chat.` : "Unlock public chat."}<br /><span>One signature. No gas.</span></h3>
+      <h3 className={ui.emptyTitle}>{room?.encrypted ? `Unlock ${room.name.slice(1)} holder chat.` : "Unlock public chat."}<br /><span>One signature. No gas.</span></h3>
       <button type="button" className={cleanButton.solid} disabled={chat.enabling} onClick={chat.enable}>
         {chat.enabling ? "Check your wallet…" : "Enable chat"} <ArrowUpRightIcon weight="bold" />
       </button>
@@ -229,7 +229,7 @@ export function CommunityWorkspace() {
           ) : (
             <div className="h-12" aria-hidden="true" />
           )}
-          <a className={cn(ui.note, "flex items-center justify-between transition-colors hover:text-black")} href={`${SNOWTRACE}/address/${chatAddress}`} target="_blank" rel="noreferrer">[ stored on avalanche ] <ArrowUpRightIcon weight="bold" /></a>
+          <a className={cn(ui.note, "flex items-center justify-between transition-colors hover:text-black")} href={`${SNOWTRACE}/address/${chatAddress}`} target="_blank" rel="noreferrer">[ stored on bnb chain ] <ArrowUpRightIcon weight="bold" /></a>
         </footer>
         {editing && chat.address && <MyProfileEditor account={chat.address as Address} onClose={() => setEditing(false)} />}
       </aside>
@@ -249,7 +249,7 @@ export function CommunityWorkspace() {
         {room?.encrypted && !isHolder ? (
           <div className={ui.empty}>
             <p className={ui.label}>[ holders only ]</p>
-            <h3 className={ui.emptyTitle}>A room for {room.name} card holders.<br /><span>Hold a {room.name.slice(1)} card to read and post.</span></h3>
+            <h3 className={ui.emptyTitle}>A room for {room.name.slice(1)} card holders.<br /><span>Hold a {room.name.slice(1)} card to read and post.</span></h3>
             <div className="flex flex-wrap justify-center gap-3">
               {!connected && <WalletEntry className={cleanButton.solid} />}
               <Link href="/packs" className={connected ? cleanButton.solid : cleanButton.outline}>Open a pack <ArrowUpRightIcon weight="bold" /></Link>
@@ -260,7 +260,7 @@ export function CommunityWorkspace() {
         ) : (
           <>
             <div ref={feed} className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-6 desk:py-8">
-              <p className="mb-6 text-sm text-muted">[ {room?.encrypted ? "end-to-end encrypted" : "public"} · on avalanche ]</p>
+              <p className="mb-6 text-sm text-muted">[ {room?.encrypted ? "end-to-end encrypted" : "public"} · on bnb chain ]</p>
               {(hiddenCount > 0 || showMuted) && (
                 <p className="mb-6 text-sm text-muted" role="status">
                   {showMuted ? "Showing messages from muted accounts." : `${hiddenCount} ${hiddenCount === 1 ? "message" : "messages"} from muted accounts hidden.`}{" "}

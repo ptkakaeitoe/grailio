@@ -2,13 +2,13 @@
 export type DemoTier = { id: number; price: number; odds: readonly number[]; backing: readonly number[] };
 export type DemoCard = { id: number; ticker: string; tier: number; rarity: number; amount: number; stakedAt: number | null; /** Staking: the pool's acc when this card was last paid. */ debt?: number };
 export type DemoState = { balances: Record<string, number>; packs: number[]; cards: DemoCard[]; nextId: number; listings: DemoListing[]; nextListingId: number; marketSeeded: boolean; gifts: DemoGift[]; claimed: string[]; points: number; /** Redeemed (burned) cards, kept for the profile. */ redeemed: DemoCard[]; /** Simulated CollectStaking pool; created on first use. */ staking?: DemoStaking };
-export const initialDemo = (): DemoState => ({ balances: { AVAX: 100, USDC: 5000, NVDA: 0, AAPL: 0, TSLA: 0, MSFT: 0, AMZN: 0 }, packs: [], cards: [], nextId: 1, listings: [], nextListingId: 1, marketSeeded: false, gifts: [], claimed: [], points: 0, redeemed: [] });
+export const initialDemo = (): DemoState => ({ balances: { BNB: 100, USDC: 5000, NVDA: 0, AAPL: 0, TSLA: 0, MSFT: 0, AMZN: 0 }, packs: [], cards: [], nextId: 1, listings: [], nextListingId: 1, marketSeeded: false, gifts: [], claimed: [], points: 0, redeemed: [] });
 export function packCost(tier: DemoTier, quantity: number, price: number): number | null {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10 || !Number.isFinite(price) || price <= 0) return null;
   return tier.price * quantity / price;
 }
 export function buyDemoPacks(state: DemoState, tier: DemoTier, quantity: number, payment: string, price: number): DemoState | null {
-  if (!['USDC', 'NVDA', 'AAPL', 'TSLA', 'MSFT', 'AMZN', 'WAVAX', 'BTC', 'ETH', 'LINK', 'JOE'].includes(payment)) return null;
+  if (!['USDC', 'NVDA', 'AAPL', 'TSLA', 'MSFT', 'AMZN', 'WBNB', 'BTC', 'ETH', 'LINK', 'CAKE'].includes(payment)) return null;
   const cost = packCost(tier, quantity, payment === 'USDC' ? 1 : price);
   if (cost === null || (state.balances[payment] ?? 0) < cost) return null;
   const packs = [...state.packs, ...Array<number>(quantity).fill(tier.id)];
@@ -102,17 +102,17 @@ export function actOnDemoCard(state: DemoState, id: number, action: 'stake' | 'c
 }
 
 // ---- Marketplace (simulated) ----
-export type DemoCurrency = 'USDC' | 'AVAX';
+export type DemoCurrency = 'USDC' | 'BNB';
 /** A listed card is held by the market (escrow) until it sells or is cancelled. */
 export type DemoListing = { id: number; card: DemoCard; price: number; currency: DemoCurrency; seller: string; expiresAt: number };
 export const DEMO_MARKET_FEE = 0.01;
-/** Prices are kept at display precision: 4 decimals for AVAX, cents for USDC. */
-export const roundPrice = (price: number, currency: DemoCurrency) => { const f = currency === 'AVAX' ? 1e4 : 1e2; return Math.round(price * f) / f; };
+/** Prices are kept at display precision: 4 decimals for BNB, cents for USDC. */
+export const roundPrice = (price: number, currency: DemoCurrency) => { const f = currency === 'BNB' ? 1e4 : 1e2; return Math.round(price * f) / f; };
 export const DEMO_SELLERS = ['@relicfox', '@bluechip_ben', '@tsla_maxi', '@seedvault', '@nightdesk'] as const;
 
 /**
  * Other collectors' listings, priced around what each card holds (a mix of
- * USDC and AVAX). Seeded once, when prices are known.
+ * USDC and BNB). Seeded once, when prices are known.
  */
 export function seedDemoListings(state: DemoState, tickers: readonly string[], prices: Record<string, number>, avaxUsd: number, random: () => number, now: number): DemoState | null {
   if (state.marketSeeded) return null;
@@ -125,8 +125,8 @@ export function seedDemoListings(state: DemoState, tickers: readonly string[], p
     const rarity = drawRarity([50, 25, 20, 5], random());
     const card: DemoCard = { id: nextId++, ticker, tier: Math.floor(random() * 3), rarity, amount: backing[rarity] / prices[ticker], stakedAt: null };
     const usd = backing[rarity] * (0.9 + random() * 0.5);
-    const currency: DemoCurrency = random() < 0.4 ? 'AVAX' : 'USDC';
-    listings.push({ id: i + 1, card, currency, price: roundPrice(currency === 'AVAX' ? usd / avaxUsd : usd, currency), seller: DEMO_SELLERS[i % DEMO_SELLERS.length], expiresAt: now + (1 + Math.floor(random() * 7)) * 86_400_000 });
+    const currency: DemoCurrency = random() < 0.4 ? 'BNB' : 'USDC';
+    listings.push({ id: i + 1, card, currency, price: roundPrice(currency === 'BNB' ? usd / avaxUsd : usd, currency), seller: DEMO_SELLERS[i % DEMO_SELLERS.length], expiresAt: now + (1 + Math.floor(random() * 7)) * 86_400_000 });
   }
   return { ...state, listings, nextListingId: listings.length + 1, nextId, marketSeeded: true };
 }

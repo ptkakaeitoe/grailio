@@ -5,7 +5,7 @@ import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
   title: "Sell — grailio",
-  description: "List a collectible card for sale on Avalanche.",
+  description: "List a collectible card for sale on BNB Chain.",
 };
 
 export default function SellPage() {

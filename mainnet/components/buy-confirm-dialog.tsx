@@ -20,11 +20,11 @@ export function BuyConfirmDialog({ art, rarity, inside, worth, price, priceUsd, 
   inside: string;
   /** Value of what's inside now, e.g. "$0.81". */
   worth: string;
-  /** In the listing's currency, e.g. "0.1235 AVAX". */
+  /** In the listing's currency, e.g. "0.1235 BNB". */
   price: string;
-  /** "≈ $0.83" for AVAX prices. */
+  /** "≈ $0.83" for BNB prices. */
   priceUsd?: string;
-  /** Your balance of the listing's currency, e.g. "100 AVAX". */
+  /** Your balance of the listing's currency, e.g. "100 BNB". */
   balance: string | null;
   /** Balance after buying. */
   after: string | null;

@@ -357,7 +357,7 @@ function LiveDao() {
         }
       />
       {error && <p className="-mt-12 mb-12 text-sm break-words text-down" role="alert">{txErrorMessage(error)}</p>}
-      {address && !onChain && <p className="-mt-12 mb-12 text-sm text-down" role="alert">Switch your wallet to Avalanche C-Chain.</p>}
+      {address && !onChain && <p className="-mt-12 mb-12 text-sm text-down" role="alert">Switch your wallet to BNB Smart Chain.</p>}
     </>
   );
 }

@@ -14,7 +14,7 @@ const shared: Partial<Record<"tokens" | "stocks", StockQuote[]>> = {};
 /**
  * Shared client-side poll of /api/prices. Both the home-page ticker strip and
  * the swap screen read from here so they can never disagree about a price.
- * `set` defaults to the current mode: demo stocks in demo mode, Avalanche
+ * `set` defaults to the current mode: demo stocks in demo mode, BNB Chain
  * tokens otherwise. Live-only views pass "tokens".
  */
 export function useStockPrices(intervalMs = 60_000, set?: "tokens" | "stocks") {
@@ -55,7 +55,7 @@ export function useStockPrices(intervalMs = 60_000, set?: "tokens" | "stocks") {
   return { quotes, byTicker, failed, loaded: quotes !== null };
 }
 
-/** USD with cents, plus extra digits under $1 so small token prices (JOE ≈ $0.02) stay readable. */
+/** USD with cents, plus extra digits under $1 so small token prices (CAKE ≈ $0.02) stay readable. */
 export const usd = (value: number) => {
   const abs = Math.abs(value);
   const digits = abs === 0 || abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;

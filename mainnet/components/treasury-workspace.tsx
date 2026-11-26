@@ -12,12 +12,12 @@ import { useConnectWallet } from "@/components/beta-access";
 import { SwapFeesSection } from "@/components/swap-fees-section";
 import { appChain, explorerUrl } from "@/lib/chain";
 import { collectMarketAbi, collectMarketAddress, collectMarketLive, collectPacksAddress, collectPacksLive, collectPacksTreasuryAbi, collectStakingAbi, collectStakingAddress, collectStakingLive } from "@/lib/collect-packs";
-import { TOKENS } from "@/lib/tokens";
+import { TOKENS, USDC_DECIMALS } from "@/lib/tokens";
 import { txErrorMessage } from "@/lib/tx-error";
 
 const USDC = TOKENS.USDC.address;
 const money = (raw: bigint | undefined) =>
-  raw === undefined ? "—" : `$${Number(formatUnits(raw, 6)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+  raw === undefined ? "—" : `$${Number(formatUnits(raw, USDC_DECIMALS)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
 const label = "text-sm text-muted";
 
 /**
@@ -79,7 +79,7 @@ export function TreasuryWorkspace() {
     : stakingBps + daoBps === 0 ? "No shares set: all to the owner"
     : `${stakingBps / 100}% staking · ${daoBps / 100}% DAO`;
 
-  // Marketplace: AVAX fees collect in the market contract.
+  // Marketplace: BNB fees collect in the market contract.
   const market = useReadContracts({
     allowFailure: true,
     contracts: [
@@ -126,7 +126,7 @@ export function TreasuryWorkspace() {
 
   let amountRaw = 0n;
   try {
-    amountRaw = amount.trim() ? parseUnits(amount.trim(), 6) : 0n;
+    amountRaw = amount.trim() ? parseUnits(amount.trim(), USDC_DECIMALS) : 0n;
   } catch {
     amountRaw = -1n;
   }
@@ -140,7 +140,7 @@ export function TreasuryWorkspace() {
         <p className="text-xl">The pack contract isn’t deployed yet.</p>
         <p className="mt-3 max-w-[560px] text-base leading-relaxed text-muted">
           Deploy it with <code className="text-black">contracts/script/DeployCollectPacks.s.sol</code>. The script writes its address into
-          <code className="text-black"> deployments/43114.json</code>; rebuild the app and this page shows the treasury.
+          <code className="text-black"> deployments/56.json</code>; rebuild the app and this page shows the treasury.
         </p>
       </div>
     );
@@ -187,14 +187,14 @@ export function TreasuryWorkspace() {
               <label className="flex flex-col gap-1.5">
                 <span className={cn(label, "flex justify-between")}>
                   <span>Amount (USDC)</span>
-                  <button type="button" className="text-black underline-offset-4 hover:underline" onClick={() => withdrawable !== undefined && setAmount(formatUnits(withdrawable, 6))}>
+                  <button type="button" className="text-black underline-offset-4 hover:underline" onClick={() => withdrawable !== undefined && setAmount(formatUnits(withdrawable, USDC_DECIMALS))}>
                     Max {money(withdrawable)}
                   </button>
                 </span>
                 <input className={cleanField} inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={amountRaw < 0n || overSurplus} />
               </label>
               {overSurplus && <p className="text-sm text-down" role="alert">More than the withdrawable surplus.</p>}
-              {!onChain && <p className="text-sm text-down" role="alert">Switch your wallet to Avalanche C-Chain.</p>}
+              {!onChain && <p className="text-sm text-down" role="alert">Switch your wallet to BNB Smart Chain.</p>}
               <div className="mt-1 flex flex-wrap gap-2.5">
                 <button type="submit" className={cleanButton.solid} disabled={!canWithdraw}>
                   {busy ? "Confirm in wallet…" : "Withdraw"}
@@ -254,10 +254,10 @@ export function TreasuryWorkspace() {
         <section className="mt-12 border-t border-border pt-8" aria-labelledby="market-fees-title">
           <h2 id="market-fees-title" className="text-xl font-normal">Marketplace fees</h2>
           <p className="mt-3 max-w-[560px] text-base leading-relaxed text-muted">
-            Fees on USDC sales go into the pack pool above as revenue. Fees on AVAX sales collect in the market contract until the owner withdraws them.
+            Fees on USDC sales go into the pack pool above as revenue. Fees on BNB sales collect in the market contract until the owner withdraws them.
           </p>
           <p className="mt-4 text-2xl tracking-[-0.02em] tabular-nums">
-            {avaxFees === undefined ? "—" : `${Number(formatUnits(avaxFees, 18)).toLocaleString("en-US", { maximumFractionDigits: 6 })} AVAX`}
+            {avaxFees === undefined ? "—" : `${Number(formatUnits(avaxFees, 18)).toLocaleString("en-US", { maximumFractionDigits: 6 })} BNB`}
           </p>
           {isMarketOwner ? (
             <button
@@ -266,7 +266,7 @@ export function TreasuryWorkspace() {
               disabled={!onChain || busy || !avaxFees || !validTo}
               onClick={() => { reset(); writeContract({ address: collectMarketAddress, abi: collectMarketAbi, functionName: "withdrawAvaxFees", args: [to as Address] }); }}
             >
-              Withdraw AVAX fees to {validTo ? `${to.slice(0, 6)}…${to.slice(-4)}` : "…"}
+              Withdraw BNB fees to {validTo ? `${to.slice(0, 6)}…${to.slice(-4)}` : "…"}
             </button>
           ) : address && marketOwner ? (
             <p className="mt-3 text-sm text-muted">Only the market owner ({marketOwner.slice(0, 6)}…{marketOwner.slice(-4)}) can withdraw these.</p>

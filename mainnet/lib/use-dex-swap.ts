@@ -28,7 +28,7 @@ export function useDexBalances(enabled: boolean) {
   });
 
   const raw = (key: string): bigint => {
-    if (key === "AVAX") return native.data?.value ?? 0n;
+    if (key === "BNB") return native.data?.value ?? 0n;
     const index = ERC20_KEYS.indexOf(key);
     const row = erc20.data?.[index];
     return row?.status === "success" ? (row.result as bigint) : 0n;

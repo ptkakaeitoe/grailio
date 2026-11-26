@@ -55,7 +55,7 @@ export function ProfileWorkspace() {
         <div className="flex items-baseline justify-end gap-3">
           <h1 id="profile-title" className="sr-only">Profile</h1>
           {!demo.active && (
-            <a className={cn(sectionLabel, "inline-flex items-center gap-1 hover:text-black")} href={`${SNOWTRACE}/address/${address}`} target="_blank" rel="noreferrer">[ snowtrace <ArrowUpRightIcon className="size-3.5" weight="bold" /> ]</a>
+            <a className={cn(sectionLabel, "inline-flex items-center gap-1 hover:text-black")} href={`${SNOWTRACE}/address/${address}`} target="_blank" rel="noreferrer">[ bscscan <ArrowUpRightIcon className="size-3.5" weight="bold" /> ]</a>
           )}
         </div>
         {demo.active ? (

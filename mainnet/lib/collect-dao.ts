@@ -1,11 +1,11 @@
 import { zeroAddress, type Address } from "viem";
 
-import deployment from "@/deployments/43114.json";
+import deployment from "@/deployments/56.json";
 
 /**
  * CollectPoints (non-transferable, 1 per $1 pack) and CollectDAO (signal votes
  * weighted by points at the proposal's snapshot). Written into
- * deployments/43114.json by contracts/script/DeployCollectPacks.s.sol.
+ * deployments/56.json by contracts/script/DeployCollectPacks.s.sol.
  */
 const d = deployment as { collectPoints?: string; collectDao?: string };
 export const pointsAddress = (d.collectPoints ?? zeroAddress) as Address;

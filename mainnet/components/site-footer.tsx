@@ -18,7 +18,7 @@ export function SiteFooter() {
           <Link href="/marketplace" className={cleanLink}>market</Link>
           <Link href="/info" className={cleanLink}>info</Link>
         </nav>
-        <a href="https://snowtrace.io" target="_blank" rel="noreferrer" className={cleanLink}>avalanche · public beta <ArrowUpRightIcon weight="bold" /></a>
+        <a href="https://bscscan.com" target="_blank" rel="noreferrer" className={cleanLink}>bnb chain · public beta <ArrowUpRightIcon weight="bold" /></a>
       </div>
       {/* Credit: the studio's X profile (@Blurrylogics). */}
       <p className="flex items-center gap-2.5 pb-10 text-sm text-muted">

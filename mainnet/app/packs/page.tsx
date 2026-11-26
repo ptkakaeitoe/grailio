@@ -5,7 +5,7 @@ import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
   title: "Packs — grailio",
-  description: "Open mystery packs and see your pack shelf on Avalanche.",
+  description: "Open mystery packs and see your pack shelf on BNB Chain.",
 };
 
 export default function PacksPage() {

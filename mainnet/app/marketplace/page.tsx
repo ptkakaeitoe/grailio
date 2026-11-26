@@ -5,7 +5,7 @@ import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
   title: "Marketplace — grailio",
-  description: "Buy and sell collectible cards on Avalanche.",
+  description: "Buy and sell collectible cards on BNB Chain.",
 };
 
 export default function MarketplacePage() {

@@ -33,7 +33,7 @@ const SEED: Record<string, string[]> = {
   AAPL: ["Silver Seed holders, checking in", "holding mine until earnings", "the card is up a few cents today"],
   MSFT: ["Prism Gate gang", "rare pull last night, keeping it"],
   NVDA: ["Neural Eye is my favorite card", "NVDA cards are popular on the market today"],
-  TSLA: ["Volt Crown epic just landed", "who's listing in AVAX vs USDC?"],
+  TSLA: ["Volt Crown epic just landed", "who's listing in BNB vs USDC?"],
   AMZN: ["Wayfinder Key collectors 🔑", "anyone redeem theirs yet?"],
 };
 const REPLIES = ["nice 🙌", "same here", "good luck with your pulls", "welcome!", "agreed", "that's a great card"];
@@ -260,7 +260,7 @@ export function CommunityPreview() {
           <ChatHeader title={room.label} label={room.ticker ? "holders" : "public"} onBack={() => setShowChat(false)} />
           <div className={ui.empty}>
             <p className={ui.label}>[ opening at launch ]</p>
-            <h3 className={ui.emptyTitle}>Chat with fellow collectors.<br /><span>On Avalanche, no gas.</span></h3>
+            <h3 className={ui.emptyTitle}>Chat with fellow collectors.<br /><span>On BNB Chain, no gas.</span></h3>
             <p className="max-w-[440px] text-sm text-muted">The lounge is open to everyone; each token’s room is for its card holders. Try it now with demo cards.</p>
             <div className="flex flex-wrap justify-center gap-3">
               <button type="button" className={cleanButton.solid} onClick={demo.start}>Try the demo <ArrowUpRightIcon weight="bold" /></button>

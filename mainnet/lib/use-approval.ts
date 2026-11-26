@@ -12,7 +12,7 @@ import { useWalletSync } from "@/lib/use-wallet-sync";
  * Standard ERC20 approval for one spender. Contracts only pull payments with
  * an allowance, so an action button shows "Approve X" first when this is
  * short. Approves the maximum once, so later actions are one click. A token of
- * `null` (AVAX) never needs approval.
+ * `null` (BNB) never needs approval.
  */
 export function useApproval(token: Address | null, spender: Address, amount: bigint) {
   const { address } = useAccount();

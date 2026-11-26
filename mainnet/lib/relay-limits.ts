@@ -1,7 +1,7 @@
 /**
  * Shared limits and send lock for the chat gas relay (server only).
  *
- * Every relayed transaction costs the relayer real AVAX, and serverless hosts
+ * Every relayed transaction costs the relayer real BNB, and serverless hosts
  * run many short-lived instances, so counters and the "one transaction at a
  * time" lock must live in a shared store, not in memory. This talks to Redis
  * over the Upstash REST API (Upstash, or Vercel KV which speaks the same API),

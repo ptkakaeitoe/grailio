@@ -107,7 +107,7 @@ export function Bio({ account, isMe }: { account: `0x${string}`; isMe: boolean }
 type NftOption = { nft: string; tokenId: string; collection: string; name: string | null; image: string | null };
 type Source = { kind: "card"; id: bigint; ticker: string } | { kind: "nft"; nft: string; tokenId: bigint; image: string; label: string };
 
-/** Pick a Grailio card or any Avalanche NFT you own and crop it into your profile picture. */
+/** Pick a Grailio card or any BNB Chain NFT you own and crop it into your profile picture. */
 export function AvatarEditor({ cards, current, onSaved, onLocalSave, onLocalClear, onChange, onClear, nfts: allowNfts = true }: {
   cards: { id: bigint; ticker: string; rarity: number; tier: number }[];
   current?: CardAvatarCrop;
@@ -147,7 +147,7 @@ export function AvatarEditor({ cards, current, onSaved, onLocalSave, onLocalClea
   const receipt = useWaitForTransactionReceipt({ hash });
   const busy = isPending || receipt.isLoading;
 
-  // The wallet's other Avalanche NFTs (Grailio cards are on the first tab).
+  // The wallet's other BNB Chain NFTs (Grailio cards are on the first tab).
   const nfts = useQuery({
     queryKey: ["my-nfts", address?.toLowerCase()],
     enabled: open && tab === "nfts" && Boolean(address),
@@ -294,7 +294,7 @@ export function AvatarEditor({ cards, current, onSaved, onLocalSave, onLocalClea
       {tab === "cards" || !allowNfts ? (
         cards.length === 0 ? <p className={note}>Open a pack to get a card you can use.</p> : cardList
       ) : nfts.isLoading ? <p className={note}>Loading your NFTs…</p> : nfts.error ? <p className={cn(note, "text-down")}>{(nfts.error as Error).message}</p> : !nfts.data?.length ? (
-        <p className={note}>No other NFTs with images found in this wallet on Avalanche.</p>
+        <p className={note}>No other NFTs with images found in this wallet on BNB Chain.</p>
       ) : (
         <ul className="mt-2 flex list-none gap-2 overflow-x-auto p-0.5" role="listbox" aria-label="Choose an NFT">
           {nfts.data.map((n) => {

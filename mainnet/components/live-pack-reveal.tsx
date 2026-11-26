@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { decodeEventLog, formatUnits, type Hex } from "viem";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { USDC_DECIMALS } from "@/lib/tokens";
 
 import { cleanButton, cleanDialog, cn, dialogClose, dialogFooter } from "@/components/clean-ui";
 import { BackingValue, PackRevealArt, RevealedCard, revealFrame } from "@/components/pack-reveal-art";
@@ -154,7 +155,7 @@ export function LivePackReveal({
             <div className={revealFrame.row}>
               <dt className="text-muted">Backing</dt>
               {/* Dollars at opening; a card the swap guard left unfilled holds USDC until it's filled. */}
-              <dd><BackingValue ticker={revealed.card.filled ? revealed.card.ticker : "USDC"} usd={Number(formatUnits(revealed.card.usd, 6))} /></dd>
+              <dd><BackingValue ticker={revealed.card.filled ? revealed.card.ticker : "USDC"} usd={Number(formatUnits(revealed.card.usd, USDC_DECIMALS))} /></dd>
             </div>
           </dl>
         )}

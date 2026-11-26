@@ -210,7 +210,7 @@ export function ListingCard({ art, rarity, badge, status, title, price, details,
 
   return (
     // Column layout with the action pinned to the bottom, so buttons line up across a row
-    // even when one price has an extra line (e.g. "≈ $1.32" under an AVAX price).
+    // even when one price has an extra line (e.g. "≈ $1.32" under an BNB price).
     <li className="flex min-w-0 flex-col">
       <button type="button" aria-haspopup="dialog" aria-label={`${art.name}, ${badge}. Show details.`} onClick={() => dialog.current?.showModal()} {...tilt} className={cn(cardFace, "focus-visible:outline-offset-[6px]")}>
         {face("(max-width: 700px) 45vw, 200px")}

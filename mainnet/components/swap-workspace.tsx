@@ -22,9 +22,9 @@ import { usd, useStockPrices } from "@/lib/use-stock-prices";
 import { txErrorMessage } from "@/lib/tx-error";
 
 /** What tokens are paid with. USDC counts as $1. */
-const BASES = ["USDC", "AVAX"] as const;
+const BASES = ["USDC", "BNB"] as const;
 type Base = (typeof BASES)[number];
-const BASE_NAMES: Record<Base, string> = { USDC: "USD Coin", AVAX: "Avalanche" };
+const BASE_NAMES: Record<Base, string> = { USDC: "USD Coin", BNB: "BNB Chain" };
 
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { maximumFractionDigits: 6 });
@@ -173,11 +173,11 @@ export function SwapWorkspace() {
   const [result, setResult] = useState<(SwapLegs & { hash?: string }) | null>(
     null,
   );
-  // Demo mode trades stocks; the live app trades Avalanche tokens.
+  // Demo mode trades stocks; the live app trades BNB Chain tokens.
   const { cards } = useCards();
   const STOCKS = [cards[2], cards[0], cards[3], cards[1], cards[4]]; // Neural Eye first in the market dropdown
   const COMPANIES: Record<string, string> = Object.fromEntries(cards.map((c) => [c.ticker, c.tokenName]));
-  // Any token for any token: USDC and AVAX plus every stock (demo) or token (live).
+  // Any token for any token: USDC and BNB plus every stock (demo) or token (live).
   const TOKEN_LIST: TokenOption[] = [
     ...BASES.map((b) => ({ symbol: b, name: BASE_NAMES[b] })),
     ...STOCKS.map((c) => ({ symbol: c.ticker, name: COMPANIES[c.ticker], accent: c.accent })),
@@ -198,7 +198,7 @@ export function SwapWorkspace() {
   const known = (sym: string) => TOKEN_LIST.some((t) => t.symbol === sym);
   const from = known(fromPick) ? fromPick : "USDC";
   const to = known(toPick) && toPick !== from ? toPick : STOCKS.find((c) => c.ticker !== from)!.ticker;
-  // The chart and its market dropdown follow the token being traded (not USDC/AVAX).
+  // The chart and its market dropdown follow the token being traded (not USDC/BNB).
   const isBase = (sym: string) => (BASES as readonly string[]).includes(sym);
   const ticker = !isBase(to) ? to : !isBase(from) ? from : STOCKS[0].ticker;
   const parsed = Number.parseFloat(amount);
@@ -206,11 +206,11 @@ export function SwapWorkspace() {
 
   // ---- live balances + quote (real DEX route) ----
   const balances = useDexBalances(live);
-  /** AVAX keeps a little back for gas, so "Use max" never strands the wallet. */
+  /** BNB keeps a little back for gas, so "Use max" never strands the wallet. */
   const GAS_BUFFER = parseEther("0.02");
   const liveRaw = (symbol: string) => {
     const raw = balances.raw(symbol);
-    if (symbol !== "AVAX") return raw;
+    if (symbol !== "BNB") return raw;
     return raw > GAS_BUFFER ? raw - GAS_BUFFER : 0n;
   };
   const amountWei = exactWei ?? (hasAmount ? toUnits(amount, from) : 0n);
@@ -245,8 +245,8 @@ export function SwapWorkspace() {
   }, [live, address, dex.hash, dex.confirmed, dex.reverted]);
 
   // ---- demo quote, at live stock prices (Yahoo Finance) ----
-  const avaxUsd = byTicker.WAVAX?.price ?? null;
-  const usdOf = (sym: string) => (sym === "USDC" ? 1 : sym === "AVAX" ? avaxUsd : byTicker[sym]?.price ?? null);
+  const avaxUsd = byTicker.WBNB?.price ?? null;
+  const usdOf = (sym: string) => (sym === "USDC" ? 1 : sym === "BNB" ? avaxUsd : byTicker[sym]?.price ?? null);
   const fromUsd = usdOf(from);
   const toUsd = usdOf(to);
   const demoReceived = fromUsd && toUsd && hasAmount ? (parsed * fromUsd) / toUsd : null;
@@ -262,7 +262,7 @@ export function SwapWorkspace() {
   const valid = received !== null && Number.isFinite(received) && received > 0;
   const fromBalance = balance(from);
   const insufficient = live
-    ? amountWei > balances.raw(from) - (from === "AVAX" ? GAS_BUFFER : 0n)
+    ? amountWei > balances.raw(from) - (from === "BNB" ? GAS_BUFFER : 0n)
     : fromBalance !== null && parsed > fromBalance;
 
   function submitDemo() {
@@ -556,10 +556,10 @@ export function SwapWorkspace() {
             )}
             <p className="swap-preview-note mt-4 text-sm text-muted">
               {live
-                ? `Best route across Avalanche DEXes via KyberSwap · ${SWAP_FEE_BPS / 100}% fee · max slippage ${slippage}%${dex.gasUsd !== null ? ` · gas ≈ ${usd(dex.gasUsd)}` : ""}`
+                ? `Best route across BNB Chain DEXes via KyberSwap · ${SWAP_FEE_BPS / 100}% fee · max slippage ${slippage}%${dex.gasUsd !== null ? ` · gas ≈ ${usd(dex.gasUsd)}` : ""}`
                 : demo.active
-                  ? `Simulated balances at live stock prices${avaxUsd ? ` · AVAX ${usd(avaxUsd)}` : ""} · no real funds.`
-                  : "Connect a wallet on Avalanche to swap, or try a simulated swap."}
+                  ? `Simulated balances at live stock prices${avaxUsd ? ` · BNB ${usd(avaxUsd)}` : ""} · no real funds.`
+                  : "Connect a wallet on BNB Chain to swap, or try a simulated swap."}
             </p>
             {live && dex.quoteError && hasAmount && (
               <p className={errorText} role="alert">

@@ -4,7 +4,7 @@ import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
   title: "Profile — grailio",
-  description: "Your wallet, holdings and card collection on Avalanche.",
+  description: "Your wallet, holdings and card collection on BNB Chain.",
 };
 
 export default function ProfilePage() {

@@ -9,10 +9,10 @@ import { explorerUrl } from "@/lib/chain";
 import { ASSET_TICKERS } from "@/lib/collect-packs";
 import { PACK_TIERS, RARITY_NAMES } from "@/lib/contracts";
 import { tokenAmount } from "@/lib/format-amount";
-import { TOKENS } from "@/lib/tokens";
+import { TOKENS, USDC_DECIMALS } from "@/lib/tokens";
 
 const usdc = (raw?: string) => {
-  const n = raw ? Number(formatUnits(BigInt(raw), 6)) : 0;
+  const n = raw ? Number(formatUnits(BigInt(raw), USDC_DECIMALS)) : 0;
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: n > 0 && n < 0.01 ? 6 : 2 })}`;
 };
 const when = (t: number) => {
@@ -24,7 +24,7 @@ const when = (t: number) => {
   return new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 const packs = (n = 1, tier?: number) => `${n} ${tier !== undefined ? `${PACK_TIERS[tier]?.name ?? ""} ` : ""}${n === 1 ? "pack" : "packs"}`;
-const price = (i: ActivityItem) => (i.inAvax ? `${tokenAmount(Number(formatUnits(BigInt(i.amount ?? "0"), 18)))} AVAX` : usdc(i.amount));
+const price = (i: ActivityItem) => (i.inAvax ? `${tokenAmount(Number(formatUnits(BigInt(i.amount ?? "0"), 18)))} BNB` : usdc(i.amount));
 
 /** One line per event: what happened, and the amount on the right. */
 function describe(i: ActivityItem, assetOf: Map<string, number>): { title: string; value?: string; positive?: boolean } {

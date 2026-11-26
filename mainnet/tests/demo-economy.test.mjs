@@ -6,11 +6,11 @@ const DAY=86400000;
 const near=(a,b,eps=1e-9)=>assert.ok(Math.abs(a-b)<eps,`${a} != ${b}`);
 
 test('quotes stock purchases and stores the purchased tier for every pack',()=>{
- const state=initialDemo();state.balances.WAVAX=1;
- const next=buyDemoPacks(state,tier,2,'WAVAX',200);
- assert.equal(next.balances.WAVAX,.9);assert.deepEqual(next.packs,[2,2]);
- assert.equal(buyDemoPacks(state,tier,1,'AVAX',10),null);
- assert.equal(buyDemoPacks(state,tier,1,'WAVAX',0),null);
+ const state=initialDemo();state.balances.WBNB=1;
+ const next=buyDemoPacks(state,tier,2,'WBNB',200);
+ assert.equal(next.balances.WBNB,.9);assert.deepEqual(next.packs,[2,2]);
+ assert.equal(buyDemoPacks(state,tier,1,'BNB',10),null);
+ assert.equal(buyDemoPacks(state,tier,1,'WBNB',0),null);
  assert.equal(buyDemoPacks(state,tier,11,'USDC',1),null);
 });
 test('rarity selection follows cumulative tier odds including exact boundaries',()=>{
@@ -18,7 +18,7 @@ test('rarity selection follows cumulative tier odds including exact boundaries',
 });
 test('opens the saved tier, selects any stock, fixes backing at opening, and rejects repeat redemption',()=>{
  const purchased=buyDemoPacks(initialDemo(),tier,1,'USDC',1);
- const tickers=['BTC','ETH','WAVAX','LINK','JOE'];const prices=Object.fromEntries(tickers.map(t=>[t,100]));
+ const tickers=['BTC','ETH','WBNB','LINK','CAKE'];const prices=Object.fromEntries(tickers.map(t=>[t,100]));
  assert.equal(openDemoPack(purchased,tier,tickers,{},0,.99),null);
  const opened=openDemoPack(purchased,tier,tickers,prices,.3,.99);
  assert.equal(opened.card.ticker,'ETH');assert.equal(opened.card.rarity,3);assert.equal(opened.card.amount,1.0133);
@@ -31,7 +31,7 @@ test('opens the saved tier, selects any stock, fixes backing at opening, and rej
 test('staking pays a revenue pool with a 7-day half-life, split by weight',()=>{
  near(keptAfter(7*DAY),.5);near(keptAfter(14*DAY),.25);near(keptAfter(0),1);
  const purchased=buyDemoPacks(initialDemo(),tier,1,'USDC',1);
- const opened=openDemoPack(purchased,tier,['WAVAX'],{WAVAX:100},0,.99);// Legendary: weight 10
+ const opened=openDemoPack(purchased,tier,['WBNB'],{WBNB:100},0,.99);// Legendary: weight 10
  const staked=actOnDemoCard(opened.state,1,'stake',0);
  assert.equal(actOnDemoCard(staked,1,'redeem',1000),null);
  assert.equal(actOnDemoCard(staked,1,'stake',1000),null);
@@ -96,13 +96,13 @@ test('demo market: seeds once, buys with the listing currency, lists, cancels an
  const poor={...seeded,balances:{...seeded.balances,[l.currency]:0}};
  assert.equal(buyDemoListing(poor,l.id),null);
  const card=bought.cards[0];
- const listed=listDemoCard(bought,card.id,5,'AVAX',7,0);
+ const listed=listDemoCard(bought,card.id,5,'BNB',7,0);
  assert.equal(listed.cards.length,0);assert.equal(listed.listings.at(-1).seller,'you');
  assert.equal(listDemoCard(bought,card.id,0,'USDC',7,0),null);
  const mine=listed.listings.at(-1);
  assert.equal(buyDemoListing(listed,mine.id),null);
  assert.equal(cancelDemoListing(listed,mine.id).cards.length,1);
  assert.equal(cancelDemoListing(listed,l.id+1),null);
- assert.equal(listDemoCard(bought,card.id,0.123456,'AVAX',7,0).listings.at(-1).price,0.1235);
- assert.ok(seeded.listings.every(l=>l.price===Number(l.price.toFixed(l.currency==='AVAX'?4:2))));
+ assert.equal(listDemoCard(bought,card.id,0.123456,'BNB',7,0).listings.at(-1).price,0.1235);
+ assert.ok(seeded.listings.every(l=>l.price===Number(l.price.toFixed(l.currency==='BNB'?4:2))));
 });

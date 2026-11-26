@@ -41,11 +41,11 @@ const timeLabel = (t: number, period: HistoryPeriod) =>
   new Date(t * 1000).toLocaleString("en-US", period === "1H" || period === "24H" ? { weekday: "short", hour: "numeric", minute: "2-digit" } : { month: "short", day: "numeric" });
 /** Fallbacks in USD, used only until the live quote arrives. */
 const BASES: Record<string, number> = {
-  WAVAX: 6.6,
+  WBNB: 6.6,
   BTC: 60_000,
   LINK: 8.5,
   ETH: 1_680,
-  JOE: 0.02,
+  CAKE: 0.02,
   // Demo stocks
   NVDA: 180,
   AAPL: 250,
@@ -132,7 +132,7 @@ export function DemoPriceChart({ ticker, markets, onSelect }: { ticker: string; 
   const gradient = useId();
   const { byTicker } = useStockPrices();
   const live = byTicker[ticker]?.price ?? null;
-  // Demo stocks come from Yahoo Finance; tokens from Avalanche DEX pools.
+  // Demo stocks come from Yahoo Finance; tokens from BNB Chain DEX pools.
   const isStock = DEMO_STOCK_CARDS.some((c) => c.ticker === ticker);
   const { history, failed } = useHistory(ticker, period);
   const real = history !== null;
@@ -278,7 +278,7 @@ export function DemoPriceChart({ ticker, markets, onSelect }: { ticker: string; 
           {real
             ? isStock
               ? "Market closed · showing the latest trading session. Prices from Yahoo Finance."
-              : "No recent trades in this pool · showing the latest data. Prices from Avalanche DEX pools."
+              : "No recent trades in this pool · showing the latest data. Prices from BNB Chain DEX pools."
             : failed
               ? "Market history unavailable right now · illustrative line only."
               : "Loading market history…"}

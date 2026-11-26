@@ -1,6 +1,6 @@
 /**
  * Shared card identities. Each relic (art + slot) has two identities: the live
- * app's Avalanche token, and the demo's stock. The artwork is framed by
+ * app's BNB Chain token, and the demo's stock. The artwork is framed by
  * StockCardFront.
  */
 export type StockCard = {
@@ -17,13 +17,13 @@ export type StockCard = {
   of?: string;
 };
 
-/** Live app: cards hold real Avalanche tokens. */
+/** Live app: cards hold real BNB Chain tokens. */
 export const STOCK_CARDS: StockCard[] = [
   { slug: "btc-seed", ticker: "BTC", name: "Silver Seed", tokenName: "Bitcoin", src: "/art/relics/aapl-silver-seed.png", accent: "#f7931a", number: "01" },
   { slug: "eth-prism", ticker: "ETH", name: "Prism Gate", tokenName: "Ethereum", src: "/art/relics/msft-prism-gate.png", accent: "#627eea", number: "02" },
-  { slug: "avax-eye", ticker: "WAVAX", name: "Neural Eye", tokenName: "Avalanche", src: "/art/relics/nvda-neural-eye.png", accent: "#e84142", number: "03" },
+  { slug: "avax-eye", ticker: "WBNB", name: "Neural Eye", tokenName: "BNB", src: "/art/relics/nvda-neural-eye.png", accent: "#f0b90b", number: "03" },
   { slug: "link-crown", ticker: "LINK", name: "Volt Crown", tokenName: "Chainlink", src: "/art/relics/tsla-volt-crown.png", accent: "#2a5ada", number: "04" },
-  { slug: "joe-key", ticker: "JOE", name: "Wayfinder Key", tokenName: "LFJ", src: "/art/relics/amzn-wayfinder-key.png", accent: "#f2716a", number: "05" },
+  { slug: "joe-key", ticker: "CAKE", name: "Wayfinder Key", tokenName: "PancakeSwap", src: "/art/relics/amzn-wayfinder-key.png", accent: "#1fc7d4", number: "05" },
 ];
 
 /** Demo mode: the same relics, tracking stocks (prices from Yahoo Finance). */
