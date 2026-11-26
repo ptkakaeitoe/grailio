@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, ImagePlus, RotateCcw, Search, X } from "lucide-react";
-import { SealedPack } from "@/components/pack-shop";
 import { StockLogo } from "@/components/stock-logo";
 import { cleanButton, cleanChip, cleanField, cn } from "@/components/clean-ui";
 import { publishPack } from "@/lib/published-packs";
@@ -24,8 +23,8 @@ const PIC_MAX_MB = 2;
 const PIC_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 const TONES = ["#2f5f8f", "#3a1f5c", "#2b8a3e", "#c2255c", "#c78a5c", "#d9480f", "#0c8599", "#202020"];
 const PADS: { id: Launchpad; name: string }[] = [{ id: "flap", name: "Flap" }, { id: "four", name: "Four.meme" }];
-const label = "mb-2.5 block text-sm text-muted";
-const option = "rounded-md border border-border px-4 py-3 text-left transition-colors hover:border-border-strong aria-pressed:border-black";
+const label = "mb-2 block text-sm text-muted";
+const option = "flex min-h-14 items-center gap-3 rounded-md border border-border px-4 text-left transition-colors hover:border-border-strong aria-pressed:border-black aria-pressed:bg-surface-muted";
 
 const cleanTicker = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, TICKER_MAX);
 
@@ -76,154 +75,201 @@ export function LaunchFlow() {
     const next = picked.has(ticker) ? tickers.filter((t) => t !== ticker) : [...tickers, ticker].slice(0, MAX_STOCKS);
     updatePack({ basket: next.length ? evenSplit(next) : [] });
   };
+  const padName = PADS.find((p) => p.id === c.launchpad)!.name;
+  const avatar = (
+    <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full text-base text-[#fff]" style={{ background: c.tone }} aria-hidden="true">
+      {c.image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- small data URL from the chosen file
+        <img src={c.image} alt="" className="size-full object-cover" />
+      ) : name[0]}
+    </span>
+  );
   const launch = () => {
     const slug = publishPack({ ...c, name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
-    showToast({ kind: "success", title: `${name} launched`, detail: `Simulated on ${PADS.find((p) => p.id === c.launchpad)!.name} · BSC testnet` });
+    showToast({ kind: "success", title: `${name} launched`, detail: `Simulated on ${padName} · BSC testnet` });
     router.push(`/app/packs/${slug}`);
   };
 
   return (
-    <div className="grid grid-cols-1 gap-10 pb-10 desk:grid-cols-[minmax(0,1fr)_300px] desk:gap-14">
-      <div className="flex min-w-0 flex-col gap-8">
-        <ol className="flex items-center gap-2" aria-label="Steps">
-          {STEPS.map((s, i) => (
-            <li key={s} className="flex min-w-0 flex-1 items-center gap-2">
-              <button type="button" disabled={!canOpen(i)} onClick={() => setStep(i)} aria-current={step === i ? "step" : undefined}
-                className="flex min-h-11 min-w-0 items-center gap-2 text-sm text-muted transition-colors enabled:hover:text-black disabled:opacity-40 aria-[current=step]:text-black">
-                <span className={cn("grid size-7 shrink-0 place-items-center rounded-full border text-[13px] tabular-nums", step === i ? "border-black bg-black text-white" : done[i] && i < step ? "border-black" : "border-border-strong")}>
-                  {i < step && done[i] ? <Check className="size-3.5" /> : i + 1}
-                </span>
-                <span className="truncate">{s}</span>
-              </button>
-              {i < STEPS.length - 1 && <ArrowRight className="size-4 shrink-0 text-muted" aria-hidden="true" />}
-            </li>
-          ))}
-        </ol>
+    <div className="mx-auto flex max-w-[560px] flex-col gap-6 pt-4 desk:pt-8">
+      <header className="flex items-center justify-between gap-3">
+        <h1 className="text-[22px] leading-tight">Launch a coin</h1>
+        <button type="button" className="-mr-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-sm text-muted hover:text-black" onClick={resetPack}>
+          <RotateCcw className="size-3.5" /> Start over
+        </button>
+      </header>
 
-        {step === 0 && <>
-          <div className="flex items-center gap-4">
-            <button type="button" onClick={() => picInput.current?.click()} aria-label={c.image ? "Change picture" : "Upload picture"}
-              className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-full border border-dashed border-border-strong bg-surface-muted text-muted transition-colors hover:border-black hover:text-black">
-              {c.image ? (
-                // eslint-disable-next-line @next/next/no-img-element -- small data URL from the chosen file
-                <img src={c.image} alt="" className="size-full object-cover" />
-              ) : <ImagePlus className="size-6" />}
+      <ol className="flex items-center gap-1" aria-label="Steps">
+        {STEPS.map((s, i) => (
+          <li key={s} className="flex min-w-0 flex-1 items-center gap-1">
+            <button type="button" disabled={!canOpen(i)} onClick={() => setStep(i)} aria-current={step === i ? "step" : undefined}
+              className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-sm text-muted transition-colors enabled:hover:text-black disabled:opacity-40 aria-[current=step]:text-black">
+              <span className={cn("grid size-6 shrink-0 place-items-center rounded-full border text-xs tabular-nums", step === i ? "border-black bg-black text-white" : done[i] && i < step ? "border-black" : "border-border-strong")}>
+                {i < step && done[i] ? <Check className="size-3" /> : i + 1}
+              </span>
+              <span className="truncate">{s}</span>
             </button>
-            <div className="min-w-0 text-sm">
-              <button type="button" className="min-h-11 text-black underline-offset-4 hover:underline" onClick={() => picInput.current?.click()}>{c.image ? "Change picture" : "Add a picture"}</button>
-              {c.image && <button type="button" className="ml-4 min-h-11 text-muted hover:text-black" onClick={() => updatePack({ image: null })}>Remove</button>}
-              {picError && <p className="text-down" role="alert">{picError}</p>}
-            </div>
-            <input ref={picInput} type="file" accept={PIC_TYPES.join(",")} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { void choosePic(e.target.files?.[0]); e.target.value = ""; }} />
-          </div>
+            {i < STEPS.length - 1 && <ArrowRight className="size-3.5 shrink-0 text-muted" aria-hidden="true" />}
+          </li>
+        ))}
+      </ol>
 
-          <div className="grid grid-cols-1 gap-5 phone:grid-cols-[1fr_160px]">
-            <div>
-              <label htmlFor="coin-name" className={label}>Name</label>
-              <input id="coin-name" className={cn(cleanField, "h-12 text-base")} value={c.name} maxLength={28} placeholder="Moon Cats" autoComplete="off" onChange={(e) => updatePack({ name: e.target.value })} />
-            </div>
-            <div>
-              <label htmlFor="coin-ticker" className={label}>Ticker</label>
-              <input id="coin-ticker" className={cn(cleanField, "h-12 text-base uppercase")} value={c.ticker} placeholder="CATS" autoComplete="off" spellCheck={false} onChange={(e) => updatePack({ ticker: cleanTicker(e.target.value) })} />
-            </div>
+      {step > 0 && (
+        <div className="flex items-center gap-3 rounded-md border border-border bg-surface-muted p-3">
+          {avatar}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base">{name}</p>
+            <p className="truncate text-[13px] text-muted">{c.ticker}</p>
           </div>
-
-          <div>
-            <span className={label}>Colour</span>
-            <div className="flex flex-wrap gap-2.5" role="group" aria-label="Colour">
-              {TONES.map((t) => (
-                <button key={t} type="button" aria-label={`Colour ${t}`} aria-pressed={c.tone === t} onClick={() => updatePack({ tone: t })}
-                  className="grid size-11 place-items-center rounded-full border-2 border-transparent aria-pressed:border-black" style={{ background: t }}>
-                  {c.tone === t && <Check className="size-4 text-[#fff]" />}
-                </button>
-              ))}
+          {c.basket.length > 0 && (
+            <div className="flex shrink-0 -space-x-1.5" aria-hidden="true">
+              {c.basket.map((b) => <StockLogo key={b.ticker} ticker={b.ticker} size={22} className="rounded-full ring-2 ring-[#1a1a1a]" />)}
             </div>
-          </div>
-        </>}
-
-        {step === 1 && (
-          <div>
-            <span className={label}>Stocks in the pack · up to {MAX_STOCKS}</span>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Basket presets">
-              {BASKET_PRESETS.map((p) => {
-                const tickers = p.basket.map((b) => b.ticker).slice(0, MAX_STOCKS);
-                return (
-                  <button key={p.id} type="button" className={cn(cleanChip, "min-h-10")} aria-pressed={tickers.join() === c.basket.map((b) => b.ticker).join()}
-                    onClick={() => updatePack({ basket: evenSplit(tickers) })}>{p.name}</button>
-                );
-              })}
-            </div>
-            {c.basket.length > 0 && (
-              <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Picked stocks">
-                {c.basket.map((b) => (
-                  <li key={b.ticker}>
-                    <button type="button" onClick={() => toggle(b.ticker)} aria-label={`Remove ${stockOf(b.ticker)?.name ?? b.ticker}`}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-md bg-surface-muted pr-2 pl-2.5 text-sm transition-colors hover:bg-raised-strong">
-                      <StockLogo ticker={b.ticker} size={18} /> {b.ticker} <span className="text-muted tabular-nums">{b.weight}%</span> <X className="size-3.5 text-muted" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <label className="relative mt-3 block">
-              <span className="sr-only">Search bStocks</span>
-              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
-              <input className={cn(cleanField, "pl-10 text-base")} placeholder="Add a stock" value={query} onChange={(e) => setQuery(e.target.value)} />
-            </label>
-            {results.length > 0 && (
-              <ul className="mt-1.5 overflow-hidden rounded-md border border-border">
-                {results.map((s) => (
-                  <li key={s.ticker}>
-                    <button type="button" disabled={!picked.has(s.ticker) && c.basket.length >= MAX_STOCKS} onClick={() => { toggle(s.ticker); setQuery(""); }}
-                      className="flex min-h-11 w-full items-center gap-3 border-b border-border px-3 text-left text-sm last:border-b-0 hover:bg-surface-muted disabled:opacity-40">
-                      <StockLogo ticker={s.ticker} size={20} /> <span className="w-14 shrink-0">{s.ticker}</span> <span className="truncate text-muted">{s.name}</span>
-                      {picked.has(s.ticker) && <Check className="ml-auto size-4" />}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {step === 2 && <>
-          <div>
-            <span className={label}>Risk</span>
-            <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Risk">
-              {TIER_PRESETS.map((t) => (
-                <button key={t.id} type="button" className={option} aria-pressed={tier?.id === t.id} onClick={() => updatePack({ tiers: t.tiers, risks: risksFor(t.id) })}>
-                  <span className="block text-base">{t.name}</span>
-                  <span className="block text-sm text-muted">{t.blurb}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className={label}>Launchpad</span>
-            <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Launchpad">
-              {PADS.map((p) => (
-                <button key={p.id} type="button" className={option} aria-pressed={c.launchpad === p.id} onClick={() => updatePack({ launchpad: p.id })}>{p.name}</button>
-              ))}
-            </div>
-          </div>
-        </>}
-
-        <div className="flex gap-2 border-t border-border pt-6">
-          {step > 0 && <button type="button" className={cn(cleanButton.outline, "justify-center")} onClick={() => setStep(step - 1)}><ArrowLeft className="size-4" /> Back</button>}
-          {step < STEPS.length - 1 ? (
-            <button type="button" className={cn(cleanButton.solid, "flex-1 justify-center")} disabled={!done[step]} onClick={() => setStep(step + 1)}>Next <ArrowRight className="size-4" /></button>
-          ) : (
-            <button type="button" className={cn(cleanButton.solid, "flex-1 justify-center")} disabled={!done.every(Boolean)} onClick={launch}>Launch on {PADS.find((p) => p.id === c.launchpad)!.name}</button>
           )}
         </div>
-      </div>
+      )}
 
-      <aside className="flex flex-col items-center gap-3 desk:sticky desk:top-[calc(var(--header-h)+24px)] desk:self-start" aria-label="Preview">
-        <div className="w-[200px]">
-          <SealedPack size={DEFAULT_SIZES[1]} coin={name || "Your coin"} color={{ bg: c.tone, ink: "#ffffff" }} />
+      {step === 0 && <>
+        <div className="flex flex-col items-center gap-1">
+          <button type="button" onClick={() => picInput.current?.click()} aria-label={c.image ? "Change picture" : "Upload picture"}
+            className="grid size-24 place-items-center overflow-hidden rounded-full border border-dashed border-border-strong text-[#fff] transition-[border-color] hover:border-black"
+            style={{ background: c.image ? undefined : c.tone }}>
+            {c.image ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small data URL from the chosen file
+              <img src={c.image} alt="" className="size-full object-cover" />
+            ) : <ImagePlus className="size-6" />}
+          </button>
+          <div className="flex items-center gap-4 text-sm">
+            <button type="button" className="min-h-11 text-black underline-offset-4 hover:underline" onClick={() => picInput.current?.click()}>{c.image ? "Change" : "Add picture"}</button>
+            {c.image && <button type="button" className="min-h-11 text-muted hover:text-black" onClick={() => updatePack({ image: null })}>Remove</button>}
+          </div>
+          {picError && <p className="text-sm text-down" role="alert">{picError}</p>}
+          <input ref={picInput} type="file" accept={PIC_TYPES.join(",")} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { void choosePic(e.target.files?.[0]); e.target.value = ""; }} />
         </div>
-        <button type="button" className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-black" onClick={resetPack}><RotateCcw className="size-3.5" /> Start over</button>
-      </aside>
+
+        <div className="grid grid-cols-1 gap-4 phone:grid-cols-[1fr_160px]">
+          <div>
+            <label htmlFor="coin-name" className={label}>Name</label>
+            <input id="coin-name" className={cn(cleanField, "h-12")} value={c.name} maxLength={28} placeholder="Moon Cats" autoComplete="off" onChange={(e) => updatePack({ name: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="coin-ticker" className={label}>Ticker</label>
+            <input id="coin-ticker" className={cn(cleanField, "num h-12 uppercase placeholder:normal-case")} value={c.ticker} placeholder="CATS" autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={(e) => updatePack({ ticker: cleanTicker(e.target.value) })} />
+          </div>
+        </div>
+
+        <div>
+          <span className={label}>Colour</span>
+          <div className="grid grid-cols-4 gap-2 phone:grid-cols-8" role="group" aria-label="Colour">
+            {TONES.map((t) => (
+              <button key={t} type="button" aria-label={`Colour ${t}`} aria-pressed={c.tone === t} onClick={() => updatePack({ tone: t })}
+                className="grid h-11 place-items-center rounded-md border-2 border-transparent transition-[border-color] aria-pressed:border-black" style={{ background: t }}>
+                {c.tone === t && <Check className="size-4 text-[#fff]" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      </>}
+
+      {step === 1 && <>
+        <div>
+          <span className={label}>Presets</span>
+          <div className="-mx-[var(--gutter)] flex gap-1.5 overflow-x-auto px-[var(--gutter)] phone:mx-0 phone:flex-wrap phone:px-0" role="group" aria-label="Basket presets">
+            {BASKET_PRESETS.map((p) => {
+              const tickers = p.basket.map((b) => b.ticker).slice(0, MAX_STOCKS);
+              return (
+                <button key={p.id} type="button" className={cn(cleanChip, "min-h-11 shrink-0 px-3.5 whitespace-nowrap")} aria-pressed={tickers.join() === c.basket.map((b) => b.ticker).join()}
+                  onClick={() => updatePack({ basket: evenSplit(tickers) })}>{p.name}</button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-baseline justify-between text-sm text-muted">
+            <span>Stocks</span>
+            <span className="tabular-nums">{c.basket.length}/{MAX_STOCKS}</span>
+          </div>
+          {c.basket.length > 0 ? (
+            <ul className="overflow-hidden rounded-md border border-border" aria-label="Picked stocks">
+              {c.basket.map((b) => (
+                <li key={b.ticker} className="flex min-h-14 items-center gap-3 border-b border-border pl-3 last:border-b-0">
+                  <StockLogo ticker={b.ticker} size={24} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base">{b.ticker}</span>
+                    <span className="block truncate text-[13px] text-muted">{stockOf(b.ticker)?.name ?? b.ticker}</span>
+                  </span>
+                  <span className="text-base tabular-nums">{b.weight}%</span>
+                  <button type="button" onClick={() => toggle(b.ticker)} aria-label={`Remove ${stockOf(b.ticker)?.name ?? b.ticker}`}
+                    className="grid size-12 shrink-0 place-items-center text-muted transition-colors hover:text-black">
+                    <X className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="grid min-h-14 place-items-center rounded-md border border-dashed border-border text-sm text-muted">No stocks yet</div>
+          )}
+        </div>
+
+        <div>
+          <label className="relative block">
+            <span className="sr-only">Search bStocks</span>
+            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
+            <input className={cn(cleanField, "h-12 pl-10")} placeholder="Add a stock" value={query} onChange={(e) => setQuery(e.target.value)} />
+          </label>
+          {results.length > 0 && (
+            <ul className="mt-1.5 overflow-hidden rounded-md border border-border">
+              {results.map((s) => (
+                <li key={s.ticker}>
+                  <button type="button" disabled={!picked.has(s.ticker) && c.basket.length >= MAX_STOCKS} onClick={() => { toggle(s.ticker); setQuery(""); }}
+                    className="flex min-h-12 w-full items-center gap-3 border-b border-border px-3 text-left text-sm last:border-b-0 hover:bg-surface-muted disabled:opacity-40">
+                    <StockLogo ticker={s.ticker} size={20} /> <span className="w-14 shrink-0">{s.ticker}</span> <span className="truncate text-muted">{s.name}</span>
+                    {picked.has(s.ticker) && <Check className="ml-auto size-4 shrink-0" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </>}
+
+      {step === 2 && <>
+        <div>
+          <span className={label}>Risk</span>
+          <div className="flex flex-col gap-1.5" role="group" aria-label="Risk">
+            {TIER_PRESETS.map((t) => (
+              <button key={t.id} type="button" className={option} aria-pressed={tier?.id === t.id} onClick={() => updatePack({ tiers: t.tiers, risks: risksFor(t.id) })}>
+                <span className="flex-1 text-base">{t.name}</span>
+                <span className="text-sm text-muted">{t.blurb}</span>
+                <Check className={cn("size-4 shrink-0", tier?.id !== t.id && "invisible")} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <span className={label}>Launchpad</span>
+          <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Launchpad">
+            {PADS.map((p) => (
+              <button key={p.id} type="button" className={cn(option, "justify-center")} aria-pressed={c.launchpad === p.id} onClick={() => updatePack({ launchpad: p.id })}>{p.name}</button>
+            ))}
+          </div>
+        </div>
+      </>}
+
+      {/* Phones: the actions stick to the bottom of the screen, just above the tab bar. */}
+      <div className="mt-2 flex gap-2 border-t border-border bg-white py-3 max-desk:sticky max-desk:bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] max-desk:z-20 max-desk:-mx-[var(--gutter)] max-desk:px-[var(--gutter)] desk:pt-6">
+        {step > 0 && (
+          <button type="button" className={cn(cleanButton.outline, "w-12 shrink-0 justify-center px-0 desk:w-auto desk:px-4")} aria-label="Back" onClick={() => setStep(step - 1)}>
+            <ArrowLeft className="size-4" /> <span className="hidden desk:inline">Back</span>
+          </button>
+        )}
+        {step < STEPS.length - 1 ? (
+          <button type="button" className={cn(cleanButton.solid, "flex-1 justify-center gap-2")} disabled={!done[step]} onClick={() => setStep(step + 1)}>Next <ArrowRight className="size-4" /></button>
+        ) : (
+          <button type="button" className={cn(cleanButton.solid, "flex-1 justify-center")} disabled={!done.every(Boolean)} onClick={launch}>Launch on {padName}</button>
+        )}
+      </div>
     </div>
   );
 }
