@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { MARKET_COINS, slugify, toCoin, type MarketCoin } from "@/lib/market";
 import type { PackConfig } from "@/lib/pack";
 
-/* Packs published from Pack studio, saved in this browser and listed on the marketplace beside the seed packs. */
+/* Packs launched from the Launch flow, saved in this browser and listed on the marketplace beside the seed packs. */
 
 
 const KEY = "bsctemp.published-packs.v1";
@@ -25,8 +25,9 @@ export function publishPack(config: PackConfig) {
   const base = slugify(config.name);
   let slug = base;
   for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
-  // Uploaded images stay out of storage.
-  const clean: PackConfig = { ...config, image: null, cards: config.cards.map((d) => ({ ...d, image: null })) };
+  // Keep the coin picture only if it's the small shrunk one; card images stay out of storage.
+  const image = config.image && config.image.length < 60_000 ? config.image : null;
+  const clean: PackConfig = { ...config, image, cards: config.cards.map((d) => ({ ...d, image: null })) };
   cache = [...readPublished(), { slug, config: clean, publishedAt: Date.now() }];
   try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch { /* keep in memory */ }
   listeners.forEach((l) => l());

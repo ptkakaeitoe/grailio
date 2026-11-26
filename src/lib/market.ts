@@ -2,7 +2,7 @@ import type { Launchpad, PackConfig } from "@/lib/pack";
 import { SEED_PACKS } from "@/data/packs";
 
 /*
- * The pack marketplace: every coin is a pack designed in Pack studio. Seed packs ship with the app (src/data/packs,
+ * The pack marketplace: every coin is a pack designed in the Launch flow. Seed packs ship with the app (src/data/packs,
  * exported from the studio); packs you publish from the studio are saved in this browser and listed beside them.
  * Names only on screen, no tickers.
  */
@@ -23,7 +23,7 @@ export type MarketCoin = {
   packs: MarketPack[];
   /** bStocks the pool buys, by weight (percent). The biggest one is the subject of the Cournot risk check. */
   basket: { ticker: string; weight: number }[];
-  /** The full Pack studio design: sizes, risk tiers, unlocks, cards. */
+  /** The full pack design: sizes, risk tiers, unlocks, cards. */
   config: PackConfig;
   /** Ships with the app (has a server-side risk check), or was published in this browser. */
   seed: boolean;

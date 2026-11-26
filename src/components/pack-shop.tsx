@@ -203,7 +203,7 @@ function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClos
 
 export function PackShop({ market, initialSize }: { market?: MarketCoin; initialSize?: string } = {}) {
   const draft = usePack();
-  // A marketplace pack uses its own Pack studio design; without one, the local draft.
+  // A marketplace pack uses its own design from the Launch flow; without one, the local draft.
   const c = market?.config ?? draft;
   const allSizes = c.sizes?.length ? c.sizes : DEFAULT_SIZES;
   // A marketplace coin sells only the sizes it launched with, in its own colors.
