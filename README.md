@@ -1,129 +1,141 @@
-# Grailio: stock packs for memecoins
+# Grailio (BNB Smart Chain mainnet)
 
-**Memecoin tax buys real stocks. Holders win them back in packs.**
+The mainnet version of Grailio: open $1 packs, collect cards that hold tokenized stocks, trade them, vote and chat, on **BNB Smart Chain (chain 56)**. It is a separate Next.js app with its own Foundry contracts, kept apart from the testnet app in the repo root (`src/`, `contracts/`, `openfour/`). Nothing here imports from there.
 
-A pack vault that any BNB Chain launchpad can attach to a coin. The coin's trading tax and pack sales fill a pool of **bStocks** (tokenized stocks on BNB Chain, priced by Atlas Oracle). Holders open packs; every card holds bStocks and can be burned to redeem them. **Cournot**'s odds on the pool's biggest stock decide when the riskier packs stay on sale.
+**Status: the contracts are deployed on BNB Smart Chain mainnet** (addresses in `deployments/56.json`, listed below). Low packs of all three editions are on sale; Medium and High open once the pool holds USDT. Swaps on `/trade` are real (KyberSwap's BSC aggregator; the user's wallet signs).
 
-Built for BNB Hack Bangkok 2026.
+## Run it
 
-## How it works
+```bash
+cd mainnet
+cp .env.example .env.local     # fill in the values (see below)
+npm install
+npm run dev -- -p 3300         # any free port; the testnet app uses 3200
+```
 
-1. **Launch.** The coin launches on Flap (Pool Launch) or Four.meme (OpenFour) with the vault attached. No presale.
-2. **Low packs first.** Low packs pay back a flat 0.95× at every rarity and are funded by the buyer, so they sell from day one with an empty pool.
-3. **The pool fills.** Trading tax and pack margin buy the coin's bStocks basket.
-4. **Tiers unlock.** When the pool first reaches its thresholds (default $1,000 for Medium, $5,000 for High), those tiers unlock for good. They only sell while the pool could still pay their top prize.
-5. **Risk check.** The vault asks Cournot how likely the basket's biggest stock is to drop 10%. At 25% or more, High pauses; at 50%, Medium pauses too. Low always sells.
-6. **Open and redeem.** Opening a pack mints a card holding bStocks. Burn it to redeem them.
+Checks: `npm run build`, `npm run lint`, `npx tsc --noEmit`, `node --test tests/*.mjs`, and for the contracts `cd contracts && ./install-libs.sh && forge test`.
 
-Odds are shown for every pack. Nothing here is investment advice.
+This Next.js version has breaking changes from older releases: read `AGENTS.md` and `node_modules/next/dist/docs/` before changing code.
 
 ## Pages
 
-| Route | What it shows |
-|---|---|
-| `/` | Landing page: how the vault works |
-| `/app/packs` | Pack marketplace: one shelf per coin, with its pool size and packs |
-| `/app/packs/<coin>` | A coin's packs: size, risk tier, odds, the Cournot risk check, buy and open |
-| `/app/trade` | Trade: Stocks (live signed bStocks prices from Atlas, cross-checked with CoinMarketCap) and Tokens (the coins launched with packs) |
-| `/studio` | Pack studio: basket, sleeve, cards, rarity tiers, tax and sale settings |
-| `/launch` | Launch a coin: name, ticker, picture, launchpad, and its pack vault settings |
+| Route | What |
+| --- | --- |
+| `/` | Live prices, packs, get started |
+| `/packs` | Buy and open $1 packs (three designs, three risk levels) |
+| `/trade` | Tokenized stocks for USDT, USDC or BNB, swapped via KyberSwap at the best BSC DEX route |
+| `/marketplace` | Buy and sell cards, priced in BNB or USDT, with a Stock filter |
+| `/collection` | Your cards (stake, redeem, view) and unopened packs |
+| `/gift` | Claim a gift code; see and cancel gifts you sent |
+| `/profile`, `/@handle` | Username, picture, bio, socials, ID card and holdings |
+| `/dao` | Proposals and votes with collector points (1 per pack bought) |
+| `/community` | Open lounge plus an encrypted room per stock for its card holders |
+| `/treasury` | Owner: pack pool, what's owed, withdraw, pause |
+| `/info` | Field guide and contract table |
+| `/v2` | Minimal black-and-white test UI over the same code |
 
-The marketplace uses four demo coins (`src/lib/market.ts`). Buying and opening packs, and launching, are simulated until the contracts are on BSC testnet. Prices (Atlas, CoinMarketCap) and the Cournot risk check are live.
+Cards hold tokenized stocks (bStocks, issued by bStocks), listed in `lib/stock-assets.ts` and priced on chain by Atlas Oracle. Payments are in USDT (BNB is swapped to USDT at checkout, and accepted on the marketplace). DAO votes use non-transferable points; there is no Grailio token.
 
-## Run it locally
+## How it works
 
-Requirements: Node.js 20 or newer.
+### Packs
 
-```bash
-git clone <this-repo-url>
-cd <repo-folder>
-npm install
-cp .env.example .env.local   # then fill in the keys you have
-npm run dev
-```
+Packs come in three editions, each with Low, Medium and High risk. Every pack earns **1 DAO point** (whatever its price), and each card holds one tokenized stock from **its edition's basket** (`baskets` in `contracts/script/stocks.mainnet.json`):
 
-Open http://localhost:3000.
+| Edition | Price | Basket | Tiers (Low / Medium / High) |
+| --- | --- | --- | --- |
+| Fable | $1 | NVDA, AAPL, TSLA, GOOGL, AMZN | 0 / 1 / 2 |
+| Saga | $3 | SPY, QQQ, BABA, NFLX, EWJ | 3 / 4 / 5 |
+| Mythos | $5 | SPCX, ANT, SKHY, EWY, EWT | 6 / 7 / 8 |
 
-| Variable | Used for |
-|---|---|
-| `ATLAS_API_KEY` | Signed bStocks prices (Atlas Oracle pull API) |
-| `CMC_API_KEY` | CoinMarketCap Pro: price cross-check and market data |
-| `COURNOT_API_KEY` | Optional prepaid Cournot key. Without it, the server uses Cournot's free calls (three per IP, ever) |
+Odds and card values per $1 of price (Saga is ×3, Mythos ×5), as `contracts/script/MainnetConfig.sol` adds them:
 
-All keys stay on the server.
+| Risk | Common | Rare | Epic | Legendary | Average in tokens |
+| --- | --- | --- | --- | --- | --- |
+| Low | 50% · $0.95 | 25% · $0.95 | 20% · $0.95 | 5% · $0.95 | $0.95 (5% edge) |
+| Medium | 50% · $0.46 | 25% · $0.80 | 20% · $1.40 | 5% · $4.00 | $0.91 (9% edge) |
+| High | 60% · $0.20 | 25% · $0.60 | 12% · $2.80 | 3% · $10.13 | $0.91 (9% edge) |
 
-## Integrations
+In a Low pack every card holds the same 95% of the price; rarity only sets the card's staking multiplier. The deploy puts the three Low tiers on sale; Medium and High need a seeded pool and are switched on later (`setTierActive`). Gas is paid in BNB.
 
-### Flap Pool Launch
+**Where the money goes:** into the pack contract's USDT pool. When a pack opens, the block hash rolls a rarity and picks a stock uniformly from the tier's basket (active assets only), swaps the card's value from USDT into that bStock on PancakeSwap v3 (USDT → bStock, routes in `stocks.mainnet.json`) and locks it in the card. Each swap must return at least the Atlas fair amount (read through that stock's `AtlasFeedAdapter`, a Chainlink-style interface) minus its slippage limit (3%). If the Atlas price is older than 6 hours or the swap would come up short, the card is minted holding its value in USDT and anyone can `fill` it later. The difference between the price and the card value is profit, which `distribute()` shares out to staking and the DAO. Staking rewards are paid in USDT. The owner can only withdraw USDT above what unopened packs and unfilled cards could still pay out, and never tokens locked in cards. Odds live in `PACK_TIERS` (`lib/contracts.ts`) and `contracts/script/MainnetConfig.sol`.
 
-The coin launches through a Flap Launcher Factory as a tax token, straight into a DEX pool; the vault is the coin's Flap Vault, fed by the trading tax.
+### Prices (`lib/quotes.ts`)
 
-- Network: BSC testnet
-- Launcher: `TODO: address`
-- Vault: `TODO: address`
-- Example launch transaction: `TODO: tx hash`
+- **Stocks:** price read on chain from Atlas Oracle's MultiFeed (`0xEAcE…44aa`, `fetch(feedId)`, `lib/atlas.ts`), cached for 30 seconds; 24h change and charts from Yahoo Finance, ending on the Atlas price. The pack contract uses the same Atlas feeds.
+- **BNB:** read on chain from the PancakeSwap v3 WBNB/USDC pool, in the same 30-second cache; 24h change from GeckoTerminal for that pool. USDC is treated as $1.
+- **Adding a stock:** one line in `lib/stock-assets.ts` (asset ID, ticker, name, token address, decimals, Atlas feed ID, accent). Logos are `public/logos/{TICKER}B.png`.
 
-### Four.meme via OpenFour
+### Swaps (`/trade`)
 
-The same vault, attached as an OpenFour launch mechanism.
+The tradable tokens are the 15 stocks in `lib/stock-assets.ts`, paid or received in USDT, USDC or BNB (`SWAP_KEYS` in `lib/tokens.ts`). KyberSwap routes each trade across BSC DEXes (`lib/kyber.ts`). `GET /api/swap/quote` returns the route; `POST /api/swap/build` returns calldata (beta cookie required, slippage capped at 5%). The user's wallet signs; the server never signs or sends. Every swap must target KyberSwap's router, checked on the server and in the browser. Grailio takes a 0.5% fee inside each swap (`lib/swap-fee.ts`): when USDT is on either side, half goes to staking and half to the treasury wallet; otherwise all of it goes to the treasury.
 
-- Network: BSC testnet
-- Mechanism: `TODO: address or OpenFour Hub listing`
-- Example launch transaction: `TODO: tx hash`
+### Beta gate
 
-### Atlas Oracle and CoinMarketCap
+Anyone can browse, use demo mode, connect a wallet, swap and chat: the beta gate is **off** (`BETA_GATE_ON = false` in `lib/beta-gate.ts`). To bring it back, set that to `true` and fill `BETA_ACCESS_CODES` / `BETA_COOKIE_SECRET`; the code is then checked on the server, which sets a signed httpOnly cookie for 90 days. It is a UI gate only: contracts on a public chain can always be called directly.
 
-`src/lib/atlas.ts` pulls signed bStocks prices from Atlas and recovers the signer exactly like the on-chain consumer, rejecting anything not signed by Atlas. `src/lib/cmc.ts` cross-checks them against CoinMarketCap Pro. These prices value the pool, price packs and set the risk check's drop level. Server routes: `/api/atlas`, `/api/cmc`.
+## Environment
 
-### Cournot Integration
+Names are in `.env.example`; you fill in the values. Never commit `.env.local`.
 
-**What it decides.** Whether a coin's Medium and High packs stay on sale. The pool holds real stocks; if its biggest stock is likely to fall, the riskier packs (paid from the pool) pause. Low packs are buyer-funded and always sell.
+| Variable | Needed for | Required? |
+| --- | --- | --- |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | Sign-in (Privy). Enable BNB Smart Chain and add your domain in the Privy dashboard | Yes for production; local dev falls back to a browser wallet |
+| `BETA_ACCESS_CODES`, `BETA_COOKIE_SECRET` | The beta gate, only if you turn it back on (`lib/beta-gate.ts`) | No (gate is off) |
+| `ETHERSCAN_API_KEY` | Not used by the app (activity and chat history read logs over public RPCs, `eth_getLogs`, cached in Upstash/KV). Only for `contracts/script/verify.sh` | No |
+| `RELAYER_KEY` | Free chat posts and gift gas top-ups (a dedicated wallet with a little BNB) | Optional |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Shared relay limits (or Vercel KV) | Required in production if `RELAYER_KEY` is set |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Mobile wallets via WalletConnect | Optional |
+| `NEXT_PUBLIC_BSC_RPC_URL` | Your own RPC instead of `bsc-dataseed.bnbchain.org` | Optional, recommended |
+| `NEXT_PUBLIC_SITE_URL` | Deployed origin, for link previews | Optional |
+| `NEXT_PUBLIC_TESTNET_URL` | The testnet app's URL, linked from the Testnet / Mainnet beta switch in the connect panel (shown as unavailable when unset) | Optional |
 
-**Where and how it calls Cournot.** `POST /api/risk/<coin>` (`src/app/api/risk/[coin]/route.ts`):
+## Mainnet addresses it uses
 
-1. Reads the signed Atlas price of the basket's biggest stock.
-2. Asks Cournot `resolve` (free) for prediction markets matching *"Will Tesla (TSLA) stock fall below $344.88?"* (10% under the Atlas price).
-3. Picks the live market closest to that level and reads its direction (`src/lib/risk.ts`): "hit (LOW) $345" means YES is the drop; "close above $340" means NO is.
-4. Calls Cournot `probability` for that market (one free or prepaid call), using the same endpoints and headers as the official Cournot skill client (`src/lib/cournot.ts`).
-5. Converts the result to the chance of the drop and applies the rule: 25% or more pauses High, 50% or more pauses Medium.
+**Grailio contracts** (deployed in block 135,895,169, on USDT; `deployments/56.json`):
 
-**How it uses the probability.** The decision gates the tier picker and the buy button on the coin's pack page. Mocked or hardcoded probabilities are never used: with no saved check, only the pool-size rule applies.
+| Contract | Address |
+| --- | --- |
+| CollectPacks | `0xfba2f95f7B4dC251e310830d16c14579FedA48cf` |
+| CollectMarket | `0x1aF51f96ed7BEF036c805f668bCd10C6Fb114f8E` |
+| CollectPoints | `0xB9e2f9ca9A3Cd685544a75e6fb6Ec335fb9797eE` |
+| CollectDAO | `0x0255552d14359EF44C6bc7b89b63655FcD071894` |
+| CollectStaking | `0x3A6a51C0f6ac6283Ea720711Aba278A3AEA75B56` |
+| CollectChat | `0xc7b63D7C7d8a235Ae4f5E3E0BdFaF652C8388B15` |
+| CollectNames | `0xf9D0186A8fDd9D0886F3794638Fb62311a037dAF` |
+| CollectProfiles | `0x533C8191B7bd61C918768466B9e70e3A4C9ec650` |
+| AtlasFeedAdapter (one per stock) | `stockAssets.<ticker>.adapter` in `deployments/56.json` |
 
-**Where users see the claim and evidence.** On each coin's pack page, the risk check panel shows the decision, Cournot's probability and when it was checked. "Claim, market and evidence" expands to the exact question sent, the Atlas price, the matched market, Cournot's YES probability, the chance of a drop (marked as added by this app), the decision, every returned assessment field and Cournot's evidence as returned.
+Third-party contracts, all read on chain 56 on 2026-11-26 (`lib/tokens.ts`, `lib/atlas.ts`, `contracts/script/MainnetConfig.sol`, `contracts/script/StockConfig.sol`):
 
-**Calls and caching.** Page views read the saved check (`.data/risk-checks.json`); only "Run risk check" calls Cournot, at most once per coin every 30 minutes.
+| What | Address |
+| --- | --- |
+| USDC (Binance-Peg, 18 decimals) | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
+| USDT (Binance-Peg, 18 decimals) | `0x55d398326f99059fF775485246999027B3197955` |
+| WBNB | `0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c` |
+| Atlas Oracle MultiFeed (stock prices) | `0xEAcE519ebB14fB8404fA6DdD23C3b34abaDE44aa` |
+| PancakeSwap v3 SmartRouter (card fills) | `0x13f4EA83D0bd40E75C8222255bc855a974568Dd4` |
+| KyberSwap MetaAggregationRouterV2 (swaps may only go here) | `0x6131B5fae19EA4f9D964eAc0408E4408b66337b5` |
+| BNB price pool (PancakeSwap v3 WBNB/USDC 0.01%) | `0xf2688Fb5B81049DFB7703aDa5e770543770612C4` |
+| bStock tokens (15) | `stockAssets.<ticker>.token` in `deployments/56.json` (also `contracts/script/stocks.mainnet.json`) |
 
-**Proof of a successful call.** Sanitized result of a live call made from this app (the server also logs each one as `[cournot] risk check`):
+The 15 bStocks, by asset ID: NVDA, AAPL, TSLA, GOOGL, AMZN (Fable); SPY, QQQ, BABA, NFLX, EWJ (Saga); SPCX, ANT, SKHY, EWY, EWT (Mythos).
 
-| Field | Value |
-|---|---|
-| Coin | Moon Cats (top stock TSLA, Atlas price $383.20) |
-| Question sent | Will Tesla (TSLA) stock fall below $344.88? |
-| Matched market | 24073286 · Will Tesla, Inc. (TSLA) hit (LOW) $345 Week of November 23 2026? |
-| Cournot probability (YES) | 0.15 (15%) |
-| Chance of drop | 15% · YES means the drop |
-| Decision | Medium and High stay on sale |
-| Evidence | polymarket: latest YES price 0.1500 for this market, 2026-11-26 02:49 UTC |
-| Checked | 2026-11-26 02:57 UTC |
+The swap-fee treasury wallet is `SWAP_FEE_TREASURY` in `lib/swap-fee.ts` (`0x9c01…a524`).
 
-Cournot's output is an assessment of market pricing, not investment advice.
+## What is left for you
 
-## Mainnet beta
+1. **Verify the contracts on BscScan** if any are still unverified: `cd contracts && ETHERSCAN_API_KEY=... BSC_RPC_URL=... ./script/verify.sh` (safe to re-run).
+2. **Fund the pack pool with USDT** before switching on Medium and High (`setTierActive`). Each unopened pack reserves its top prize; `capacity(tierId)` shows how many more can sell.
+3. **Fill in `.env.local`** (or your host's env): Privy app ID, and optionally a relayer wallet plus Upstash (which also caches the contract-log index).
+4. **Fund the relayer wallet** (`RELAYER_KEY`) with a little BNB and top it up; it refuses below 0.01 BNB.
+5. **Privy dashboard:** enable BNB Smart Chain and add your production domain.
+6. **Optional: outside NFTs as profile pictures.** BNB Chain has no keyless NFT index, so the picker offers Grailio cards only. Plug an NFT indexer into `lib/nft-metadata.ts` to bring this back.
 
-The BNB Smart Chain mainnet app is its own repo, `grailio-mainnet`. The Testnet / Mainnet switch in Connect and in the footer links the two (`NEXT_PUBLIC_MAINNET_URL` here, `NEXT_PUBLIC_TESTNET_URL` there).
+## What changed from the earlier app
 
-## Tech
+Branding is now Grailio, on BNB Chain: chain, RPC and explorer (BscScan); KyberSwap's BSC endpoint; contract logs read over public RPCs (`eth_getLogs`) into an incremental index cached in Upstash/KV; USD amounts formatted with USDT's 18 on-chain decimals; gas top-ups sized for BSC fees; outside-NFT avatars switched off. Cards no longer hold crypto (BTCB, ETH, WBNB, LINK, CAKE): they hold 15 bStocks, each pack edition drawing from its own basket of five. Card fills are priced by Atlas Oracle instead of Chainlink and bought on PancakeSwap v3 straight from USDT. Payments and staking rewards are in USDT. The exchange trades the stocks against USDT, USDC or BNB, the marketplace has a Stock filter, and the community has one room per stock.
 
-Next.js 16, React 19, TypeScript, Tailwind CSS 4, viem.
+## Stack
 
-## Roadmap
-
-- Vault contract on BSC testnet, fed by a Flap Launcher Factory tax token; buy and open packs on-chain with bStocks payouts
-- The same vault as an OpenFour mechanism
-- Risk check run by a keeper on a schedule, with the decision written on-chain
-- Holder votes on the basket and the pack settings
-- Audit, then mainnet
-
-## License
-
-[MIT](LICENSE)
+Next.js 16 (App Router), React 19, wagmi 2, viem 2, Privy, Tailwind CSS 4, Foundry, OpenZeppelin 5.4.

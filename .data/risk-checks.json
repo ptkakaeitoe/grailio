@@ -1,0 +1,89 @@
+{
+  "moon-cats": {
+    "coin": "moon-cats",
+    "stock": {
+      "ticker": "TSLA",
+      "name": "Tesla",
+      "price": 383.20309885
+    },
+    "claim": "Will Tesla (TSLA) stock fall below $344.88?",
+    "market": {
+      "id": "24073286",
+      "title": "Will Tesla, Inc. (TSLA) hit (LOW) $345 Week of November 23 2026?",
+      "endTime": "2026-11-27T21:00:00Z"
+    },
+    "badIfYes": true,
+    "probabilityYes": 0.15,
+    "chanceOfDrop": 0.15,
+    "decision": {
+      "highOpen": true,
+      "mediumOpen": true
+    },
+    "result": {},
+    "basis": [
+      {
+        "source": "polymarket",
+        "summary": "polymarket latest YES price 0.1500 for \"Will Tesla, Inc. (TSLA) hit (LOW) $345 Week of November 23 2026?\", ends 2026-11-27T21:00:00Z",
+        "time": "2026-11-26T02:49:44Z",
+        "url": "https://polymarket.com/market/will-tsla-dip-to-345-by-november-23-2026"
+      }
+    ],
+    "billing": null,
+    "checkedAt": 1795661821515
+  },
+  "chip-rush": {
+    "coin": "chip-rush",
+    "stock": {
+      "ticker": "NVDA",
+      "name": "NVIDIA",
+      "price": 150.75665718
+    },
+    "claim": "Will NVIDIA (NVDA) stock fall below $135.68?",
+    "market": {
+      "id": "28462283",
+      "title": "Will NVIDIA (NVDA) finish week of November 23 above $135?",
+      "endTime": "2026-11-27T21:00:00Z"
+    },
+    "badIfYes": false,
+    "probabilityYes": 0.907,
+    "chanceOfDrop": 0.09299999999999997,
+    "decision": {
+      "highOpen": true,
+      "mediumOpen": true
+    },
+    "result": {
+      "probability": 0.907,
+      "markets": [
+        {
+          "market_info": {
+            "id": 28462283,
+            "title": "Will NVIDIA (NVDA) finish week of November 23 above $135?",
+            "description": "This market will resolve to \"Yes\" if the Close price for NVIDIA (NVDA) on the final day of trading of the week specified in the title (normally Friday) is higher than the listed price. Otherwise, this market will resolve to \"No.\"\n\nIf the two specified prices are exactly equal, this market will resolve to \"No\".\n\nClosing prices will be used exactly as published by Pyth, without rounding.\n\nIf NVIDIA (NVDA) does not trade at all during the regular session of the final trading day of the week, the ma…",
+            "start_time": "",
+            "end_time": "2026-11-27T21:00:00Z",
+            "market_outcome": "YES",
+            "market_outcome_price": 0.907
+          },
+          "matching_confidence": 0.755
+        }
+      ],
+      "billing": "free_quota"
+    },
+    "basis": [
+      {
+        "source": "polymarket",
+        "summary": "polymarket latest YES price 0.9070 for \"Will NVIDIA (NVDA) finish week of November 23 above $135?\", ends 2026-11-27T21:00:00Z",
+        "time": "2026-11-26T05:49:44Z",
+        "url": "https://polymarket.com/market/nvda-above-135-week-november-27-2026"
+      },
+      {
+        "source": "polymarket",
+        "summary": "polymarket latest YES price 0.9000 for \"Will NVIDIA (NVDA) close above $135 on November 27?\", ends 2026-11-27T21:00:00Z",
+        "time": "2026-11-26T05:50:41Z",
+        "url": "https://polymarket.com/market/nvda-close-above-135-on-november-27-2026"
+      }
+    ],
+    "billing": "Free call · 1 left",
+    "checkedAt": 1795672392672
+  }
+}

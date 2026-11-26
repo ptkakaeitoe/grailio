@@ -1,0 +1,541 @@
+@import "tailwindcss";
+
+:root {
+  /* Dark mode, site-wide. */
+  color-scheme: dark;
+  --background: #111111;
+  --surface: #111111;
+  /* Raised panels are a white tint, not a solid grey, so the hero glow shows through them. */
+  --surface-muted: rgb(255 255 255 / .045);
+  --foreground: #f5f5f5;
+  --muted: #adadad;
+  --muted-soft: #828282;
+  --border: #434343;
+  --border-strong: #5e5e5e;
+  --accent: #f5f5f5;
+  --accent-soft: rgb(255 255 255 / .05);
+  --positive: #2fc25b;
+  --warning: #e3b341;
+  --warning-soft: #2a2210;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-positive: var(--positive);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-outfit), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-brand: var(--font-syne), system-ui, sans-serif;
+}
+
+/* Clean-theme values for Tailwind classes: hero block colors, price moves, and layout switches at 481px (`phone:`), 801px (`desk:`) and 1201px (`wide:`). */
+@theme {
+  /* Dark mode flips Tailwind's white and black: "white" is the dark surface and "black" the light ink,
+     so every bg-white / text-black / border-black in the components follows the theme. Card art keeps
+     its own literal colours in the CSS below. */
+  --color-white: #111111;
+  --color-black: #f5f5f5;
+  --color-block-salmon: #ec746e;
+  --color-block-green: #74fc84;
+  --color-block-ink: #202020;
+  --color-block-crimson: #8f1a12;
+  --color-block-gray: #666666;
+  --color-up: #1fae45;
+  --color-down: #e5322d;
+  --breakpoint-phone: 30.0625rem;
+  --breakpoint-desk: 50.0625rem;
+  --breakpoint-wide: 75.0625rem;
+}
+
+/* Element defaults live in the base layer so Tailwind utility classes always override them. */
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    /* Nothing scrolls sideways (the hero's light rays reach past narrow screens); clip, unlike hidden, keeps sticky working. */
+    overflow-x: clip;
+  }
+  /* Titles use Outfit; a font-* utility on a heading still overrides it. */
+  :is(h1, h2, h3) { font-family: var(--font-outfit), system-ui, sans-serif; }
+  /* No elastic bounce past the top or bottom: browsers paint only the flat background there, which cut the glow off
+     in a hard band above the nav. */
+  html { overscroll-behavior-y: none; }
+  html { scroll-behavior: smooth; scroll-padding-top: 120px; }
+  /* Scrollbars are hidden everywhere; content still scrolls. */
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
+  ::selection { background: #3f3f3f; }
+  a, button, summary { -webkit-tap-highlight-color: transparent; }
+  button:not(:disabled), summary { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+  /* Opening a dialog focuses its close button, and Chrome then drew the full focus ring around the X.
+     The X shows focus as its soft hover background instead (still visible to keyboard users). */
+  dialog button[aria-label^="Close"]:focus-visible { outline: none; background: var(--surface-muted); }
+  /* Phosphor icons (the only 256x256 SVGs in the app) size to the surrounding text; a className or style still overrides. */
+  :where(svg[viewBox="0 0 256 256"]) { display: inline-block; width: 1em; height: 1em; flex-shrink: 0; vertical-align: -.125em; }
+  /* A touch heavier than Phosphor "regular" (16 units) without jumping to "bold" (24): a 4-unit outline in the icon's colour makes ~20. */
+  :where(svg[viewBox="0 0 256 256"]) path { stroke: currentColor; stroke-width: 4; stroke-linejoin: round; }
+}
+
+/* While a modal dialog (pop-up or drawer) is open, the page behind it can't scroll (iOS Safari otherwise scrolls it
+   under the backdrop). The gutter keeps the layout from shifting where the scrollbar takes up space. */
+html:has(dialog:modal) { overflow: hidden; scrollbar-gutter: stable; }
+
+/* A faint rainbow glow across the whole top of the page, fading out downward. It belongs to the top of the page and
+   scrolls away with it (PageShell leaves its background transparent so it shows). */
+body::before {
+  content: "";
+  /* Starts 40svh above the page, for any browser that still bounces past the top (html turns overscroll off). */
+  position: absolute;
+  inset: -40svh 0 auto;
+  height: 80svh;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, #8c6cff, #29b6f6 20%, #3ddc84 40%, #ffe14d 60%, #ff9f1c 80%, #ff3d7f);
+  /* At least 1200px wide, centred: narrow screens show a couple of colours, not the whole rainbow squeezed in. */
+  background-size: max(100%, 1200px) 100%;
+  background-position: center;
+  /* Full strength above the page, then fades out over the top 40svh of the page. */
+  --glow-fade: linear-gradient(to bottom, #000 50%, rgb(0 0 0 / 0.972) 55%, rgb(0 0 0 / 0.896) 60%, rgb(0 0 0 / 0.784) 65%, rgb(0 0 0 / 0.648) 70%, rgb(0 0 0 / 0.500) 75%, rgb(0 0 0 / 0.352) 80%, rgb(0 0 0 / 0.216) 85%, rgb(0 0 0 / 0.104) 90%, rgb(0 0 0 / 0.028) 95%, rgb(0 0 0 / 0.000) 100%);
+  -webkit-mask-image: var(--glow-fade);
+  mask-image: var(--glow-fade);
+  opacity: .2;
+  /* Alive but slow: the colours cycle round the rainbow while the glow brightens and dims. */
+  animation: glow-hue 24s linear infinite, glow-breathe 9s ease-in-out infinite alternate;
+  will-change: filter, opacity;
+}
+/* The same rainbow at the foot of every page (SiteFooter): rising from the bottom edge, full screen width, fainter. */
+.footer-glow {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 50vw);
+  width: 100vw;
+  height: min(32svh, 300px);
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, #8c6cff, #29b6f6 20%, #3ddc84 40%, #ffe14d 60%, #ff9f1c 80%, #ff3d7f);
+  /* At least 1200px wide, centred: narrow screens show a couple of colours, not the whole rainbow squeezed in. */
+  background-size: max(100%, 1200px) 100%;
+  background-position: center;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgb(0 0 0 / .45) 40%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, rgb(0 0 0 / .45) 40%, transparent 100%);
+  opacity: .08;
+  animation: glow-hue 24s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .footer-glow { animation: none; } }
+/* iPhone and iPad Safari (the only browsers with -webkit-touch-callout): Safari paints the status-bar strip itself in
+   the theme colour, so the glow eases in over the page's top 40px instead of starting at full strength under a flat
+   strip. Short enough not to read as a band. */
+@supports (-webkit-touch-callout: none) {
+  body::before {
+    -webkit-mask-image: var(--glow-fade), linear-gradient(to bottom, transparent 50%, #000 calc(50% + 40px));
+    -webkit-mask-composite: source-in;
+    mask-image: var(--glow-fade), linear-gradient(to bottom, transparent 50%, #000 calc(50% + 40px));
+    mask-composite: intersect;
+  }
+}
+@keyframes glow-hue { to { filter: hue-rotate(360deg); } }
+@keyframes glow-breathe { from { opacity: .16; } to { opacity: .26; } }
+@media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+
+/* Content fades out as it scrolls up under the nav instead of anything being painted over it (as in grailio): a mask
+   on #main-content pinned to the bar's bottom edge. Main starts right under the bar, so the bar's bottom edge sits at
+   --scroll-y in main. The fade is a long, gentle 100px smoothstep with no visible edge: content stays faintly visible
+   behind the bar and dissolves toward the top of the screen. It grows in over the first 100px of scroll.
+   --scroll-y follows the scroll exactly via a scroll-driven animation (a 100000px range, so progress × range = offset);
+   where that isn't supported, SiteHeader sets it once a frame instead (it inherits from <html>).
+   data-scrolled (also SiteHeader) keeps the mask off at the very top, so blurred buttons in the hero keep their blur. */
+@property --scroll-y { syntax: "<length>"; inherits: true; initial-value: 0px; }
+@keyframes scroll-y { from { --scroll-y: 0px; } to { --scroll-y: 100000px; } }
+@supports (animation-timeline: scroll()) {
+  #main-content { animation: scroll-y linear both; animation-timeline: scroll(root); animation-range: 0px 100000px; }
+}
+html[data-scrolled] #main-content:not(:has(details[open] .frost, .frost:not(details .frost))) {
+  --fade-mask: linear-gradient(to bottom,
+    rgb(0 0 0 / 0) calc(var(--scroll-y) + -0.7 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.028) calc(var(--scroll-y) + -0.6 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.104) calc(var(--scroll-y) + -0.5 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.216) calc(var(--scroll-y) + -0.4 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.352) calc(var(--scroll-y) + -0.3 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.5) calc(var(--scroll-y) + -0.2 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.648) calc(var(--scroll-y) + -0.1 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.784) calc(var(--scroll-y) + 0.0 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.896) calc(var(--scroll-y) + 0.1 * min(var(--scroll-y), 100px)),
+    rgb(0 0 0 / 0.972) calc(var(--scroll-y) + 0.2 * min(var(--scroll-y), 100px)),
+    #000 calc(var(--scroll-y) + 0.3 * min(var(--scroll-y), 100px)));
+  -webkit-mask-image: var(--fade-mask);
+  mask-image: var(--fade-mask);
+}
+
+/* The "grailio" wordmark: Syne, bold and wide, set slightly tight. */
+.wordmark { font-family: var(--font-syne), system-ui, sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+
+/* A mask on #main-content stops backdrop-filter working inside it, so while a frosted menu (.frost) is open (rendered, or in an
+   open <details>) the fade is dropped (above) and the header shows its frosted bar instead, keeping content out from behind the logo. */
+html[data-scrolled]:has(#main-content details[open] .frost, #main-content .frost:not(details .frost)) .site-header::before { display: block; clip-path: inset(0); transition: none; }
+
+/* Numbers that update in place keep their width (used by the /v2 dev UI's components/ui.tsx). */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Numbers in Geist Mono: every figure marked `tabular-nums` (prices, balances, odds, counts, points). */
+.tabular-nums, .tabular { font-family: var(--font-geist-mono), ui-monospace, monospace; }
+
+/* Trade: chart (market data, with the token dropdown in its title) beside Swap, split by a hairline. Outer edges carry no padding so content lines up with the page gutter, like the other pages; the tops sit 40px (24px on phones) below the header. */
+.trade-workspace .trade-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, .85fr) minmax(320px, 1.15fr);
+  align-items: stretch;
+  gap: 0;
+  padding-top: 40px;
+}
+.trade-workspace .swap-column,
+.trade-workspace .demo-chart { min-width: 0; border: 0; background: transparent; }
+.trade-workspace .swap-column { position: relative; width: 100%; max-width: none; margin: 0; padding: 0 0 48px 32px; border-left: 1px solid var(--border); }
+.trade-workspace .swap-box { padding: 0; border: 0; }
+.trade-workspace .demo-chart {
+  position: relative;
+  grid-column: auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 32px 48px 0;
+}
+/* Two columns: chart and swap share two grid rows (subgrid), so the chart's high/low rule and the rule above Recent trades sit on the same line. */
+@media (min-width: 700px) {
+  .trade-workspace .trade-layout { grid-template-rows: auto 1fr; }
+  .trade-workspace .demo-chart,
+  .trade-workspace .swap-column { grid-row: span 2; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .trade-workspace .chart-main { grid-row: 1; display: flex; flex-direction: column; }
+  .trade-workspace .chart-main > dl { margin-top: auto; }
+  .trade-workspace .chart-notes { grid-row: 2; align-self: start; }
+  .trade-workspace .swap-box { grid-row: 1; padding-bottom: 40px; }
+  .trade-workspace .recent-trades { grid-row: 2; align-self: start; margin-top: 0; }
+}
+/* From 1201px the swap is the main column; the chart stays compact beside it. */
+@media (min-width: 75.0625rem) {
+  .trade-workspace .trade-layout { grid-template-columns: minmax(310px, .82fr) minmax(440px, 1.18fr); }
+}
+.trade-workspace .market-description,
+.trade-workspace .market-footnote,
+.trade-workspace .swap-below { display: none; }
+@media (max-width: 699px) {
+  .trade-workspace .trade-layout { grid-template-columns: minmax(0, 1fr); }
+  /* Phones: Swap (the action) first, the chart and its market dropdown after it. */
+  .trade-workspace .swap-column { order: 1; padding: 0 0 32px; border-left: 0; }
+  .trade-workspace .demo-chart { order: 2; padding: 40px 0 24px; border-top: 1px solid var(--border); }
+}
+
+/* The card's lettering and rules are shared DOM, so every stock uses the same frame. */
+.stock-card-front {
+  container-type: inline-size;
+  display: grid;
+  grid-template-rows: 14% 65% 21%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border: 1px solid #181818;
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 10px 24px -14px #0007;
+}
+.stock-card-front__masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2cqw;
+  padding: 0 5cqw;
+  /* White strip with black type; the nameplate at the foot is the inverse (black with white type). */
+  background: #fff;
+  color: #111;
+  border-bottom: 1px solid #181818;
+}
+.stock-card-front__masthead strong { font-size: 11cqw; line-height: 1; font-weight: 800; letter-spacing: -.065em; }
+.stock-card-front__masthead span { font-size: 4.4cqw; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stock-card-front__art { position: relative; overflow: hidden; border-bottom: 1px solid #111; }
+.stock-card-front__art img { object-fit: cover; object-position: center; }
+.stock-card-front__nameplate { display: flex; flex-direction: column; justify-content: center; gap: 1.5cqw; min-width: 0; padding: 0 5cqw; border-top: 1.5cqw solid var(--card-accent); background: #111; color: #fff; text-transform: uppercase; }
+.stock-card-front__nameplate strong { overflow: hidden; font-size: 9cqw; line-height: 1.05; font-weight: 800; letter-spacing: -.04em; white-space: nowrap; }
+.stock-card-front__nameplate div { display: flex; align-items: center; justify-content: space-between; gap: 2cqw; font-size: 4.6cqw; line-height: 1; font-weight: 600; letter-spacing: .06em; }
+.stock-card-front__nameplate div span:last-child { font-size: 3.8cqw; color: #9a9a9a; }
+/* The coin a card holds: its logo before the ticker. */
+/* Card status tag (components/profile-cards.tsx): the same small tag as the collection and market cards
+   (components/market-parts.tsx: light fill, dark lowercase text, 4px corners, 16% down, 6px in), sized in cqw. */
+.card-status-frame { position: relative; display: block; container-type: inline-size; }
+.card-status-clip { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: 4px; pointer-events: none; }
+.card-status {
+  position: absolute; top: 24cqw; right: 3cqw;
+  padding: 1cqw 4.2cqw; border-radius: 4px;
+  background: #f5f5f5; color: #111;
+  font-size: 5.6cqw; line-height: 1.45; text-transform: lowercase; white-space: nowrap;
+}
+.stock-card-front__coin { display: inline-flex; align-items: center; gap: 1.6cqw; min-width: 0; }
+.stock-card-front__coin-logo { width: 6cqw; height: 6cqw; flex-shrink: 0; }
+
+/* Rarity frames (StockCardFront rarity): a band just inside the card's edge, over the art. Sized in cqw so it scales with the card.
+   Rare: solid blue. Epic: purple-to-cyan foil with a soft glow. Legendary: gold foil that turns slowly, with a warm glow. */
+@property --frame-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.stock-card-front[data-rarity] { position: relative; }
+.stock-card-front[data-rarity]::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit; padding: 2.2cqw;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.stock-card-front[data-rarity="1"]::after { background: #779bad; }
+.stock-card-front[data-rarity="2"] { box-shadow: 0 0 0 1px #9883aa, 0 10px 26px -10px #8c5fd0aa; }
+.stock-card-front[data-rarity="2"]::after { background: linear-gradient(135deg, #b48cf2, #e58ad8 35%, #7fd3f5 70%, #9b7be0); }
+.stock-card-front[data-rarity="3"] { border-color: #8a6414; box-shadow: 0 0 0 1px #b29451, 0 12px 30px -10px #e0a82eb3; }
+.stock-card-front[data-rarity="3"]::after {
+  padding: 2.8cqw;
+  background: conic-gradient(from var(--frame-turn), #8a6414, #ffd76a, #fff3c4, #c8930f, #ffe08a, #8a6414);
+  animation: frame-turn 6s linear infinite;
+}
+@keyframes frame-turn { to { --frame-turn: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .stock-card-front[data-rarity="3"]::after { animation: none; } }
+/* Rarity foil over a card front (components/stock-card-front.tsx Holo). Overlay blending keeps the white masthead and black nameplate clean and lights up the art:
+   rare gets a passing white shine, epic a sweeping rainbow band, legendary a sweeping gold band over a gold tint with twinkling glitter. */
+.holo { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; mix-blend-mode: overlay; }
+.holo--rare {
+  background: linear-gradient(110deg, transparent 38%, rgb(255 255 255 / .85) 50%, transparent 62%) 100% 0 / 250% 100% no-repeat;
+  animation: holo-shine 4.5s ease-in-out infinite;
+}
+.holo--epic {
+  background:
+    linear-gradient(115deg, transparent 22%, #ff0084 32%, #ffe600 40%, #00ff8a 48%, #00cfff 56%, #cc4cfa 64%, transparent 74%) 0 0 / 300% 100% no-repeat,
+    linear-gradient(115deg, #ff008426, #00cfff26, #cc4cfa26);
+  animation: holo-sweep 6s ease-in-out infinite alternate;
+}
+.holo--legendary {
+  background:
+    linear-gradient(115deg, transparent 26%, #ffb347 36%, #ffe27a 45%, #fff6d0 50%, #ffd700 56%, #c8930f 64%, transparent 74%) 0 0 / 300% 100% no-repeat,
+    radial-gradient(circle, #fff 0 1px, transparent 1.6px) 0 0 / 17px 17px,
+    radial-gradient(circle, #fff 0 .8px, transparent 1.4px) 8px 9px / 23px 23px,
+    linear-gradient(135deg, #ffd70040, #fff1a830 50%, #c8930f40);
+  opacity: .85;
+  animation: holo-sweep 5s ease-in-out infinite alternate, holo-glitter 1.8s ease-in-out infinite alternate;
+}
+/* Share ID card (components/identity-card.tsx): flat, so its SVG text stays crisp. The radius matches the SVG corner
+   (16 of 640 × 400), so it scales with the card. */
+.id-card { --px: .5; --py: .5; position: relative; border-radius: 2.5% / 4%; box-shadow: 0 18px 40px -20px rgb(0 0 0 / .55); transition: transform .5s cubic-bezier(.2, .8, .3, 1), box-shadow .5s cubic-bezier(.2, .8, .3, 1); }
+/* Hover: a rainbow foil in the watermark's shape (same box as the SVG mark: 320 of 640 × 400, centred), sliding with the
+   pointer. Clipped off the picture column on the right; multiply keeps the ink and text dark. */
+.id-card-holo {
+  position: absolute; left: 25%; top: 10%; width: 50%; height: 80%; pointer-events: none;
+  background: linear-gradient(115deg, #ff7aa8 0%, #ffb27a 14%, #ffe27a 28%, #8cf0b4 42%, #7ac8ff 56%, #b49cff 70%, #ff7aa8 84%, #ffb27a 100%);
+  background-size: 170% 170%;
+  background-position: calc(var(--px) * 100%) calc(var(--py) * 100%);
+  mask-size: 100% 100%; -webkit-mask-size: 100% 100%; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat;
+  clip-path: inset(0 7% 0 0);
+  mix-blend-mode: multiply; opacity: 0; transition: opacity .4s ease;
+}
+/* Hover: a diagonal rainbow band across the whole card, moving opposite the pointer like light on foil. */
+.id-card-sheen {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(115deg, transparent 22%, #ff7aa8 34%, #ffe27a 42%, #8cf0b4 50%, #7ac8ff 58%, #b49cff 66%, transparent 78%);
+  background-size: 260% 100%;
+  background-position: calc((1 - var(--px)) * 100%) 0;
+  mix-blend-mode: multiply; opacity: 0; transition: opacity .4s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  /* Tilts toward the pointer like the trading cards (.holo-card), gentler since it is wider; the shadow shifts opposite. */
+  .id-card:hover {
+    transform: perspective(900px) rotateX(calc((.5 - var(--py)) * 10deg)) rotateY(calc((var(--px) - .5) * 12deg));
+    box-shadow: calc((.5 - var(--px)) * 28px) calc(24px + (.5 - var(--py)) * 18px) 56px -22px rgb(0 0 0 / .75);
+    transition-duration: .12s;
+  }
+  .id-card:hover .id-card-holo { opacity: .5; }
+  .id-card:hover .id-card-sheen { opacity: .32; }
+}
+@media (prefers-reduced-motion: reduce) { .id-card:hover { transform: none; } }
+
+/* Hovered with a mouse, a card tilts toward the pointer, a glare follows it and the foil band tracks it instead of animating.
+   --px / --py (0–1) are set by pointer handlers in components/market-parts.tsx. The band math maps --px onto each layer's oversized background. */
+.holo-card { --px: .5; --py: .5; transition: transform .5s cubic-bezier(.2,.8,.3,1); }
+.holo-glare {
+  position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(circle at calc(var(--px) * 100%) calc(var(--py) * 100%), rgb(255 255 255 / .65), transparent 55%);
+  mix-blend-mode: overlay; opacity: 0; transition: opacity .3s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .holo-card:hover { transform: perspective(700px) rotateX(calc((.5 - var(--py)) * 16deg)) rotateY(calc((var(--px) - .5) * 16deg)) scale(1.02); transition-duration: .12s; }
+  .holo-card:hover .holo-glare { opacity: 1; }
+  .holo-card:hover .holo--rare { animation: none; background-position: calc((1.25 - var(--px)) / 1.5 * 100%) 0; }
+  .holo-card:hover .holo--epic { animation: none; background-position: calc((1.5 - var(--px)) * 50%) 0, 0 0; }
+  .holo-card:hover .holo--legendary { animation: holo-glitter 1.8s ease-in-out infinite alternate; background-position: calc((1.5 - var(--px)) * 50%) 0, 0 0, 8px 9px, 0 0; }
+}
+/* .holo-reveal keeps the foil hidden until hover (components/holo-stock-card.tsx on the landing page). */
+.holo-reveal .holo { opacity: 0; transition: opacity .3s; }
+@media (hover: hover) and (pointer: fine) { .holo-reveal:hover .holo { opacity: 1; } }
+/* The pack carousel's centred pack: same tilt and glare, switched on by data-active from components/pack-panel.tsx (its children ignore pointer events for dragging). */
+.pack-tilt { --px: .5; --py: .5; transition: transform .5s cubic-bezier(.2,.8,.3,1); }
+.pack-tilt[data-active] { transform: perspective(900px) rotateX(calc((.5 - var(--py)) * 12deg)) rotateY(calc((var(--px) - .5) * 12deg)) scale(1.02); transition-duration: .12s; }
+.pack-tilt[data-active] .holo-glare { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .holo { animation: none !important; } .holo-card:hover, .pack-tilt[data-active] { transform: none; } }
+
+/* components/ui.tsx panels and stat tiles, used by the /v2 dev UI. */
+.ui-panel { border-radius: 3px; overflow: hidden; }
+.ui-panel > div:first-child { padding: 24px; }
+.stat-tile { border-right: 1px solid var(--border); }
+.stat-tile:last-child { border-right: 0; }
+.stat-tile > p:first-child { font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 10px; }
+.stat-tile > p:nth-child(2) { font-weight: 400; }
+@media (max-width: 800px) { .stat-tile:nth-child(2) { border-right: 0; } }
+@media (max-width: 480px) { .stat-tile { padding: 14px 10px; } .stat-tile > p:nth-child(2) { font-size: 20px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; }
+}
+
+/* Keyframes referenced from Tailwind `animate-[...]` classes. */
+@keyframes live-marquee { to { transform: translateX(-50%); } }
+@keyframes popover-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes swap-confirm { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes message-flash { 0%, 30% { background: var(--accent-soft); } 100% { background: transparent; } }
+@keyframes pack-halo { from { transform: scale(.4); opacity: 0; } to { transform: scale(1.25); opacity: 1; } }
+@keyframes pack-pulse { from { transform: scale(1.25); opacity: 1; } to { transform: scale(1.05); opacity: .6; } }
+@keyframes pack-shake { from { transform: rotate(-5deg); } to { transform: rotate(5deg) translateY(-5px); } }
+@keyframes pack-tear { to { transform: translate(35px, -60px) rotate(25deg); opacity: 0; } }
+@keyframes pack-fade { to { opacity: 0; transform: scale(1.12); } }
+@keyframes holo-shine { 0%, 45% { background-position: 100% 0; } 100% { background-position: 0% 0; } }
+/* The band is the first background layer; later values keep legendary's glitter still (epic ignores the extras). */
+@keyframes holo-sweep { from { background-position: 100% 0, 0 0, 8px 9px, 0 0; } to { background-position: 0% 0, 0 0, 8px 9px, 0 0; } }
+@keyframes holo-glitter { from { filter: brightness(.9); } to { filter: brightness(1.25); } }
+@keyframes card-unveil { from { opacity: 0; transform: perspective(800px) rotateY(85deg) translateY(20px); } to { opacity: 1; transform: perspective(800px) rotateY(0) translateY(0); } }
+
+/* Community profile: a see-through panel that slides in from the left (and back out on close). */
+.side-drawer {
+  translate: calc(-100% - 16px) 0;
+  transition: translate .34s cubic-bezier(.22, .8, .24, 1), overlay .34s allow-discrete, display .34s allow-discrete;
+}
+.side-drawer[open] { translate: 0 0; }
+@starting-style { .side-drawer[open] { translate: calc(-100% - 16px) 0; } }
+.side-drawer::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition: background .34s, overlay .34s allow-discrete, display .34s allow-discrete;
+}
+.side-drawer[open]::backdrop { background: rgb(0 0 0 / .5); }
+@starting-style { .side-drawer[open]::backdrop { background: rgb(0 0 0 / 0); } }
+/* Members slide in from the right. */
+.side-drawer--right { translate: calc(100% + 16px) 0; }
+.side-drawer--right[open] { translate: 0 0; }
+@starting-style { .side-drawer--right[open] { translate: calc(100% + 16px) 0; } }
+/* Pop-ups anchored under a button (get started, share profile): grow out of their top-right corner. */
+.drop-panel {
+  opacity: 0;
+  scale: .92;
+  transform-origin: 100% 0;
+  transition: opacity .22s ease-out, scale .34s cubic-bezier(.22, .8, .24, 1), overlay .34s allow-discrete, display .34s allow-discrete;
+}
+.drop-panel[open] { opacity: 1; scale: 1; }
+@starting-style { .drop-panel[open] { opacity: 0; scale: .92; } }
+/* Below the desktop layout every pop-up sits in the middle of the screen: anchored panels drop their under-the-button
+   placement (inline top/left/right from the component) and grow from their centre instead of a corner. */
+@media (max-width: 50rem) {
+  .drop-panel { inset: 0 !important; margin: auto !important; transform-origin: 50% 50%; }
+}
+/* Centred pop-ups (cleanDialog): fade in while rising a touch and scaling up from 96%, and back out on close; the
+   backdrop dims in and out with them. Pop-ups anchored under a button keep .drop-panel's grow-from-corner instead. */
+.pop-dialog:not(.drop-panel) {
+  opacity: 0;
+  scale: .96;
+  translate: 0 10px;
+  transition: opacity .24s ease-out, scale .36s cubic-bezier(.22, .8, .24, 1), translate .36s cubic-bezier(.22, .8, .24, 1), overlay .36s allow-discrete, display .36s allow-discrete;
+}
+.pop-dialog:not(.drop-panel)[open] { opacity: 1; scale: 1; translate: 0 0; }
+@starting-style { .pop-dialog:not(.drop-panel)[open] { opacity: 0; scale: .96; translate: 0 10px; } }
+.pop-dialog::backdrop { transition: background-color .3s ease-out, overlay .3s allow-discrete, display .3s allow-discrete; }
+.pop-dialog:not([open])::backdrop { background-color: rgb(0 0 0 / 0); }
+@starting-style { .pop-dialog[open]::backdrop { background-color: rgb(0 0 0 / 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .side-drawer, .side-drawer::backdrop, .drop-panel, .pop-dialog, .pop-dialog::backdrop { transition: none; }
+}
+
+/* Buttons nudge their ↗ arrow up and right on hover (add .arrow-nudge to the icon). */
+.arrow-nudge { transition: translate .25s cubic-bezier(.22, .8, .24, 1); }
+:is(a, button):is(:hover, :focus-visible):not(:disabled) > .arrow-nudge { translate: 2px -2px; }
+@media (prefers-reduced-motion: reduce) { .arrow-nudge { transition: none; } }
+
+/* Button icons on hover: a + spins a quarter turn, ↕ flips, → slides right. */
+.plus-spin, .icon-flip { transition: rotate .3s cubic-bezier(.22, .8, .24, 1); }
+.arrow-slide { transition: translate .25s cubic-bezier(.22, .8, .24, 1); }
+:is(a, button):is(:hover, :focus-visible):not(:disabled) > .plus-spin { rotate: 90deg; }
+:is(a, button):is(:hover, :focus-visible):not(:disabled) > .icon-flip { rotate: 180deg; }
+:is(a, button):is(:hover, :focus-visible):not(:disabled) > .arrow-slide { translate: 3px 0; }
+@media (prefers-reduced-motion: reduce) { .plus-spin, .icon-flip, .arrow-slide { transition: none; } }
+
+/* Hero art: the hands float toward each other (HeroHands); the pack tilts back a little on hover (HeroPack). */
+.hero-card-tilt { transition: transform .5s cubic-bezier(.2, .8, .3, 1); }
+/* A lens-flare starburst behind the pack: long thin streaks at uneven angles (.hero-pack-rays) over many short soft rays
+   (.hero-pack-rays--soft), each fading out from the centre, turning slowly in opposite directions so the flare shimmers. */
+.hero-pack-rays {
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 11.1deg, rgb(255 214 140 / 0.15) 11.9deg, transparent 12.7deg, transparent 51.8deg, rgb(255 214 140 / 0.13) 52.9deg, transparent 53.9deg, transparent 94.6deg, rgb(255 214 140 / 0.11) 95.7deg, transparent 96.8deg, transparent 145.5deg, rgb(255 214 140 / 0.11) 146.2deg, transparent 147.0deg, transparent 193.8deg, rgb(255 214 140 / 0.12) 195.1deg, transparent 196.4deg, transparent 228.5deg, rgb(255 214 140 / 0.17) 229.7deg, transparent 230.8deg, transparent 283.9deg, rgb(255 214 140 / 0.17) 284.9deg, transparent 285.9deg, transparent 319.3deg, rgb(255 214 140 / 0.12) 320.6deg, transparent 321.9deg, transparent 360deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 8%, rgb(0 0 0 / .4) 30%, transparent 75%);
+  mask-image: radial-gradient(closest-side, #000 8%, rgb(0 0 0 / .4) 30%, transparent 75%);
+  filter: blur(1.5px);
+  animation: pack-rays 140s linear infinite;
+}
+.hero-pack-rays--soft {
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 2.2deg, rgb(255 214 140 / 0.04) 4.0deg, transparent 5.8deg, transparent 12.3deg, rgb(255 214 140 / 0.04) 15.5deg, transparent 18.6deg, transparent 26.3deg, rgb(255 214 140 / 0.06) 29.1deg, transparent 31.9deg, transparent 40.9deg, rgb(255 214 140 / 0.04) 42.5deg, transparent 44.1deg, transparent 50.3deg, rgb(255 214 140 / 0.06) 53.2deg, transparent 56.0deg, transparent 62.0deg, rgb(255 214 140 / 0.06) 64.7deg, transparent 67.3deg, transparent 73.0deg, rgb(255 214 140 / 0.07) 76.1deg, transparent 79.2deg, transparent 84.4deg, rgb(255 214 140 / 0.07) 87.0deg, transparent 89.7deg, transparent 100.1deg, rgb(255 214 140 / 0.05) 103.0deg, transparent 106.0deg, transparent 118.1deg, rgb(255 214 140 / 0.06) 119.9deg, transparent 121.6deg, transparent 133.1deg, rgb(255 214 140 / 0.07) 134.9deg, transparent 136.7deg, transparent 141.4deg, rgb(255 214 140 / 0.08) 144.2deg, transparent 147.1deg, transparent 154.6deg, rgb(255 214 140 / 0.06) 157.8deg, transparent 161.1deg, transparent 169.7deg, rgb(255 214 140 / 0.07) 172.4deg, transparent 175.1deg, transparent 181.8deg, rgb(255 214 140 / 0.09) 185.0deg, transparent 188.2deg, transparent 195.0deg, rgb(255 214 140 / 0.04) 197.8deg, transparent 200.6deg, transparent 209.6deg, rgb(255 214 140 / 0.09) 212.4deg, transparent 215.2deg, transparent 225.9deg, rgb(255 214 140 / 0.06) 228.0deg, transparent 230.1deg, transparent 240.8deg, rgb(255 214 140 / 0.06) 242.4deg, transparent 243.9deg, transparent 251.0deg, rgb(255 214 140 / 0.04) 252.7deg, transparent 254.4deg, transparent 266.1deg, rgb(255 214 140 / 0.05) 267.8deg, transparent 269.6deg, transparent 276.7deg, rgb(255 214 140 / 0.04) 280.0deg, transparent 283.2deg, transparent 290.0deg, rgb(255 214 140 / 0.09) 292.6deg, transparent 295.2deg, transparent 304.9deg, rgb(255 214 140 / 0.05) 308.1deg, transparent 311.3deg, transparent 318.2deg, rgb(255 214 140 / 0.09) 320.4deg, transparent 322.7deg, transparent 335.3deg, rgb(255 214 140 / 0.04) 337.1deg, transparent 338.9deg, transparent 346.0deg, rgb(255 214 140 / 0.07) 348.0deg, transparent 349.9deg, transparent 360deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 10%, rgb(0 0 0 / .4) 28%, transparent 55%);
+  mask-image: radial-gradient(closest-side, #000 10%, rgb(0 0 0 / .4) 28%, transparent 55%);
+  filter: blur(4px);
+  animation-duration: 100s;
+  animation-direction: reverse;
+}
+@keyframes pack-rays { to { rotate: 360deg; } }
+/* Phones: the pack sits near the top, so the long streaks would reach up behind the nav as thin lines. Softer and
+   shorter there, fading out close to the pack. */
+@media (max-width: 50rem) {
+  .hero-pack-rays:not(.hero-pack-rays--soft) {
+    -webkit-mask-image: radial-gradient(closest-side, #000 6%, rgb(0 0 0 / .3) 20%, transparent 42%);
+    mask-image: radial-gradient(closest-side, #000 6%, rgb(0 0 0 / .3) 20%, transparent 42%);
+    filter: blur(4px);
+  }
+}
+@media (hover: hover) and (pointer: fine) { .hero-card-tilt:hover { transform: perspective(900px) rotateX(5deg) rotateY(-8deg) scale(1.02); } }
+.hand-float-left { transform-origin: 0% 80%; animation: hand-float-left 6.5s ease-in-out infinite alternate; }
+.hand-float-right { transform-origin: 100% 35%; animation: hand-float-right 7.5s ease-in-out -3s infinite alternate; }
+/* Desktop right hand: tilted round its fingertip (left edge, 78% down) so its finger lines up with the left hand's. */
+.hand-tilt-right { transform-origin: 0% 78%; rotate: 10deg; }
+@keyframes hand-float-left { from { transform: translateY(5px) rotate(.3deg); } to { transform: translateY(-9px) rotate(-.6deg); } }
+@keyframes hand-float-right { from { transform: translateY(-5px) rotate(-.3deg); } to { transform: translateY(9px) rotate(.6deg); } }
+@media (prefers-reduced-motion: reduce) { .hand-float-left, .hand-float-right { animation: none; }
+  .hero-card-tilt { transition: none; }
+  .hero-pack-rays { animation: none; } }
+
+/* Scroll areas fade their content at the edges instead of cutting it off: the bottom fades while there's more below,
+   the top once you've scrolled, and each fade lifts at its end of the list. Driven by the element's own scroll
+   (a scroll-driven animation); a list that doesn't scroll gets no fade. Browsers without scroll-driven animations
+   keep a fixed bottom fade. */
+@property --fade-top { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --fade-bottom { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.scroll-fade {
+  --fade-top: 0px;
+  --fade-bottom: 40px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-fade { --fade-bottom: 0px; animation: scroll-fade linear both; animation-timeline: scroll(self); }
+}
+@keyframes scroll-fade {
+  0% { --fade-top: 0px; --fade-bottom: 48px; }
+  8% { --fade-top: 48px; --fade-bottom: 48px; }
+  92% { --fade-top: 48px; --fade-bottom: 48px; }
+  100% { --fade-top: 48px; --fade-bottom: 0px; }
+}

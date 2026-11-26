@@ -41,8 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Cournot risk checks saved by the dev server
-/.data/
-
-# Local preview config
-/.claude/launch.json
+# foundry
+/contracts/out/
+/contracts/cache/
+/contracts/broadcast/
+/contracts/lib/

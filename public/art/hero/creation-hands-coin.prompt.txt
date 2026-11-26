@@ -1,9 +1,0 @@
-Generated with the built-in image_gen tool.
-
-Use case: stylized-concept.
-Asset type: transparent cutout artwork for an existing dark website hero.
-Primary request: Only the two bare hands and forearms from Michelangelo's The Creation of Adam, reinterpreted on a strong ascending diagonal, with one small luminous gold coin floating precisely in the gap between the index fingertips.
-Composition: landscape 3:2 canvas. A left forearm enters from the lower-left edge, its relaxed wrist and hand reach upward-right toward the center. A right forearm enters from the upper-right edge, its outstretched index finger reaches downward-left toward the center. The two index fingertips almost meet, separated by the single gold coin at exactly 50% width and 50% height. The diagonal runs from bottom-left to top-right. The top-left quarter and bottom-right quarter must remain entirely empty transparent negative space for website text. Long forearms, elegant anatomically correct hands, five fingers each, recognizable iconic Renaissance gesture, no touching. Both forearms extend naturally past opposite canvas edges. The coin is small relative to hands, about 7% of canvas width, slightly tilted with a visible milled edge, warm polished gold with a simple embossed four-point star, no letters.
-Style/medium: beautifully detailed Renaissance oil painting cutout, warm ivory and natural skin tones, subtle painterly grain and chiaroscuro, realistic anatomy, sculptural depth. Warm highlights on fingertips from the coin. Sophisticated editorial art, restrained golden glow.
-Scene/backdrop: genuinely transparent alpha background surrounding the hands and coin, clean cutout edges, no backdrop.
-Constraints: exactly two hands with forearms and one coin. No full people, faces, bodies, clothing, clouds, angels, wall, fresco rectangle, cards, lettering, logos, frame, watermark, sparkles or extra objects. No solid or checkerboard background. Keep the coin at the canvas center.

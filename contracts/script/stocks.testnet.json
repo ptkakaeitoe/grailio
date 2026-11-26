@@ -1,0 +1,105 @@
+{
+  "schema": "BSC testnet card assets for script/DeployTestnet.s.sol, in the same order as stocks.mainnet.json (asset ID = index). token: the trade market's test stock (MockBStock). market: the trade market (MockStockMarket) the router buys through and the feeds read. payToken: Flap's free-mint test USD.",
+  "market": "0x99AC96c9a468DfAb571e0C562d455CA3678391c0",
+  "payToken": "0x190C989D5665a0e404B444b53CAE9AbCfb600157",
+  "stocks": [
+    {
+      "ticker": "NVDA",
+      "symbol": "NVDAB",
+      "token": "0xe47425B5F0d9bbe0B5cCb7c5349927B4e813c725"
+    },
+    {
+      "ticker": "AAPL",
+      "symbol": "AAPLB",
+      "token": "0xE8BaD10bE8FaA6f417a599B4a33d9f5f48370Aa2"
+    },
+    {
+      "ticker": "TSLA",
+      "symbol": "TSLAB",
+      "token": "0x8bE8B7048567a4da7A99487dfA63b940D848b003"
+    },
+    {
+      "ticker": "GOOGL",
+      "symbol": "GOOGLB",
+      "token": "0x1DCAB70F0fA46c1eE2f29D6eb4bd44e86663880C"
+    },
+    {
+      "ticker": "AMZN",
+      "symbol": "AMZNB",
+      "token": "0x0e21aCdce6735C64A537be178683d9FF6753B549"
+    },
+    {
+      "ticker": "SPY",
+      "symbol": "SPYB",
+      "token": "0x7541E2A09e97122e22206c8a3A03bB5a7b8cb67d"
+    },
+    {
+      "ticker": "QQQ",
+      "symbol": "QQQB",
+      "token": "0x98b8321970A869c812A8dcE9c3135869747594F2"
+    },
+    {
+      "ticker": "BABA",
+      "symbol": "BABAB",
+      "token": "0xF172EBe7DC8d72f2917bb563bF1EcaB2B6bE5b1A"
+    },
+    {
+      "ticker": "NFLX",
+      "symbol": "NFLXB",
+      "token": "0xc5ceFd204AAd489ECC11F0757Ff33098B21aD0Ef"
+    },
+    {
+      "ticker": "EWJ",
+      "symbol": "EWJB",
+      "token": "0x27e0684C439bE3aaA5BFa2E95f39986d27E3F479"
+    },
+    {
+      "ticker": "SPCX",
+      "symbol": "SPCXB",
+      "token": "0x0C26ab3Bea36D362faEc82244AEf30A90BF4c785"
+    },
+    {
+      "ticker": "ANT",
+      "symbol": "ANTB",
+      "token": "0x3182EbA65A20170c0322b75ae0E93B8f332bD584"
+    },
+    {
+      "ticker": "SKHY",
+      "symbol": "SKHYB",
+      "token": "0x65C3e28076fF9e41B7b04E406c075263aC4d5E4a"
+    },
+    {
+      "ticker": "EWY",
+      "symbol": "EWYB",
+      "token": "0x5775d926343d91A323774bc2004d883675F5d8d8"
+    },
+    {
+      "ticker": "EWT",
+      "symbol": "EWTB",
+      "token": "0x43A12e026BD6B143Be3FF87a48b43295e1B17EBd"
+    }
+  ],
+  "baskets": {
+    "fable": [
+      "NVDA",
+      "AAPL",
+      "TSLA",
+      "GOOGL",
+      "AMZN"
+    ],
+    "saga": [
+      "SPY",
+      "QQQ",
+      "BABA",
+      "NFLX",
+      "EWJ"
+    ],
+    "mythos": [
+      "SPCX",
+      "ANT",
+      "SKHY",
+      "EWY",
+      "EWT"
+    ]
+  }
+}

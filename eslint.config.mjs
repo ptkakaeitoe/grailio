@@ -12,9 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Solidity projects with their own tooling.
-    "contracts/**",
-    "openfour/**",
+    // Vendored Solidity dependencies installed by forge.
+    "contracts/lib/**",
+    "contracts/out/**",
+    // Separate Chainlink CRE project with its own toolchain and lint rules.
+    "collect-oracle/**",
   ]),
 ]);
 

@@ -1,0 +1,18 @@
+{
+  "chainId": 97,
+  "deployBlock": null,
+  "payToken": "0x190C989D5665a0e404B444b53CAE9AbCfb600157",
+  "tradeMarket": "0x99AC96c9a468DfAb571e0C562d455CA3678391c0",
+  "router": null,
+  "collectPacks": null,
+  "collectMarket": null,
+  "collectPoints": null,
+  "collectDao": null,
+  "collectChat": null,
+  "collectNames": null,
+  "collectProfiles": null,
+  "collectStaking": null,
+  "owner": null,
+  "stockAssets": {},
+  "baskets": {}
+}
