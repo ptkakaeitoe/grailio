@@ -28,9 +28,9 @@ const statBox = "min-w-0 rounded-md border border-border px-4 py-4 desk:py-5";
 const statValue = "mt-2 truncate text-[24px] leading-[1.2] tracking-tight tabular-nums phone:text-[28px]";
 
 /**
- * The connected wallet's Collect cards, shown like market listings: the card
+ * The connected wallet's Grailio cards, shown like market listings: the card
  * with what it holds, its value now, and actions (stake, claim, redeem, fill),
- * plus a details dialog on click. Staked cards earn a share of Collect's revenue.
+ * plus a details dialog on click. Staked cards earn a share of Grailio's revenue.
  */
 export function StockCardCollection() {
   const { cards, refetch, ready } = useStockCards();

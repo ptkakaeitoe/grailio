@@ -189,7 +189,7 @@ export function SwapWorkspace() {
   const [exactWei, setExactWei] = useState<bigint | null>(null);
   const setAmount = (text: string, exact: bigint | null = null) => { setAmountText(text); setExactWei(exact); };
   const [slippage, setSlippage] = useState("1");
-  // Live swaps are reviewed in Collect's own pop-up before anything is signed.
+  // Live swaps are reviewed in Grailio's own pop-up before anything is signed.
   const [reviewing, setReviewing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 

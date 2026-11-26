@@ -20,11 +20,11 @@ function parse(raw: string) {
 
 export async function generateMetadata(props: PageProps<"/u/[handle]">): Promise<Metadata> {
   const target = parse((await props.params).handle);
-  if (!target) return { title: "Profile not found — graily" };
+  if (!target) return { title: "Profile not found — grailio" };
   const label = target.kind === "name" ? `@${target.value}` : `${target.value.slice(0, 6)}…${target.value.slice(-4)}`;
   return {
-    title: `${label} — graily`,
-    description: `${label}'s cards, holdings and links on graily.`,
+    title: `${label} — grailio`,
+    description: `${label}'s cards, holdings and links on grailio.`,
   };
 }
 

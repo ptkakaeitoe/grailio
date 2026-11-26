@@ -4,7 +4,7 @@ import { toActivity, type RawLog } from "@/lib/activity";
 import { latestBlock, ROUTESCAN_API } from "@/lib/routescan";
 
 /**
- * A wallet's Collect activity: /api/activity?address=0x…
+ * A wallet's Grailio activity: /api/activity?address=0x…
  *
  * Public RPCs cap log queries at ~100 blocks, so logs come from Routescan's
  * free logs API (the Snowtrace backend), filtered by the wallet in an indexed

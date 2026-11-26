@@ -3,7 +3,7 @@ import { CollectionWorkspace } from "@/components/collection-workspace";
 import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
-  title: "Collection — graily",
+  title: "Collection — grailio",
   description: "Your cards and unopened packs: open, stake and redeem.",
 };
 

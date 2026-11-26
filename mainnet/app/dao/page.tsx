@@ -6,8 +6,8 @@ import { PageShell } from "@/components/page-shell";
 import { DAO_VISIBLE } from "@/lib/collect-dao";
 
 export const metadata: Metadata = {
-  title: "DAO — graily",
-  description: "Propose and vote on Graily with points earned from packs.",
+  title: "DAO — grailio",
+  description: "Propose and vote on Grailio with points earned from packs.",
 };
 
 export default function DaoPage() {

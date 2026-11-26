@@ -9,7 +9,7 @@ export const GIFT_GAS_AMOUNT = "0.01"; // AVAX: enough to claim and open a few p
 export const GIFT_GAS_THRESHOLD = "0.005";
 export const GIFT_GAS_MAX_AGE = 10 * 60; // seconds
 
-export const giftGasMessage = (recipient: string, issuedAt: number) => `Graily: gas for gift claim to ${recipient.toLowerCase()} (${issuedAt})`;
+export const giftGasMessage = (recipient: string, issuedAt: number) => `Grailio: gas for gift claim to ${recipient.toLowerCase()} (${issuedAt})`;
 
 /** Ask the relayer for the top-up (browser). Signs with the gift code's key; the code itself isn't sent. */
 export async function requestGiftGas(secret: string, recipient: string): Promise<void> {

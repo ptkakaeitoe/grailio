@@ -4,7 +4,7 @@ import { PackPanel } from "@/components/pack-panel";
 import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
-  title: "Packs — graily",
+  title: "Packs — grailio",
   description: "Open mystery packs and see your pack shelf on Avalanche.",
 };
 

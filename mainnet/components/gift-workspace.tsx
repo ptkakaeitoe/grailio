@@ -30,7 +30,7 @@ const readHash = () => decodeURIComponent(window.location.hash.slice(1));
 
 // Signing in with Google can leave the page and come back without the "#CODE".
 // The code is kept for this tab during sign-in and put back on return.
-const PENDING_GIFT = "graily-pending-gift";
+const PENDING_GIFT = "grailio-pending-gift";
 function rememberGift(code: string) {
   try { sessionStorage.setItem(PENDING_GIFT, code); } catch { /* storage blocked */ }
 }

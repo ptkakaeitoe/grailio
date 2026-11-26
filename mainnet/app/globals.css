@@ -132,7 +132,7 @@ html[data-scrolled] #main-content:not(:has(details[open] .frost, .frost:not(deta
   mask-image: var(--fade-mask);
 }
 
-/* The "graily" wordmark: Syne, bold and wide, set slightly tight. */
+/* The "grailio" wordmark: Syne, bold and wide, set slightly tight. */
 .wordmark { font-family: var(--font-syne), system-ui, sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
 
 /* A mask on #main-content stops backdrop-filter working inside it, so while a frosted menu (.frost) is open (rendered, or in an

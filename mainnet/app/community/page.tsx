@@ -5,7 +5,7 @@ import { PageShell } from "@/components/page-shell";
 import { chatLive } from "@/lib/contracts";
 
 export const metadata: Metadata = {
-  title: "Community — graily",
+  title: "Community — grailio",
   description: "An open lounge, plus a room for each token's card holders.",
 };
 

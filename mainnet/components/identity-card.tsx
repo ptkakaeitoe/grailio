@@ -10,7 +10,7 @@ import { useReadContract } from "wagmi";
 
 import { cn } from "@/components/clean-ui";
 import { CARD_ASPECT, clampCrop, NFT_ASPECT } from "@/components/card-avatar";
-import { GRAILY_MARK } from "@/components/collect-mark";
+import { GRAILIO_MARK } from "@/components/collect-mark";
 import { useDemo } from "@/components/demo-provider";
 import { pointsAbi, pointsAddress } from "@/lib/collect-dao";
 import { RARITY_NAMES } from "@/lib/contracts";
@@ -31,7 +31,7 @@ const QR = { x: COL.x + 16, y: COL.y + COL.w + 16, size: COL.w - 32 };
 const R = 16;
 const INK = "#111111";
 /** The mark as a CSS mask, for the hover reflection over the watermark. */
-const MARK_MASK = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill-rule="evenodd" d="${GRAILY_MARK}"/></svg>`)}")`;
+const MARK_MASK = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill-rule="evenodd" d="${GRAILIO_MARK}"/></svg>`)}")`;
 
 const subscribeNoop = () => () => {};
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -214,7 +214,7 @@ export function IdCard({ name, address, path, cards, points, rarest, crop }: {
   async function share() {
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${title} on Graily`, url });
+        await navigator.share({ title: `${title} on Grailio`, url });
       } catch {
         // Cancelled: nothing to do.
       }
@@ -237,17 +237,17 @@ export function IdCard({ name, address, path, cards, points, rarest, crop }: {
         }}
         onPointerLeave={(e) => { e.currentTarget.style.setProperty("--px", ".5"); e.currentTarget.style.setProperty("--py", ".5"); }}
       >
-      <svg ref={svg} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" style={{ borderRadius: "inherit" }} role="img" aria-label={`Graily ID card for ${title}: ${cards ?? 0} cards${points !== null ? `, ${points} points` : ""}. QR code links to ${url}.`}>
+      <svg ref={svg} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" style={{ borderRadius: "inherit" }} role="img" aria-label={`Grailio ID card for ${title}: ${cards ?? 0} cards${points !== null ? `, ${points} points` : ""}. QR code links to ${url}.`}>
         <defs>
           <clipPath id="id-avatar"><rect x={AVATAR.x} y={AVATAR.y} width={AVATAR.d} height={AVATAR.d} /></clipPath>
         </defs>
         {/* Plain white card stock. */}
         <rect width={W} height={H} rx={R} fill="#f6f5f1" />
         {/* The mark as a large, faint watermark in the middle, behind everything else. */}
-        <svg x={W / 2 - 160} y={H / 2 - 160} width="320" height="320" viewBox="0 0 100 100" aria-hidden="true"><path d={GRAILY_MARK} fill={INK} fillOpacity="0.045" fillRule="evenodd" /></svg>
+        <svg x={W / 2 - 160} y={H / 2 - 160} width="320" height="320" viewBox="0 0 100 100" aria-hidden="true"><path d={GRAILIO_MARK} fill={INK} fillOpacity="0.045" fillRule="evenodd" /></svg>
 
-        {/* Header: the Graily mark alone on the left, the holder on the right. */}
-        <svg x="33" y="21" width="44" height="44" viewBox="0 0 100 100"><path d={GRAILY_MARK} fill={INK} fillRule="evenodd" /></svg>
+        {/* Header: the Grailio mark alone on the left, the holder on the right. */}
+        <svg x="33" y="21" width="44" height="44" viewBox="0 0 100 100"><path d={GRAILIO_MARK} fill={INK} fillRule="evenodd" /></svg>
         <text x={W - 40} y="53" textAnchor="end" fill={INK} fontSize="20" fontWeight="500" letterSpacing="-0.2" fontFamily={FONT}>{title.toUpperCase()}</text>
 
         {/* Who: label / value rows. */}

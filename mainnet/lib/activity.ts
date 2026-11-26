@@ -1,7 +1,7 @@
 import { decodeEventLog, parseAbi, type Address, type Hex } from "viem";
 
 /**
- * A wallet's on-chain activity in Collect: packs, reveals, redemptions, gifts,
+ * A wallet's on-chain activity in Grailio: packs, reveals, redemptions, gifts,
  * staking and the market, read from contract event logs. Pure: no app imports,
  * so tests can load it directly.
  */
@@ -52,7 +52,7 @@ export type RawLog = { address: string; topics: string[]; data: string; timeStam
 
 /**
  * Turns raw logs into activity for `account`, newest first. Logs that aren't
- * Collect events, or Sold events where `account` was neither side, are dropped.
+ * Grailio events, or Sold events where `account` was neither side, are dropped.
  */
 export function toActivity(logs: RawLog[], account: Address): ActivityItem[] {
   const me = account.toLowerCase();

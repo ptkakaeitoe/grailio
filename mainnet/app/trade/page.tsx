@@ -3,7 +3,7 @@ import { PageShell } from "@/components/page-shell";
 import { SwapWorkspace } from "@/components/swap-workspace";
 
 export const metadata: Metadata = {
-  title: "Trade — graily",
+  title: "Trade — grailio",
   description: "Swap USDC and AVAX for Avalanche tokens at DEX prices.",
 };
 

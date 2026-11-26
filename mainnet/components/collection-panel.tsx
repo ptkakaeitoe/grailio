@@ -39,7 +39,7 @@ export function CollectionPanel() {
       <CollectionWelcome
         label="series 01"
         title="Cards arrive at launch."
-        body="Packs go on sale when Graily launches on Avalanche."
+        body="Packs go on sale when Grailio launches on Avalanche."
         action={<button type="button" className={cleanButton.solid} onClick={demo.start}>Try the demo <ArrowUpRightIcon weight="bold" /></button>}
       />
     );

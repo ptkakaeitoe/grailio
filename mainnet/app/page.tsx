@@ -125,7 +125,7 @@ export default function Home() {
           </div>
           <CardFan />
         </div>
-        {/* What Collect runs on, in the spot the price ticker used to hold (ticker hidden for now).
+        {/* What Grailio runs on, in the spot the price ticker used to hold (ticker hidden for now).
             Spread edge to edge on desktop. Each partner shows its own mark. */}
         <ul
           aria-label="Built with"

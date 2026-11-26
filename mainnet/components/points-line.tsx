@@ -5,7 +5,7 @@ import { useReadContract } from "wagmi";
 import { CollectMark } from "@/components/collect-mark";
 import { pointsAbi, pointsAddress } from "@/lib/collect-dao";
 
-/** A profile's collector points (1 per pack bought): the Collect mark and the count in an outlined pill beside the name. */
+/** A profile's collector points (1 per pack bought): the Grailio mark and the count in an outlined pill beside the name. */
 export function PointsLine({ account, demoPoints }: { account?: Address; demoPoints?: number }) {
   const live = demoPoints === undefined && Boolean(account) && pointsAddress !== zeroAddress;
   const { data } = useReadContract({

@@ -27,7 +27,7 @@ export function PackArt({ edition, large = false, className = "", style }: { edi
         {/* Title at the foot, light on a soft dark rise from the bottom edge so it reads over any artwork. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-3 -z-[5] h-[52%] bg-linear-to-t from-[#120c16]/92 via-[#120c16]/55 to-transparent" aria-hidden="true" />
         <div className="mt-auto flex flex-col items-center px-3 pb-2 text-[#f7f2ea]">
-          <span className="text-[10px] font-semibold tracking-[0.28em] opacity-90">GRAILY</span>
+          <span className="text-[10px] font-semibold tracking-[0.28em] opacity-90">GRAILIO</span>
           <span className={cn("mt-1 font-serif leading-none font-black tracking-[-0.03em] uppercase [text-shadow:0_2px_14px_rgb(0_0_0/.6)]", large ? "text-[50px]" : "text-[44px]")}>{edition.name.split(" · ")[0]}</span>
           <div className="mt-3 flex w-full justify-between px-1 text-[8px] font-semibold tracking-[0.12em] opacity-80">
             <span>1 CARD</span>
@@ -44,7 +44,7 @@ export function PackArt({ edition, large = false, className = "", style }: { edi
     <div className={cn("relative flex flex-col rounded-[4px]", PALETTE[edition.style], className)} style={style}>
       <div className={seal} />
       <div className={cn("flex flex-col items-center", large ? "px-5 pt-[30px] pb-5" : "px-[15px] pt-[18px] pb-3")}>
-        <span className="text-[13px] tracking-[0.12em]">graily</span>
+        <span className="text-[13px] tracking-[0.12em]">grailio</span>
         <span className="mt-[9px] text-[6px] tracking-[0.14em] opacity-75">MYSTERY PACK {edition.id}</span>
         <div
           className={cn("relative grid place-items-center border border-current before:absolute before:inset-[5px] before:rounded-[inherit] before:border before:border-current before:opacity-40 [&_svg]:size-[44%] [&_svg]:stroke-[1.5]", emblemShape, large ? "my-7 size-[112px] max-[380px]:size-[82px]" : "mt-[25px] mb-5 size-24")}

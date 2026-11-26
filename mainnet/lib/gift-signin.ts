@@ -6,4 +6,4 @@
  */
 export const GIFT_SIGNIN_MAX_AGE = 10 * 60; // seconds
 
-export const giftSigninMessage = (issuedAt: number) => `Graily: sign in with a gift (${issuedAt})`;
+export const giftSigninMessage = (issuedAt: number) => `Grailio: sign in with a gift (${issuedAt})`;

@@ -25,7 +25,7 @@ export class SwapError extends Error {}
 const sameAddress = (a: unknown, b: string) => typeof a === "string" && a.toLowerCase() === b.toLowerCase();
 
 export async function kyberRoute(tokenIn: string, tokenOut: string, amountIn: bigint) {
-  // Collect's 0.5% fee (lib/swap-fee.ts) is part of every route: amountOut already accounts for it.
+  // Grailio's 0.5% fee (lib/swap-fee.ts) is part of every route: amountOut already accounts for it.
   const fee = swapFeeFor(tokenIn, tokenOut);
   const query = new URLSearchParams({ tokenIn, tokenOut, amountIn: amountIn.toString(), feeAmount: fee.feeAmount, chargeFeeBy: fee.chargeFeeBy, isInBps: "true", feeReceiver: fee.feeReceiver });
   const url = `${BASE}/routes?${query}`;
@@ -38,7 +38,7 @@ export async function kyberRoute(tokenIn: string, tokenOut: string, amountIn: bi
 }
 
 export async function kyberBuild(routeSummary: RouteSummary, sender: string, slippageBps: number) {
-  // The route comes back from the browser: build only routes that still carry Collect's fee.
+  // The route comes back from the browser: build only routes that still carry Grailio's fee.
   if (!hasCollectFee(routeSummary)) throw new SwapError("Quote expired. Get a new quote.");
   const res = await fetch(`${BASE}/route/build`, {
     method: "POST",

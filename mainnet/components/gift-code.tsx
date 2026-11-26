@@ -15,8 +15,8 @@ const chip = "inline-flex min-h-9 items-center gap-1.5 rounded-md border border-
 /** Copy code, copy link and (where supported) share, for one gift code. */
 export function GiftShareActions({ code, tier, quantity }: { code: string; tier: number; quantity: number }) {
   const [copied, setCopied] = useState<"" | "code" | "link">("");
-  const name = PACK_TIERS.find((t) => t.id === tier)?.name ?? "Graily";
-  const text = `I got you ${quantity === 1 ? `a ${name} pack` : `${quantity} ${name} packs`} on Graily. Claim with code ${code}`;
+  const name = PACK_TIERS.find((t) => t.id === tier)?.name ?? "Grailio";
+  const text = `I got you ${quantity === 1 ? `a ${name} pack` : `${quantity} ${name} packs`} on Grailio. Claim with code ${code}`;
   async function copy(what: "code" | "link") {
     try {
       await navigator.clipboard.writeText(what === "code" ? code : giftLink(code));
@@ -32,7 +32,7 @@ export function GiftShareActions({ code, tier, quantity }: { code: string; tier:
       <button type="button" className={chip} onClick={() => copy("code")}>{copied === "code" ? <CheckIcon /> : <CopyIcon />} {copied === "code" ? "Copied" : "Copy code"}</button>
       <button type="button" className={chip} onClick={() => copy("link")}>{copied === "link" ? <CheckIcon /> : <CopyIcon />} {copied === "link" ? "Copied" : "Copy link"}</button>
       {typeof navigator !== "undefined" && "share" in navigator && (
-        <button type="button" className={chip} onClick={() => { navigator.share({ title: "A Graily gift", text, url: giftLink(code) }).catch(() => {}); }}><ShareNetworkIcon /> Share</button>
+        <button type="button" className={chip} onClick={() => { navigator.share({ title: "A Grailio gift", text, url: giftLink(code) }).catch(() => {}); }}><ShareNetworkIcon /> Share</button>
       )}
     </div>
   );

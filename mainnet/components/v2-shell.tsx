@@ -22,7 +22,7 @@ export function V2Shell({ children }: { children: React.ReactNode }) {
 
   return <div className="v2-root">
     <header className="v2-header">
-      <Link href="/v2/">graily / dev</Link>
+      <Link href="/v2/">grailio / dev</Link>
       <span>{demo.active ? "Demo" : "Beta"}</span>
       <button type="button" onClick={() => demo.active ? demo.exit() : demo.start()}>{demo.active ? "Exit demo" : "Try demo"}</button>
       {address ? <button type="button" onClick={() => { void logout(); }} title="Sign out">{`${address.slice(0, 6)}…${address.slice(-4)}`}</button> : <button type="button" onClick={openConnect}>Connect</button>}

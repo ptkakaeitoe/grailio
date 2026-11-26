@@ -51,7 +51,7 @@ function describe(i: ActivityItem, assetOf: Map<string, number>): { title: strin
   }
 }
 
-/** The wallet's on-chain history in Collect, newest first (from /api/activity), in a drawer from the right. */
+/** The wallet's on-chain history in Grailio, newest first (from /api/activity), in a drawer from the right. */
 export function ActivityDrawer({ account, onClose }: { account: Address; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { dialog.current?.showModal(); }, []);

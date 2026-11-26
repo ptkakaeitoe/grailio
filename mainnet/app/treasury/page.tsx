@@ -5,7 +5,7 @@ import { PageShell } from "@/components/page-shell";
 import { TreasuryWorkspace } from "@/components/treasury-workspace";
 
 export const metadata: Metadata = {
-  title: "Treasury — graily",
+  title: "Treasury — grailio",
   description: "The pack prize pool: what's held, what's owed to players, and what can be withdrawn.",
   robots: { index: false, follow: false },
 };

@@ -10,7 +10,7 @@ import { avatarsAbi, avatarsAddress, avatarsLive } from "@/lib/contracts";
  */
 export type CardAvatarCrop = { tokenId: bigint; ticker: string; rarity?: number; tier?: number; nft?: string; image?: string | null; label?: string; x: number; y: number; zoom: number };
 
-/** Avatars (Collect cards or any Avalanche NFT) for a set of wallets, keyed by lowercase address. */
+/** Avatars (Grailio cards or any Avalanche NFT) for a set of wallets, keyed by lowercase address. */
 export function useAvatars(accounts: string[]) {
   const unique = [...new Set(accounts.map((a) => a.toLowerCase()))].sort();
   const { data: rows, refetch: refetchRows } = useReadContracts({

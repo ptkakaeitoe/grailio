@@ -8,7 +8,7 @@ import { tokenAmount } from "@/lib/format-amount";
 import { TOKENS } from "@/lib/tokens";
 
 /**
- * Standard NFT metadata for a Collect card: /api/card/3
+ * Standard NFT metadata for a Grailio card: /api/card/3
  *
  * CollectPacks' tokenURI is baseURI + id; with the base set to
  * "https://<site>/api/card/", wallets, explorers and marketplaces read the
@@ -39,12 +39,12 @@ export async function GET(req: Request, ctx: RouteContext<"/api/card/[id]">) {
   const origin = new URL(req.url).origin;
   const atOpening = Number(formatUnits(usd, 6));
   const inside = filled && token ? `${tokenAmount(Number(formatUnits(amount, token.decimals)))} ${token.symbol}` : `${atOpening.toFixed(2)} USDC`;
-  const name = `${art?.name ?? "Graily card"} #${id}`;
+  const name = `${art?.name ?? "Grailio card"} #${id}`;
 
   return Response.json(
     {
       name,
-      description: `A ${RARITY_NAMES[rarity] ?? ""} Graily card holding ${inside}. Keep it, stake it, trade it, or redeem it on Graily for what's inside.`.replace("  ", " "),
+      description: `A ${RARITY_NAMES[rarity] ?? ""} Grailio card holding ${inside}. Keep it, stake it, trade it, or redeem it on Grailio for what's inside.`.replace("  ", " "),
       image: art ? `${origin}${art.src}` : undefined,
       external_url: `${origin}/marketplace`,
       background_color: "ffffff",

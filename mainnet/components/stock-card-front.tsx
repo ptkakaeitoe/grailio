@@ -28,7 +28,7 @@ export function StockCardFront({ art, className, priority = false, sizes, decora
       aria-label={decorative ? undefined : `${art.name}, ${art.ticker} trading card`}
       aria-hidden={decorative || undefined}
     >
-      <div className="stock-card-front__masthead"><strong>GRAILY</strong><span>{art.number} / {art.of ?? "05"}</span></div>
+      <div className="stock-card-front__masthead"><strong>GRAILIO</strong><span>{art.number} / {art.of ?? "05"}</span></div>
       <div className="stock-card-front__art">
         <Image src={art.src} alt="" fill sizes={sizes ?? "(max-width: 700px) 45vw, 220px"} priority={priority} />
       </div>

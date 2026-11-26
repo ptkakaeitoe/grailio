@@ -9,8 +9,8 @@ import { daoAddress, pointsAddress, DAO_VISIBLE } from "@/lib/collect-dao";
 import { SWAP_ROUTER, TOKENS } from "@/lib/tokens";
 
 export const metadata: Metadata = {
-  title: "Info — graily",
-  description: "Every action in Graily, the contract behind it, and what it costs.",
+  title: "Info — grailio",
+  description: "Every action in Grailio, the contract behind it, and what it costs.",
 };
 
 type Action = {

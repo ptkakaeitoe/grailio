@@ -28,7 +28,7 @@ export type StockCardView = {
 };
 
 /**
- * A wallet's Collect cards (the connected one unless `account` is given), with
+ * A wallet's Grailio cards (the connected one unless `account` is given), with
  * any active listing of theirs on CollectMarket. Listings are non-custodial,
  * so a listed card is still in the wallet; this only marks it.
  */

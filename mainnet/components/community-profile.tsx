@@ -107,7 +107,7 @@ export function Bio({ account, isMe }: { account: `0x${string}`; isMe: boolean }
 type NftOption = { nft: string; tokenId: string; collection: string; name: string | null; image: string | null };
 type Source = { kind: "card"; id: bigint; ticker: string } | { kind: "nft"; nft: string; tokenId: bigint; image: string; label: string };
 
-/** Pick a Collect card or any Avalanche NFT you own and crop it into your profile picture. */
+/** Pick a Grailio card or any Avalanche NFT you own and crop it into your profile picture. */
 export function AvatarEditor({ cards, current, onSaved, onLocalSave, onLocalClear, onChange, onClear, nfts: allowNfts = true }: {
   cards: { id: bigint; ticker: string; rarity: number; tier: number }[];
   current?: CardAvatarCrop;
@@ -147,7 +147,7 @@ export function AvatarEditor({ cards, current, onSaved, onLocalSave, onLocalClea
   const receipt = useWaitForTransactionReceipt({ hash });
   const busy = isPending || receipt.isLoading;
 
-  // The wallet's other Avalanche NFTs (Collect cards are on the first tab).
+  // The wallet's other Avalanche NFTs (Grailio cards are on the first tab).
   const nfts = useQuery({
     queryKey: ["my-nfts", address?.toLowerCase()],
     enabled: open && tab === "nfts" && Boolean(address),
@@ -286,7 +286,7 @@ export function AvatarEditor({ cards, current, onSaved, onLocalSave, onLocalClea
       {!embedded && <h3 className={sectionLabel}>Profile picture</h3>}
       {allowNfts && (
         <div className="mt-2 flex gap-1.5" role="group" aria-label="Picture source">
-          <button type="button" className={tabButton} aria-pressed={tab === "cards"} onClick={() => setTab("cards")}>Graily cards</button>
+          <button type="button" className={tabButton} aria-pressed={tab === "cards"} onClick={() => setTab("cards")}>Grailio cards</button>
           <button type="button" className={tabButton} aria-pressed={tab === "nfts"} onClick={() => setTab("nfts")}>Your NFTs</button>
         </div>
       )}

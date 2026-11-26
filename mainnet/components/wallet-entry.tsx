@@ -35,7 +35,7 @@ export function WalletEntry({ className = cleanButton.solid, disabled = false, n
     <button type="button" className={className} disabled={disabled} aria-haspopup="dialog" data-wallet-anchor={navAnchor || undefined} onClick={(e) => open(e.currentTarget)}>
       <span>Connect<span className="wallet-word"> wallet</span></span><span aria-hidden="true"><PlusIcon /></span>
     </button>
-    <dialog ref={dialog} style={place} className={cn(cleanDialog, "drop-panel inset-auto m-0 w-[min(380px,calc(100vw-32px))] max-h-[calc(100dvh-96px)]")} aria-label="Welcome to graily" onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
+    <dialog ref={dialog} style={place} className={cn(cleanDialog, "drop-panel inset-auto m-0 w-[min(380px,calc(100vw-32px))] max-h-[calc(100dvh-96px)]")} aria-label="Welcome to grailio" onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       <header className={dialogHeader}><span className={dialogLabel}>[ get started ]</span><button type="button" className={dialogClose} aria-label="Close" onClick={() => dialog.current?.close()}><XIcon /></button></header>
       <div className="p-6">
         <h2 className="text-3xl leading-[1.1] font-normal tracking-[-0.02em]">Your next move.</h2>

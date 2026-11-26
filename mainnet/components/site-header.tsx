@@ -116,11 +116,11 @@ export function SiteHeader() {
       <header className="site-header sticky top-0 z-40 pt-[env(safe-area-inset-top)] before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:bg-white/72 before:backdrop-blur-[14px] before:[clip-path:inset(0_0_100%_0)]">
         <GasNotice />
         <div className={cn("relative mx-auto flex h-[72px] items-center gap-3 phone:gap-5 desk:grid desk:h-[88px] desk:grid-cols-[1fr_auto_1fr] desk:gap-6 wide:gap-10", gutter)}>
-          {/* Wordmark: the mark, "graily" in Syne (.wordmark), and a small solid "BETA" chip in mono caps. Phones show the mark
+          {/* Wordmark: the mark, "grailio" in Syne (.wordmark), and a small solid "BETA" chip in mono caps. Phones show the mark
               alone (the name stays for screen readers). */}
           <Link href="/" className="inline-flex shrink-0 items-center gap-2 desk:justify-self-start">
             <CollectMark className="size-9" />
-            <span className="wordmark text-[26px] max-phone:sr-only">graily</span>
+            <span className="wordmark text-[26px] max-phone:sr-only">grailio</span>
             <span className={cn("ml-1.5 rounded-[3px] bg-black px-1.5 py-[3px] font-mono text-[10px] leading-none font-medium tracking-[0.08em] text-white uppercase max-phone:hidden")}>beta</span>
           </Link>
 

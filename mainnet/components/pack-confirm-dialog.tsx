@@ -72,7 +72,7 @@ export function PackConfirmDialog({ edition, name, risk, quantity, total, balanc
             </span>
           </label>
         )}
-        {needsApproval && <p className="mt-4 text-sm text-muted">First, allow Graily&apos;s pack contract to use your USDC. You do this once.</p>}
+        {needsApproval && <p className="mt-4 text-sm text-muted">First, allow Grailio&apos;s pack contract to use your USDC. You do this once.</p>}
       </div>
       <div className={cn(dialogFooter, "grid grid-cols-2 gap-2")}>
         <button type="button" className={cn(cleanButton.outline, "h-11 justify-center")} onClick={onClose}>Cancel</button>

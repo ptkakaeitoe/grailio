@@ -34,7 +34,7 @@ export function cropStyle(x: number, y: number, zoom: number, aspect = CARD_ASPE
   };
 }
 
-/** A round avatar cropped from a Collect card's art or any NFT's image, or the fallback (initials). */
+/** A round avatar cropped from a Grailio card's art or any NFT's image, or the fallback (initials). */
 export function CardAvatar({
   crop,
   fallback,

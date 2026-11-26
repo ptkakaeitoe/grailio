@@ -3,7 +3,7 @@ import { ProfileWorkspace } from "@/components/profile-workspace";
 import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
-  title: "Profile — graily",
+  title: "Profile — grailio",
   description: "Your wallet, holdings and card collection on Avalanche.",
 };
 

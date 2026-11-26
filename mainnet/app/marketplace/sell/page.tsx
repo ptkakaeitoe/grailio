@@ -4,7 +4,7 @@ import { collectMarketLive } from "@/lib/collect-packs";
 import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
-  title: "Sell — graily",
+  title: "Sell — grailio",
   description: "List a collectible card for sale on Avalanche.",
 };
 

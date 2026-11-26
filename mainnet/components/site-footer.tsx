@@ -9,7 +9,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border desk:mt-32">
       <div className="flex flex-wrap items-center justify-between gap-6 pt-6 pb-6 desk:gap-8">
-        <Link href="/" className="wordmark text-2xl">graily</Link>
+        <Link href="/" className="wordmark text-2xl">grailio</Link>
         <nav aria-label="Footer navigation" className="order-3 flex w-full flex-wrap gap-x-[22px] gap-y-2 desk:order-none desk:w-auto desk:gap-x-[34px]">
           <Link href="/packs" className={cleanLink}>packs</Link>
           <Link href="/collection" className={cleanLink}>collection</Link>

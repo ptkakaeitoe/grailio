@@ -3,7 +3,7 @@ import { collectStakingAddress } from "@/lib/collect-packs";
 import { TOKENS } from "@/lib/tokens";
 
 /**
- * Collect's fee on swaps (charged by KyberSwap inside the swap transaction).
+ * Grailio's fee on swaps (charged by KyberSwap inside the swap transaction).
  *
  * 0.5% of every swap. When USDC is on either side the fee is taken in USDC and
  * split: half straight to CollectStaking (it counts any USDC it receives as
@@ -32,7 +32,7 @@ export function swapFeeFor(tokenIn: string, tokenOut: string): SwapFee {
   return { feeAmount: String(SWAP_FEE_BPS), chargeFeeBy: usdcSide ?? "currency_in", isInBps: true, feeReceiver: treasury };
 }
 
-/** True when a quoted route carries exactly the fee Collect charges for its pair. */
+/** True when a quoted route carries exactly the fee Grailio charges for its pair. */
 export function hasCollectFee(route: { tokenIn: string; tokenOut: string; extraFee?: unknown }): boolean {
   const want = swapFeeFor(route.tokenIn, route.tokenOut);
   const got = route.extraFee as Partial<Record<keyof SwapFee, unknown>> | undefined;

@@ -27,7 +27,7 @@ const ENTRY = 4 + 12 + 48;
 
 /** The message the wallet signs to derive chat keys. Changing it changes every key. */
 export const KEY_MESSAGE =
-  "Unlock Collect chat\n\nThis signature creates your private chat key on this device. It never leaves your browser and costs no gas.";
+  "Unlock Grailio chat\n\nThis signature creates your private chat key on this device. It never leaves your browser and costs no gas.";
 
 export type ChatKeys = {
   /** X25519 secret for decrypting holder rooms. */

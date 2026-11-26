@@ -1,7 +1,7 @@
 import { avalanche } from "viem/chains";
 
 /**
- * Collect runs on Avalanche C-Chain mainnet (43114), in beta. Every chain
+ * Grailio runs on Avalanche C-Chain mainnet (43114), in beta. Every chain
  * reference in the app goes through this module, so switching networks is a
  * one-file change.
  */

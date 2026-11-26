@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-/** The "graily" wordmark: Syne, a wide, bold modern sans (.wordmark in globals.css). */
+/** The "grailio" wordmark: Syne, a wide, bold modern sans (.wordmark in globals.css). */
 const brandFont = Syne({
   variable: "--font-syne",
   subsets: ["latin"],
@@ -26,11 +26,12 @@ const description = "Open packs, collect token cards and trade them on Avalanche
 
 /** Link previews use app/opengraph-image.jpg and app/twitter-image.jpg (the mark on the glow, square). */
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.graily.xyz"),
-  title: "Graily",
+  /** Set NEXT_PUBLIC_SITE_URL to the deployed origin so link previews resolve. */
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: "Grailio",
   description,
-  openGraph: { title: "Graily", description, siteName: "Graily", type: "website" },
-  twitter: { card: "summary", title: "Graily", description },
+  openGraph: { title: "Grailio", description, siteName: "Grailio", type: "website" },
+  twitter: { card: "summary", title: "Grailio", description },
 };
 
 /** Draw under the iOS status bar so the hero glow runs to the top edge; the header pads itself by the safe-area inset. */

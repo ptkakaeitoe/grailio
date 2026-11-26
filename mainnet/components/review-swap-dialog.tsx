@@ -7,7 +7,7 @@ import { cleanButton, cleanDialog, cn, dialogClose, dialogFooter, dialogHeader, 
 import { TokenIcon } from "@/components/token-icon";
 
 /**
- * Collect's own confirmation before a live swap is signed (the wallet's pop-up
+ * Grailio's own confirmation before a live swap is signed (the wallet's pop-up
  * is hidden for wallets Privy makes). Shows what you pay and get, the minimum
  * after slippage, the fee and the route; if the token needs a one-time
  * permission for KyberSwap's router, that step comes first.
@@ -22,7 +22,7 @@ export function ReviewSwapDialog({ from, to, pay, payUsd, receive, receiveUsd, m
   minReceive: string;
   slippage: string;
   gasUsd: string | null;
-  /** Collect's swap fee, e.g. "0.5% · half to stakers" (already taken out of "receive"). */
+  /** Grailio's swap fee, e.g. "0.5% · half to stakers" (already taken out of "receive"). */
   collectFee?: string;
   needsApproval: boolean;
   approving: boolean;
@@ -64,7 +64,7 @@ export function ReviewSwapDialog({ from, to, pay, payUsd, receive, receiveUsd, m
         <dl className="mt-3 border-t border-border">
           <div className={row}><dt className="text-muted">Minimum received</dt><dd className="tabular-nums">{minReceive} {to}</dd></div>
           <div className={row}><dt className="text-muted">Slippage</dt><dd className="tabular-nums">{slippage}%</dd></div>
-          {collectFee && <div className={row}><dt className="text-muted">Graily fee</dt><dd className="tabular-nums">{collectFee}</dd></div>}
+          {collectFee && <div className={row}><dt className="text-muted">Grailio fee</dt><dd className="tabular-nums">{collectFee}</dd></div>}
           {gasUsd && <div className={row}><dt className="text-muted">Network fee</dt><dd className="tabular-nums">≈ {gasUsd}</dd></div>}
           <div className={row}><dt className="text-muted">Route</dt><dd>KyberSwap · Avalanche</dd></div>
         </dl>

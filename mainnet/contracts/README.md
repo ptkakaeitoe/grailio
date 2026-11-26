@@ -1,4 +1,4 @@
-# Collect contracts
+# Grailio contracts
 
 - `src/CollectPacks.sol`: $1 USDC packs whose cards hold real Avalanche tokens, and the USDC prize pool behind them.
 - `src/CollectMarket.sol`: peer-to-peer card market. Each listing is priced in AVAX or USDC, the seller's choice.
