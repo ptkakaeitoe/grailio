@@ -89,7 +89,7 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
         {phase === "confirm" && (
           <div className={revealUi.actions}>
             <button type="button" className={cleanButton.solid} disabled={Boolean(onchain) && !address} onClick={() => (onchain ? void burnOnchain() : setPhase("burning"))}>
-              Redeem for {stock} <ArrowUpRightIcon weight="bold" />
+              Redeem for {stock} <ArrowUpRightIcon weight="bold" className="arrow-nudge" />
             </button>
             <button type="button" className={cn(cleanLink, "text-sm text-muted")} onClick={onClose}>Keep the card</button>
           </div>
@@ -97,7 +97,7 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
         {phase === "done" && (
           <div className={revealUi.actions}>
             <Link className={cleanButton.solid} href="/app/trade" onClick={onClose}>
-              See {card.ticker} price <ArrowUpRightIcon weight="bold" />
+              See {card.ticker} price <ArrowUpRightIcon weight="bold" className="arrow-nudge" />
             </Link>
             <button type="button" className={cn(cleanLink, "text-sm text-muted")} onClick={onClose}>Back to collection</button>
           </div>

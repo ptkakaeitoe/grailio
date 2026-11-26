@@ -108,8 +108,14 @@
   }
   .btn:hover:not(:disabled) { background: transparent; color: var(--ink); }
   .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-  .btn-ghost:hover:not(:disabled) { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--ink); }
   .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* Buttons nudge their ↗ arrow up and right on hover (lucide's arrow has its own class; Phosphor arrows add
+     .arrow-nudge). Matches the bigger nudge on the landing page's link cards. */
+  .lucide-arrow-up-right, .arrow-nudge { transition: translate .25s cubic-bezier(.22, .8, .24, 1); }
+  :is(a, button):is(:hover, :focus-visible):not(:disabled) > :is(.lucide-arrow-up-right, .arrow-nudge) { translate: 2px -2px; }
+  @media (prefers-reduced-motion: reduce) { .lucide-arrow-up-right, .arrow-nudge { transition: none; } }
 
 
   .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }

@@ -41,7 +41,7 @@ export function CollectionPanel() {
         label="Your collection"
         title="Your cards live here."
         body="Try the demo to open packs now."
-        action={<button type="button" className={cleanButton.solid} onClick={startDemo}>Try the demo <ArrowUpRightIcon weight="bold" /></button>}
+        action={<button type="button" className={cleanButton.solid} onClick={startDemo}>Try the demo <ArrowUpRightIcon weight="bold" className="arrow-nudge" /></button>}
       />
     );
   }
@@ -52,7 +52,7 @@ export function CollectionPanel() {
         label="Demo collection"
         title="Your first find awaits."
         body="Open a pack and its card lands here."
-        action={<Link className={cleanButton.solid} href="/app/packs">Browse packs <ArrowUpRightIcon weight="bold" /></Link>}
+        action={<Link className={cleanButton.solid} href="/app/packs">Browse packs <ArrowUpRightIcon weight="bold" className="arrow-nudge" /></Link>}
       />
     );
   }
