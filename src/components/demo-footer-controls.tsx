@@ -11,7 +11,6 @@ export function DemoFooterControls() {
   if (!demo.active) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 pb-8">
-      <span className="text-sm text-muted">Demo wallet · <span className="num">{demo.bnb.toFixed(4)}</span> BNB</span>
       <button type="button" className={control} onClick={() => { if (window.confirm(`Reset demo? Your demo wallet goes back to ${DEMO_START_BNB} BNB and your demo cards are cleared.`)) resetDemo(); }}>
         <RotateCcw className="size-3.5" /> Reset demo
       </button>
