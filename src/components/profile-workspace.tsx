@@ -117,11 +117,8 @@ export function ProfileWorkspace() {
         </section>
         {/* Phones: holdings first. */}
         <aside className="border-border max-desk:order-first max-desk:border-b desk:border-l">
-          {demo.active ? <HoldingsPanel /> : (
-            <section className="py-8 desk:pt-10 desk:pl-8">
-              <h2 className={sectionTitle}>Holdings</h2>
-            </section>
-          )}
+          {/* Demo: the simulated wallet. Connected: tBNB, test USD and trade-market stocks read from BSC testnet. */}
+          <HoldingsPanel />
         </aside>
       </div>
     </div>
