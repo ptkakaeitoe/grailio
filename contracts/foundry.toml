@@ -6,6 +6,8 @@ evm_version = "cancun"
 solc_version = "0.8.26"
 optimizer = true
 optimizer_runs = 99999
+# Scripts read the mock bStock list.
+fs_permissions = [{ access = "read", path = "./script" }]
 
 [fmt]
 line_length = 120

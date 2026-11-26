@@ -1,0 +1,36 @@
+{
+ "source": "Atlas oracle signed prices (USD per bStock, 18 decimals); BNB/USD is read on-chain from Atlas's feed",
+ "names": [
+  "NVIDIA bStock (mock)",
+  "AMD bStock (mock)",
+  "Micron bStock (mock)",
+  "SK hynix bStock (mock)",
+  "SpaceX bStock (mock)",
+  "Rocket Lab bStock (mock)",
+  "Tesla bStock (mock)",
+  "S&P 500 ETF bStock (mock)",
+  "Apple bStock (mock)"
+ ],
+ "symbols": [
+  "NVDAB",
+  "AMDB",
+  "MUB",
+  "SKHYB",
+  "SPCXB",
+  "RKLBB",
+  "TSLAB",
+  "SPYB",
+  "AAPLB"
+ ],
+ "usd": [
+  "150620409320000000000",
+  "413286635760000000000",
+  "611573630340000000000",
+  "112020035040000000000",
+  "128301688320000000000",
+  "48046113800000000000",
+  "382640642490000000000",
+  "720269091370000000000",
+  "355605417070000000000"
+ ]
+}
