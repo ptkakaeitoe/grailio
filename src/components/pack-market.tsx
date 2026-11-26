@@ -113,11 +113,12 @@ function CoinCard({ coin }: { coin: MarketCoin }) {
   );
 }
 
-function SectionTitle({ id, title, count }: { id: string; title: string; count: string }) {
+/** Title and a zero-padded count; the count's noun is dropped on narrow phones so it stays on one line. */
+function SectionTitle({ id, title, n, noun }: { id: string; title: string; n: number; noun: string }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pb-4 desk:pb-6">
-      <h2 id={id} className="text-[22px] leading-[1.2] font-normal tracking-tight desk:text-[28px]">{title}</h2>
-      <span className="num shrink-0 text-sm text-muted">[ {count} ]</span>
+    <div className="flex items-baseline justify-between gap-3 pb-4 desk:pb-6">
+      <h2 id={id} className="min-w-0 truncate text-[22px] leading-[1.2] font-normal tracking-tight desk:text-[28px]">{title}</h2>
+      <span className="num shrink-0 text-sm text-muted">[ {String(n).padStart(2, "0")}<span className="max-phone:hidden"> {noun}</span> ]</span>
     </div>
   );
 }
@@ -144,8 +145,9 @@ function ClassicSection({ published }: { published: MarketCoin[] }) {
   const total = 1 + published.length;
   return (
     <section className="pb-8" aria-labelledby="classic-title">
-      <SectionTitle id="classic-title" title="Classic collections" count={`${String(total).padStart(2, "0")} ${total === 1 ? "collection" : "collections"}`} />
+      <SectionTitle id="classic-title" title="Classic collections" n={total} noun={total === 1 ? "collection" : "collections"} />
       <ul className={grid}>
+        {[...published].reverse().map((c) => <ClassicCollectionCard key={c.slug} coin={c} />)}
         {CLASSIC_SIZES.map((s) => (
           <li key={s.id} className="min-w-0">
             <Link href={`/app/packs/classic?size=${s.id}`} className={card} aria-label={`Classic ${s.name} pack, ${usd(s.price, 0)}`}>
@@ -156,7 +158,6 @@ function ClassicSection({ published }: { published: MarketCoin[] }) {
             </Link>
           </li>
         ))}
-        {published.map((c) => <ClassicCollectionCard key={c.slug} coin={c} />)}
       </ul>
     </section>
   );
@@ -193,7 +194,7 @@ export function PackMarket() {
 
       {tab === "classic" ? <ClassicSection published={classics} /> : (
       <section className="pb-8" aria-labelledby="newgen-title">
-        <SectionTitle id="newgen-title" title="New-gen collections" count={`${String(coins.length).padStart(2, "0")} coins`} />
+        <SectionTitle id="newgen-title" title="New-gen collections" n={coins.length} noun={coins.length === 1 ? "coin" : "coins"} />
         <div className="mb-5 flex flex-col gap-3 desk:mb-6 desk:flex-row desk:items-center desk:justify-between">
           {/* Phones: one row of chips you can swipe instead of wrapping. */}
           <div className="-mx-[var(--gutter)] flex gap-1.5 overflow-x-auto px-[var(--gutter)] [scrollbar-width:none] desk:mx-0 desk:px-0 [&::-webkit-scrollbar]:hidden" role="group" aria-label="Sort coins">
