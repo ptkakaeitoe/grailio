@@ -13,6 +13,8 @@ const BUILT_ON = [
   ["", "CoinMarketCap"],
 ] as const;
 
+const POINTS = ["Holders own the gacha.", "Tax funds the pool.", "Stakers get revenue."];
+
 /** Phones: the two buttons share a row at equal widths, wrapping to full-width rows when they don't fit. */
 export const buttonRow =
   "flex flex-wrap gap-3 max-desk:[&>a]:min-w-max max-desk:[&>a]:flex-1 max-desk:[&>a]:justify-center";
@@ -34,8 +36,16 @@ export function Hero() {
             id="hero-title"
             className="text-[clamp(34px,10.5vw,64px)] leading-[1.12] font-normal tracking-[-0.02em] desk:text-[clamp(40px,calc(min(6vw,10svh)_-_8px),96px)]"
           >
-            <span className="text-muted-soft">Memecoin tax buys real stocks.</span> Holders win them in packs.
+            Not your typical memecoin.
           </h1>
+          <ul className="mt-5 flex flex-col gap-2 text-[clamp(18px,4.6vw,24px)] leading-snug desk:mt-7" aria-label="How it's different">
+            {POINTS.map((p, i) => (
+              <li key={p} className="flex items-baseline gap-3">
+                <span className="text-sm text-muted tabular-nums">[{String(i + 1).padStart(2, "0")}]</span>
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
           <div className={cn(buttonRow, "mt-6 phone:gap-4 desk:mt-[clamp(32px,6svh,56px)]")}>
             <Link href="/app/packs" className={cn(cleanButton.solid, "lowercase desk:min-h-[58px]")}>
               browse packs <ArrowUpRight weight="bold" aria-hidden="true" />

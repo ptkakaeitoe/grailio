@@ -10,10 +10,9 @@ const sectionSpace = "pt-20 desk:pt-28";
 const sectionTitle = "text-[clamp(34px,calc(5.5vw_-_10px),74px)] leading-[1.06] font-normal tracking-[-0.04em]";
 
 const FLOW = [
-  { title: "Presale packs", body: "Packs sell before the coin exists." },
-  { title: "Launch", body: "Sold out: the coin launches on Flap or Four.meme." },
-  { title: "Tax fills the pool", body: "50% stock pool · 30% card stakers · 15% creator · 5% platform." },
-  { title: "Open, stake, redeem", body: "Cards hold stocks. Stake them to earn tax, burn them for the stock." },
+  { title: "Holders own the gacha", body: "Packs sell before the coin exists. Buyers get the coin and the cards." },
+  { title: "Tax funds the pool", body: "Every trade's tax buys stocks for the packs. Cards hold them." },
+  { title: "Stakers get revenue", body: "Stake your cards to earn 30% of the tax. Burn a card for its stock." },
 ];
 
 /** A pack cover and the card it opened. */
