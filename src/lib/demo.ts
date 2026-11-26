@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { clearCollection } from "@/lib/collection";
+import { clearDemoLaunches } from "@/lib/demo-launch";
 
 /*
  * Demo mode, like graily's: a demo wallet saved in this browser, so anyone can buy, open and redeem packs without
@@ -36,9 +37,10 @@ function write(next: DemoState) {
 export const startDemo = () => write({ ...read(), active: true });
 /** Leave demo mode; the demo wallet stays saved. */
 export const exitDemo = () => write({ ...read(), active: false });
-/** Wipe the demo wallet and cards and start fresh. */
+/** Wipe the demo wallet, cards and simulated launches and start fresh. */
 export function resetDemo() {
   clearCollection();
+  clearDemoLaunches();
   write({ active: read().active, bnb: DEMO_START_BNB, assets: {} });
 }
 /** Pays from the demo wallet; false if demo is off or the balance is short. */
@@ -46,6 +48,21 @@ export function spendDemoBnb(amount: number) {
   const s = read();
   if (!s.active || !(amount > 0) || amount > s.bnb + 1e-12) return false;
   write({ ...s, bnb: Math.max(0, s.bnb - amount) });
+  return true;
+}
+
+/** Pays BNB into the demo wallet (staking rewards); false if demo is off. */
+export function earnDemoBnb(amount: number) {
+  const s = read();
+  if (!s.active || !(amount > 0)) return false;
+  write({ ...s, bnb: s.bnb + amount });
+  return true;
+}
+/** Adds an asset to the demo wallet (e.g. `token:<slug>` from a presale); false if demo is off. */
+export function creditDemoAsset(asset: string, amount: number) {
+  const s = read();
+  if (!s.active || !(amount > 0)) return false;
+  write({ ...s, assets: { ...(s.assets ?? {}), [asset]: (s.assets?.[asset] ?? 0) + amount } });
   return true;
 }
 
