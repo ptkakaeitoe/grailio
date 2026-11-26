@@ -8,7 +8,7 @@ import { CollectionWelcome } from "@/components/collection-welcome";
 import { HoldingsPanel } from "@/components/holdings-panel";
 import { Holo, StockCardFront } from "@/components/stock-card-front";
 import { WalletEntry } from "@/components/wallet-entry";
-import { cardArt } from "@/lib/cards";
+import { useCardArt } from "@/lib/design";
 import { explorerUrl } from "@/lib/chain";
 import { useCollection } from "@/lib/collection";
 import { exitDemo, startDemo, useDemo } from "@/lib/demo";
@@ -53,6 +53,7 @@ function Identity() {
 /** The cards you keep, as a compact grid; the Collection page has the details and redeem. */
 function ProfileCards() {
   const cards = useCollection().filter((c) => !c.redeemedAt).reverse();
+  const cardArt = useCardArt();
   if (cards.length === 0) {
     return (
       <CollectionWelcome
@@ -66,7 +67,7 @@ function ProfileCards() {
   return (
     <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 phone:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] desk:gap-x-6 desk:gap-y-8">
       {cards.map((c) => {
-        const art = cardArt(c.ticker, c.rarity, c.set);
+        const art = cardArt(c);
         return (
           <li key={c.id} className="min-w-0">
             <div className="relative overflow-hidden rounded-[4px]">

@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Holo, StockCardFront } from "@/components/stock-card-front";
 import { cleanButton, cleanDialog, cleanField, cn, dialogClose, dialogFooter, dialogHeader, dialogLabel } from "@/components/clean-ui";
-import { cardArt } from "@/lib/cards";
+import { useCardArt } from "@/lib/design";
 import { listCard, type OwnedCard } from "@/lib/collection";
 import { usd } from "@/lib/format";
 
 /** Put a card up for sale on the NFT market at a price in USD (simulated until the vault is on BSC testnet). */
 export function ListDialog({ card, onClose }: { card: OwnedCard; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const cardArt = useCardArt();
   const [price, setPrice] = useState(String(Math.max(1, Math.round(card.usd * 1.2 * 100) / 100)));
   const value = Number(price);
   const valid = Number.isFinite(value) && value > 0;
@@ -25,7 +26,7 @@ export function ListDialog({ card, onClose }: { card: OwnedCard; onClose: () => 
       </header>
       <div className="flex items-center gap-4 p-5">
         <div className="relative w-[96px] shrink-0 overflow-hidden rounded-[4px]">
-          <StockCardFront art={cardArt(card.ticker, card.rarity, card.set)} rarity={card.rarity} brand={card.coinName} decorative sizes="96px" className="w-full" />
+          <StockCardFront art={cardArt(card)} rarity={card.rarity} brand={card.coinName} decorative sizes="96px" className="w-full" />
           <Holo rarity={card.rarity} />
         </div>
         <div className="min-w-0 flex-1">

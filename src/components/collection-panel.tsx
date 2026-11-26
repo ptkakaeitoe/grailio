@@ -8,7 +8,7 @@ import { cardBack, FlipCard } from "@/components/flip-card";
 import { RedeemDialog } from "@/components/redeem-dialog";
 import { Holo, StockCardFront } from "@/components/stock-card-front";
 import { cleanButton, cn } from "@/components/clean-ui";
-import { cardArt } from "@/lib/cards";
+import { useCardArt } from "@/lib/design";
 import { listCard, useCollection, type OwnedCard } from "@/lib/collection";
 import { ListDialog } from "@/components/list-dialog";
 import { startDemo, useDemo } from "@/lib/demo";
@@ -25,6 +25,7 @@ const fmtShares = (n: number) => n.toLocaleString("en-US", { maximumFractionDigi
 export function CollectionPanel() {
   const cards = useCollection();
   const demo = useDemo();
+  const cardArt = useCardArt();
   const [flipped, setFlipped] = useState<number | null>(null);
   const [redeeming, setRedeeming] = useState<OwnedCard | null>(null);
   const [listing, setListing] = useState<OwnedCard | null>(null);
@@ -60,7 +61,7 @@ export function CollectionPanel() {
       {held.length > 0 ? (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-5 gap-y-7 phone:grid-cols-[repeat(auto-fill,minmax(175px,230px))] desk:grid-cols-[repeat(auto-fill,minmax(205px,255px))] desk:gap-x-8 desk:gap-y-12">
           {held.map((card) => {
-            const art = cardArt(card.ticker, card.rarity, card.set);
+            const art = cardArt(card);
             const isFlipped = flipped === card.id;
             return (
               <li key={card.id} className="min-w-0">
@@ -108,7 +109,7 @@ export function CollectionPanel() {
           <ul className="divide-y divide-border text-sm">
             {redeemed.map((c) => (
               <li key={c.id} className={cn("flex flex-wrap items-baseline justify-between gap-2 py-2.5")}>
-                <span>#{c.id} · {c.coinName} · {cardArt(c.ticker, c.rarity, c.set).name}</span>
+                <span>#{c.id} · {c.coinName} · {cardArt(c).name}</span>
                 <span className="text-muted tabular-nums">{fmtShares(c.shares)} {c.ticker}B · {new Date(c.redeemedAt!).toLocaleDateString()}</span>
               </li>
             ))}

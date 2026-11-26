@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { StockCardFront } from "@/components/stock-card-front";
 import { cleanButton, cleanDialog, cleanLink, cn, dialogFooter, dialogLabel, revealUi } from "@/components/clean-ui";
-import { cardArt } from "@/lib/cards";
+import { useCardArt } from "@/lib/design";
 import { redeemCard, type OwnedCard } from "@/lib/collection";
 import { appChain } from "@/lib/chain";
 import { packVaultAbi } from "@/lib/onchain";
@@ -21,7 +21,7 @@ const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 6 
  */
 export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const art = cardArt(card.ticker, card.rarity, card.set);
+  const art = useCardArt()(card);
   const [phase, setPhase] = useState<"confirm" | "burning" | "done">(card.redeemedAt ? "done" : "confirm");
   const payout = { amount: fmt(card.shares), symbol: card.ticker };
   const stock = `${payout.amount} ${payout.symbol}`;

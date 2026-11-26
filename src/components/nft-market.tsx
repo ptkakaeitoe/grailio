@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Holo, StockCardFront, tilt } from "@/components/stock-card-front";
 import { cn } from "@/components/clean-ui";
-import { cardArt } from "@/lib/cards";
+import { useCardArt } from "@/lib/design";
 import { listCard, useCollection } from "@/lib/collection";
 import { startDemo, useDemo } from "@/lib/demo";
 import { buyListing, ownListing, useListings, type Listing } from "@/lib/nft-market";
@@ -17,6 +17,7 @@ const action = "inline-flex min-h-10 w-full items-center justify-center rounded-
 export function NftMarket() {
   const demo = useDemo();
   const listings = useListings();
+  const cardArt = useCardArt();
   const mine = useCollection().filter((c) => c.listedUsd && !c.redeemedAt);
   const [bnbUsd, setBnbUsd] = useState<number | null>(null);
 
@@ -27,7 +28,7 @@ export function NftMarket() {
   const buy = (l: Listing) => {
     if (!demo.active) { startDemo(); return; }
     if (!bnbUsd) return;
-    if (buyListing(l, bnbUsd)) showToast({ kind: "success", title: `${cardArt(l.ticker, l.rarity, l.set).name} is yours`, detail: "Added to your collection · simulated" });
+    if (buyListing(l, bnbUsd)) showToast({ kind: "success", title: `${cardArt(l).name} is yours`, detail: "Added to your collection · simulated" });
     else showToast({ kind: "error", title: "Not enough demo BNB" });
   };
 
@@ -36,7 +37,7 @@ export function NftMarket() {
   return (
     <ul className="grid grid-cols-2 gap-x-3.5 gap-y-7 phone:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] desk:gap-x-6 desk:gap-y-10">
       {items.map(({ listing: l, ownId }) => {
-        const art = cardArt(l.ticker, l.rarity, l.set);
+        const art = cardArt(l);
         return (
           <li key={l.id} className="min-w-0">
             <div {...tilt} className="holo-card relative overflow-hidden rounded-[4px]">

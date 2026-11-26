@@ -7,6 +7,7 @@ import { SealedPack } from "@/components/pack-shop";
 import { cleanChip, cleanField, cn } from "@/components/clean-ui";
 import type { MarketCoin } from "@/lib/market";
 import { useMarketCoins } from "@/lib/published-packs";
+import { customPack } from "@/lib/design";
 import { usd } from "@/lib/format";
 
 /*
@@ -35,10 +36,11 @@ const compact = (v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(v >= 10000 ? 
 function Shelf({ coin }: { coin: MarketCoin }) {
   const sizes = coin.config.sizes;
   const href = `/app/packs/${coin.slug}`;
+  const custom = customPack(coin.config);
   return (
     <section className="border-t border-border pt-6 pb-7 desk:pt-8 desk:pb-10" aria-labelledby={`coin-${coin.slug}`}>
       <div className="mb-4 flex items-center gap-3 desk:mb-6">
-        <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full text-lg text-[#fff]" style={{ background: coin.tone }} aria-hidden="true">
+        <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full text-lg text-[#fff]" style={custom?.style ?? { background: coin.tone }} aria-hidden="true">
           {coin.config.image ? (
             // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
             <img src={coin.config.image} alt="" className="size-full object-cover" />
@@ -64,7 +66,7 @@ function Shelf({ coin }: { coin: MarketCoin }) {
             <Link href={`${href}?size=${s.id}`} className="group block rounded-[4px] focus-visible:outline-offset-[6px]" aria-label={`${coin.name} ${s.name} pack, ${usd(s.price, 0)}`}>
               <div className="relative overflow-hidden rounded-[4px] transition-transform duration-300 group-hover:-translate-y-1" style={{ width: PACK_W * SCALE, height: PACK_H * SCALE }}>
                 <div style={{ width: PACK_W, height: PACK_H, transform: `scale(${SCALE})`, transformOrigin: "top left" }}>
-                  <SealedPack size={s} coin={coin.name} color={coin.packs.find((p) => p.size === s.id)?.color} className="h-full justify-between shadow-none" />
+                  <SealedPack size={s} coin={coin.name} color={custom?.color ?? coin.packs.find((p) => p.size === s.id)?.color} style={custom?.style} className="h-full justify-between shadow-none" />
                 </div>
               </div>
               <div className="mt-3 flex items-baseline justify-between gap-2">
