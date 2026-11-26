@@ -5,14 +5,24 @@ import { useMemo, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import { cleanField, cn } from "@/components/clean-ui";
 import { useMarketCoins } from "@/lib/published-packs";
+import { useDemoLaunches } from "@/lib/demo-launch";
 
 const PAD_NAME = { flap: "Flap", four: "Four.meme" } as const;
 const compact = (v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : `$${Math.round(v)}`);
 
 /** Launched coins, busiest first: each opens its trade screen. Names only, no tickers. */
 export function TokenList() {
-  const coins = useMarketCoins();
+  const market = useMarketCoins();
+  const sims = useDemoLaunches();
   const [query, setQuery] = useState("");
+  // Demo-launched coins: pool and volume from the simulation (volume = tax received / tax rate).
+  const coins = useMemo(() => market.filter((c) => c.config.kind !== "classic").map((c) => {
+    const s = sims[c.slug];
+    if (!s) return c;
+    const tax = s.tax.pool + s.tax.stakers + s.tax.creator + s.tax.platform;
+    const rate = ((c.config.buyTax ?? 3) + (c.config.sellTax ?? 3)) / 200;
+    return { ...c, poolUsd: s.pool, volumeUsd: rate > 0 ? tax / rate : 0 };
+  }), [market, sims]);
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return coins.filter((c) => !q || c.name.toLowerCase().includes(q)).sort((a, b) => b.volumeUsd - a.volumeUsd);
