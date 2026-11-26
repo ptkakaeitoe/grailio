@@ -7,7 +7,7 @@ import { underlying } from "@/lib/atlas-feeds";
 import { usePack } from "@/lib/pack";
 import { compactUsd, gapPct, useCmc } from "@/lib/use-cmc";
 import { usd } from "@/lib/format";
-import { StatStrip, cleanChip, cleanField, cn } from "@/components/clean-ui";
+import { cleanChip, cleanField, cn } from "@/components/clean-ui";
 import { StockLogo } from "@/components/stock-logo";
 
 const REFRESH_MS = 30_000;
@@ -15,7 +15,6 @@ type Filter = "all" | "pack" | "healthy" | "degraded";
 type Sort = "symbol" | "price" | "change" | "score" | "volume" | "gap";
 const AGREE_PCT = 1;
 
-const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const ago = (ts: number, now: number) => {
   const s = Math.max(0, Math.round(now / 1000 - ts));
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ago`;
@@ -84,7 +83,6 @@ export function StockList() {
     return [...list].sort(by[sort]);
   }, [snap, query, filter, sort, inPack, cmc.byTicker]);
 
-  const healthy = snap?.quotes.filter((q) => q.consensusStatus === "HEALTHY").length ?? 0;
   const agree = useMemo(() => {
     if (!snap || !cmc.snap) return null;
     const gaps = snap.quotes.map((q) => gapPct(q.price, cmc.byTicker.get(underlying(q.symbol))?.price)).filter((g): g is number => g !== null);
@@ -99,25 +97,17 @@ export function StockList() {
 
   return (
     <div className="flex flex-col gap-6 desk:gap-8">
-      <StatStrip
-        items={[
-          { label: "Feeds", value: snap ? snap.quotes.length : "—" },
-          { label: "Atlas ≈ CoinMarketCap", value: agree ? `${agree.ok}/${agree.n}` : "—", note: `within ±${AGREE_PCT}%` },
-          { label: "Healthy consensus", value: snap ? `${healthy}/${snap.quotes.length}` : "—" },
-          { label: "Signed at", value: snap ? ago(newest, now) : "—" },
-          {
-            label: "Signature",
-            value: (
-              <span className={cn("flex items-center gap-1.5 text-base tracking-normal", snap?.signerOk ? "text-up" : snap ? "text-down" : "")}>
-                {snap ? (snap.signerOk ? <BadgeCheck className="size-4" /> : <TriangleAlert className="size-4" />) : null}
-                {snap ? (snap.signerOk ? "Atlas signer" : "Unknown signer") : "—"}
-              </span>
-            ),
-            note: snap ? <span className="num" title={snap.signer}>{short(snap.signer)}</span> : undefined,
-          },
-        ]}
-        className="max-desk:[&>div]:py-3.5"
-      />
+      {/* One status line: how many feeds, that Atlas signed them, how fresh, and how many agree with CoinMarketCap. */}
+      <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted tabular-nums">
+        <span>{snap ? snap.quotes.length : "—"} feeds</span>
+        <span aria-hidden="true">·</span>
+        <span className={cn("inline-flex items-center gap-1", snap?.signerOk ? "text-up" : snap ? "text-down" : "")} title={snap?.signer}>
+          {snap ? (snap.signerOk ? <BadgeCheck className="size-3.5" /> : <TriangleAlert className="size-3.5" />) : null}
+          {snap ? (snap.signerOk ? "signed" : "unknown signer") : "—"}
+        </span>
+        {snap && <span>{ago(newest, now)}</span>}
+        {agree && <><span aria-hidden="true">·</span><span>{agree.ok}/{agree.n} match CMC</span></>}
+      </p>
 
       <div className="flex flex-col gap-3 wide:flex-row wide:items-center wide:justify-between">
         <div className="flex flex-col gap-3 desk:flex-row desk:items-center desk:gap-2">
