@@ -194,6 +194,13 @@
       "medium": 1000,
       "high": 5000
     },
-    "image": null
+    "image": null,
+    "onchain": {
+      "pad": "four",
+      "token": "0x1c5E728bcc382Db78083AA2C84F3AEF8eaBA8085",
+      "saleVault": "0x6A7B0dF7e5CC2e2b32400a69Fa77b8bD4E87E79F",
+      "packVault": "0xdD42011c9Caee3e5CA428Cf3e3B54a47fAb0a14C",
+      "createTx": "0x4533d7b72c336db5de29c17273431f7523cffb75c41ccedbcb766c8a3fbfdc6e"
+    }
   }
 }
