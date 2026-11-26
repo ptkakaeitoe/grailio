@@ -25,6 +25,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${dmSans.variable} ${geistMono.variable} ${syne.variable} ${outfit.variable} overscroll-y-none antialiased`}>
       <body className="flex min-h-dvh flex-col">
+        {/* The soft glow across the top of every page (globals.css, .page-glow). */}
+        <div className="page-glow" aria-hidden="true" />
         <Providers>
           <SiteHeader />
           <main id="main-content" className="flex-1">{children}</main>
