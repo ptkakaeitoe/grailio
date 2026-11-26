@@ -1,6 +1,7 @@
 "use client";
 
 import { CaretDownIcon } from "@phosphor-icons/react/ssr";
+import Link from "next/link";
 import { useState } from "react";
 import { cleanButton, cn } from "@/components/clean-ui";
 import { useBnbUsd, useNow } from "@/components/stake-panel";
@@ -42,7 +43,19 @@ export function CollectionStaking() {
 
   const streaming = rows.some((r) => r.stats.streaming > 0);
   if (streaming !== on) setOn(streaming);
-  if (!demo.active || rows.length === 0) return null;
+  if (!demo.active) return null;
+  if (rows.length === 0) {
+    return (
+      <section aria-label="Staking" className="mb-6 rounded-md border border-border p-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-base font-normal">Staking · simulated</h2>
+          <span className="text-[13px] text-muted">7 days = 60s</span>
+        </div>
+        <p className="mt-2 text-sm text-muted">No stakeable cards yet</p>
+        <Link href="/app/packs" className={cn(cleanButton.outline, "mt-4 w-full justify-center")}>Open a pack</Link>
+      </section>
+    );
+  }
 
   return (
     <StakingPoolPanel

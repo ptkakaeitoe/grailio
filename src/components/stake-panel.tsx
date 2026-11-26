@@ -113,7 +113,8 @@ function useStakeCoin(card: OwnedCard) {
 export function CardStakeButton({ card, className }: { card: OwnedCard; className?: string }) {
   const coin = useStakeCoin(card);
   const bnbUsd = useBnbUsd();
-  if (!coin || card.redeemedAt) return null;
+  if (card.redeemedAt || card.onchain) return null;
+  if (!coin) return <span className={cn(rowButton, "w-full cursor-default border-dashed text-muted hover:border-border", className)}>Coin no longer listed</span>;
   return card.stakedAt ? (
     <button type="button" className={cn(rowButton, "w-full border-black", className)} disabled={!bnbUsd} onClick={() => bnbUsd && unstakeCards(coin, [card], bnbUsd)}>Unstake</button>
   ) : (
