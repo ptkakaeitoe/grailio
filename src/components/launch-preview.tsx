@@ -4,8 +4,8 @@ import { Globe, Send } from "lucide-react";
 import { StockLogo } from "@/components/stock-logo";
 import { cn } from "@/components/clean-ui";
 import { customPack } from "@/lib/design";
-import { DEFAULT_SIZES, type PackConfig } from "@/lib/pack";
-import { PRESALE_PACKS } from "@/lib/demo-launch";
+import { DEFAULT_SIZES, presaleError, standardPrice, type PackConfig } from "@/lib/pack";
+import { PRESALE_PACKS, launchMcap } from "@/lib/demo-launch";
 import { SealedPack } from "@/components/pack-shop";
 import { ClassicPack } from "@/components/classic-pack-shop";
 import type { MarketCoin } from "@/lib/market";
@@ -30,10 +30,17 @@ export function CoinAvatar({ c, name, className }: { c: PackConfig; name: string
   );
 }
 
-/** A new coin starts in presale: PRESALE_PACKS packs, launching when they sell out. */
-function Meta({ classic }: { classic: boolean }) {
-  if (classic) return <>Classic · <span className="num">{DEFAULT_SIZES.length}</span> packs</>;
-  return <>Presale · <span className="num">{PRESALE_PACKS}</span> packs</>;
+/** A new coin starts in presale: its presalePacks (default PRESALE_PACKS), launching when they sell out. */
+function Meta({ c }: { c: PackConfig }) {
+  if (c.kind === "classic") return <>Classic · <span className="num">{DEFAULT_SIZES.length}</span> packs</>;
+  return <>Presale · <span className="num">{(c.presalePacks ?? PRESALE_PACKS).toLocaleString("en-US")}</span> packs</>;
+}
+
+/** The coin's launch mcap from its presale raise, or null while the presale is out of bounds. */
+function mcapOf(c: PackConfig) {
+  const packs = c.presalePacks ?? PRESALE_PACKS, price = standardPrice(c);
+  if (presaleError(packs, price)) return null;
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 }).format(launchMcap(packs * price));
 }
 
 /** SealedPack is laid out at 228×384; the preview shows three, scaled down and fanned like the marketplace card. */
@@ -74,6 +81,7 @@ export function CoinPreview({ c, name, compact = false }: { c: PackConfig; name:
   const what = classic ? "Collection preview" : "Coin preview";
   const ticker = c.ticker || "TICKER";
   const links = c.links ?? {};
+  const mcap = classic ? null : mcapOf(c);
 
   if (compact) {
     return (
@@ -84,7 +92,7 @@ export function CoinPreview({ c, name, compact = false }: { c: PackConfig; name:
             <span className={cn("truncate text-base", !name && "text-muted")}>{shownName}</span>
             {!classic && <span className={cn("num shrink-0 text-[13px]", c.ticker ? "text-muted" : "text-muted/60")}>{ticker}</span>}
           </p>
-          <p className="mt-0.5 truncate text-[13px] text-muted"><Meta classic={classic} /></p>
+          <p className="mt-0.5 truncate text-[13px] text-muted"><Meta c={c} /></p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           {!classic && <span className={badge}>{PAD_NAME[c.launchpad]}</span>}
@@ -112,7 +120,7 @@ export function CoinPreview({ c, name, compact = false }: { c: PackConfig; name:
         </div>
         {c.tagline.trim() && <p className="line-clamp-2 text-sm text-muted">{c.tagline.trim()}</p>}
         <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-[13px] text-muted">
-          <span className="truncate"><Meta classic={classic} /></span>
+          <span className="truncate"><Meta c={c} />{mcap && <> · <span className="num">{mcap}</span> mcap</>}</span>
           {c.basket.length > 0 && (
             <span className="flex shrink-0 -space-x-1.5" aria-hidden="true">
               {c.basket.map((b) => <StockLogo key={b.ticker} ticker={b.ticker} size={20} className="rounded-full ring-2 ring-surface-muted" />)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 import { parseEventLogs } from "viem";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
@@ -10,7 +10,8 @@ import { CoinPreview } from "@/components/launch-preview";
 import { cleanButton, cleanChip, cleanField, cn } from "@/components/clean-ui";
 import { publishPack } from "@/lib/published-packs";
 import { showToast } from "@/lib/toast";
-import { BASKET_PRESETS, DEFAULT_SIZES, TIER_PRESETS, evenSplit, resetPack, updatePack, usePack, type CoinLinks, type Launchpad } from "@/lib/pack";
+import { BASKET_PRESETS, DEFAULT_SIZES, PRESALE_LIMITS, TIER_PRESETS, evenSplit, presaleError, resetPack, standardPrice, updatePack, usePack, type CoinLinks, type Launchpad, type PackConfig } from "@/lib/pack";
+import { PRESALE_PACKS, SEED_SHARE, launchMcap } from "@/lib/demo-launch";
 import { COIN_TONES as TONES, DesignStep, PIC_TYPES, designPatch, readPicture } from "@/components/launch-design";
 import { PRICED_STOCKS, stockOf } from "@/lib/stocks";
 import { appChain } from "@/lib/chain";
@@ -67,7 +68,8 @@ export function LaunchFlow() {
   // Kept for the on-chain create request's style; drafts start on Classic.
   const tier = TIER_PRESETS.find((t) => JSON.stringify(t.tiers) === JSON.stringify(c.tiers));
   const name = c.name.trim();
-  const done = [name.length > 0 && (classic || c.ticker.length >= 2), c.basket.length > 0, true];
+  const presaleErr = classic ? "" : presaleError(c.presalePacks ?? PRESALE_PACKS, standardPrice(c));
+  const done = [name.length > 0 && (classic || (c.ticker.length >= 2 && !presaleErr)), c.basket.length > 0, true];
   const canOpen = (i: number) => done.slice(0, i).every(Boolean);
   const q = query.trim().toUpperCase();
   const results = q ? PRICED_STOCKS.filter((s) => s.ticker.includes(q) || s.name.toUpperCase().includes(q)).slice(0, 8) : [];
@@ -246,6 +248,8 @@ export function LaunchFlow() {
               </div>
           </div>}
 
+          {!classic && <PresaleBlock c={c} error={presaleErr} />}
+
           <div>
             <span className={label}>Colour</span>
             <div className="-mx-1.5 grid grid-cols-8 desk:mx-0 desk:flex" role="group" aria-label="Colour">
@@ -371,6 +375,83 @@ export function LaunchFlow() {
         <span className="text-sm text-muted">Preview</span>
         <CoinPreview c={c} name={name} />
       </aside>
+    </div>
+  );
+}
+
+const money = (v: number) => {
+  const big = v >= 100_000;
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: big ? "compact" : "standard", minimumFractionDigits: 0, maximumFractionDigits: big ? 1 : 2 }).format(v);
+};
+
+/** Writes the Standard size's price (or the first size's), keeping the other sizes. */
+const setPackPrice = (price: number) => updatePack((p) => {
+  const sizes = p.sizes?.length ? p.sizes : DEFAULT_SIZES;
+  const id = sizes.some((s) => s.id === "standard") ? "standard" : sizes[0].id;
+  return { sizes: sizes.map((s) => (s.id === id ? { ...s, price } : s)) };
+});
+
+/** A number field that keeps what's typed ("", "1.") while the draft holds the number; follows outside resets. */
+function NumField({ id, value, onValue, prefix, ...rest }: { id: string; value: number; onValue: (v: number) => void; prefix?: string } & Pick<InputHTMLAttributes<HTMLInputElement>, "min" | "max" | "step" | "inputMode">) {
+  const [text, setText] = useState(String(value));
+  const shown = (text === "" ? 0 : Number(text)) === value ? text : String(value);
+  return (
+    <div className="relative">
+      {prefix && <span className="num pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted" aria-hidden="true">{prefix}</span>}
+      <input id={id} type="number" className={cn(cleanField, "num h-12", prefix && "pl-7")} value={shown} autoComplete="off" {...rest}
+        onChange={(e) => { setText(e.target.value); onValue(e.target.value === "" ? 0 : Number(e.target.value)); }} />
+    </div>
+  );
+}
+
+/** Presale size and pack price, and what they make: raise, launch mcap, and the raise's liquidity / prizes split. */
+function PresaleBlock({ c, error }: { c: PackConfig; error: string }) {
+  const packs = c.presalePacks ?? PRESALE_PACKS;
+  const price = standardPrice(c);
+  const raise = error ? 0 : packs * price;
+  const L = PRESALE_LIMITS;
+  const terms = [
+    { k: "Packs", v: error ? "–" : packs.toLocaleString("en-US") },
+    { k: "Price", v: error ? "–" : money(price) },
+    { k: "Raise", v: error ? "–" : money(raise) },
+    { k: "Launch mcap", v: error ? "–" : money(launchMcap(raise)) },
+  ];
+  return (
+    <div>
+      <span className={label}>Presale</span>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label htmlFor="presale-packs" className="mb-1 block text-[13px] text-muted">Packs</label>
+          <NumField id="presale-packs" value={packs} min={L.minPacks} max={L.maxPacks} step={1} inputMode="numeric" onValue={(v) => updatePack({ presalePacks: v })} />
+        </div>
+        <div>
+          <label htmlFor="presale-price" className="mb-1 block text-[13px] text-muted">Pack price</label>
+          <NumField id="presale-price" value={price} prefix="$" min={L.minPrice} max={L.maxPrice} step={1} inputMode="decimal" onValue={setPackPrice} />
+        </div>
+      </div>
+      {error ? <p className="mt-2 text-sm text-down" role="alert">{error}</p> : (
+        <div className="mt-2 rounded-md border border-border bg-surface-muted p-3" aria-live="polite">
+          <p className="flex items-start justify-between gap-1">
+            {terms.map((t, i) => (
+              <span key={t.k} className="contents">
+                {i > 0 && <span className="num pt-0.5 text-muted" aria-hidden="true">{["×", "=", "→"][i - 1]}</span>}
+                <span className="flex min-w-0 flex-col">
+                  <span className="num truncate text-base text-black">{t.v}</span>
+                  <span className="truncate text-xs text-muted">{t.k}</span>
+                </span>
+              </span>
+            ))}
+          </p>
+          <div className="mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
+            <span className="bg-black" style={{ width: `${(1 - SEED_SHARE) * 100}%` }} />
+            <span className="flex-1 bg-black/30" />
+          </div>
+          <p className="mt-1.5 flex justify-between gap-2 text-xs text-muted">
+            <span>Liquidity <span className="num text-black">{money(raise * (1 - SEED_SHARE))}</span></span>
+            <span>Prizes <span className="num text-black">{money(raise * SEED_SHARE)}</span></span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
