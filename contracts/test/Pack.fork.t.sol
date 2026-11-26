@@ -84,14 +84,15 @@ contract PackBSCTestForkTest is ForkBase {
         b.weights[1] = 4000;
     }
 
-    /// @dev BNB: 10 packs of 0.25 BNB. USD: 10 packs of 160 USD. Either way 70% of the raise clears the 1x floor.
+    /// @dev BNB: 10 packs of 0.35 BNB. USD: 10 packs of 220 USD. Either way 70% of the raise clears the 1x floor
+    ///      ($1,500 of liquidity with half the supply in the pool).
     function _config(bytes32 seed, address quote) internal returns (PackConfig memory c) {
         c.name = "Chip Rush";
         c.symbol = "CHIP";
         c.meta = "bafkreig4y5nwb4izyilbbmiydumvkld446d4k7j4ohg3x3q2lfel3fo4yq";
         c.salt = _mineSalt(seed);
         c.quoteToken = quote;
-        c.packPrice = quote == address(0) ? 0.25 ether : 160 ether;
+        c.packPrice = quote == address(0) ? 0.35 ether : 220 ether;
         c.packsForSale = PACKS;
         c.saleDuration = 1 days;
         c.vaultFactory = address(vaultFactory);
@@ -165,7 +166,7 @@ contract PackBSCTestForkTest is ForkBase {
         cardId = vault.reveal(id);
     }
 
-    /// @dev Like ForkBase's description check, for this launcher's quote and its 70% pool share.
+    /// @dev Like ForkBase's description check, for this launcher's quote and its 50% pool share.
     function _assertPackDescription(address launcher, PackConfig memory c, Vm.Log[] memory creation) internal view {
         string memory d = PackLauncher(payable(launcher)).description();
         assertEq(_launcherDescriptionFromLogs(creation, launcher), d, "the event carries the Launcher's own JSON");
@@ -173,7 +174,7 @@ contract PackBSCTestForkTest is ForkBase {
         _assertContains(d, c.name, "name");
         _assertContains(d, string.concat('"quoteToken":"', vm.toLowercase(vm.toString(c.quoteToken)), '"'), "quote");
         _assertContains(d, string.concat('"targetRaise":"', vm.toString(c.packPrice * PACKS), '"'), "targetRaise");
-        _assertContains(d, '"poolTokenRatio":"700000000000000000"', "70% of the supply seeds the pool");
+        _assertContains(d, '"poolTokenRatio":"500000000000000000"', "half the supply seeds the pool");
     }
 
     function _journey(address quote, bytes32 seed) internal {
@@ -203,13 +204,13 @@ contract PackBSCTestForkTest is ForkBase {
         assertEq(vault.presaleReserve(), seedAmount, "seed funded the presale reserve");
         assertEq(_quoteBal(quote, address(launcher)), 0, "launcher keeps nothing");
 
-        // 30% of the supply to presale buyers by packs.
+        // Half the supply to presale buyers by packs.
         vm.prank(alice);
         launcher.claim();
         vm.prank(bob);
         launcher.claim();
         uint256 reserve = launcher.TOTAL_SUPPLY() - launcher.POOL_TOKEN();
-        assertEq(reserve, launcher.TOTAL_SUPPLY() * 3 / 10);
+        assertEq(reserve, launcher.TOTAL_SUPPLY() / 2);
         assertEq(IERC20(token).balanceOf(alice), reserve * 4 / 10);
         assertEq(IERC20(token).balanceOf(bob), reserve * 6 / 10);
 
@@ -292,7 +293,7 @@ contract PackBSCTestForkTest is ForkBase {
         uint256 bal = IERC20(USD).balanceOf(alice);
         vm.prank(alice);
         launcher.refund();
-        assertEq(IERC20(USD).balanceOf(alice), bal + 3 * 160 ether);
+        assertEq(IERC20(USD).balanceOf(alice), bal + 3 * 220 ether);
     }
 
     function test_factoryRejectsBadConfigs() public {

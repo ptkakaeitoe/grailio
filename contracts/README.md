@@ -3,9 +3,9 @@
 Foundry project for the stock-pack Launcher + Vault on Flap Pool Launch (BSC testnet).
 
 - `src/packs/PackLauncher.sol` + `PackLauncherFactory.sol` — pre-launch pack presale, priced in BNB or an ERC20 quote
-  (Flap's testnet USD). The purchase that sells the last pack launches the coin through the Portal: 70% of the supply
-  and most of the raise seed the pool, `seedBps` of the raise funds the presale packs, and buyers split 30% of the
-  supply by packs held. All tax goes to the vault, for the longest duration the Portal allows. Refunds if not sold out.
+  (Flap's testnet USD). The purchase that sells the last pack launches the coin through the Portal: half the supply
+  and most of the raise seed the pool, `seedBps` of the raise funds the presale packs, and buyers split the other half
+  by packs held, at the price the pool opens at. All tax goes to the vault, for the longest duration the Portal allows. Refunds if not sold out.
 - `src/packs/PackVault.sol` + `PackVaultFactory.sol` — splits the tax 50% stock pool / 30% card stakers / 15% creator /
   5% platform. Pack tiers (`PackTypes.sol`): Low always pays 95% and can always be bought; Medium (30–150%) and High
   (10–300%) average 90% and unlock while the pool covers their top prize. Presale packs share the presale reserve and

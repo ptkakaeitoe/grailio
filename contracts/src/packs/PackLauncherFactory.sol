@@ -95,7 +95,7 @@ contract PackLauncherFactory is LauncherFactoryBase {
 
     function launcherDataSchema() external pure override returns (LauncherDataSchema memory schema) {
         schema.description =
-            "Stock pack presale: packs sell before the coin exists, in BNB or a supported ERC20 quote. When they sell out the coin launches; most of the raise seeds the pool, the rest funds the presale packs' prizes, and buyers split 30% of the supply by packs held. The tax then goes 50% to the stock pool, 30% to card stakers, 15% to the creator and 5% to the platform. Packs open into card NFTs holding tokenized stocks; stake cards to earn tax, burn them to take the stock. If the packs do not sell out, buyers are refunded.";
+            "Stock pack presale: packs sell before the coin exists, in BNB or a supported ERC20 quote. When they sell out the coin launches; most of the raise seeds the pool, the rest funds the presale packs' prizes, and buyers split 50% of the supply by packs held. The tax then goes 50% to the stock pool, 30% to card stakers, 15% to the creator and 5% to the platform. Packs open into card NFTs holding tokenized stocks; stake cards to earn tax, burn them to take the stock. If the packs do not sell out, buyers are refunded.";
         FieldDescriptor[] memory f = new FieldDescriptor[](11);
         f[0] = FieldDescriptor("name", "string", "Coin name", 0);
         f[1] = FieldDescriptor("symbol", "string", "Coin symbol", 0);

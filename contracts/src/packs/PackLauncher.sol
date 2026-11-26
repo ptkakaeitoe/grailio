@@ -18,9 +18,9 @@ interface IPackVaultFunding {
 string constant PACK_TITLE_ZH = unicode"股票卡包预售";
 string constant PACK_TITLE_EN = "Stock pack presale";
 string constant PACK_SUMMARY_ZH =
-    unicode"发射前先预售卡包。卡包售罄后代币发射：大部分募集资金进入流动性池，其余成为预售卡包的奖池，买家按卡包数量分得 30% 的代币供应。之后交易税按 50% 奖池、30% 卡牌质押者、15% 创建者、5% 平台分配。卡包开出持有代币化股票的卡牌 NFT，可质押赚取税收，销毁即可取出股票。未售罄则可退款。";
+    unicode"发射前先预售卡包。卡包售罄后代币发射：大部分募集资金进入流动性池，其余成为预售卡包的奖池，买家按卡包数量分得 50% 的代币供应。之后交易税按 50% 奖池、30% 卡牌质押者、15% 创建者、5% 平台分配。卡包开出持有代币化股票的卡牌 NFT，可质押赚取税收，销毁即可取出股票。未售罄则可退款。";
 string constant PACK_SUMMARY_EN =
-    "Packs sell before the coin exists. When they sell out the coin launches: most of the raise seeds the pool, the rest funds the presale packs' prizes, and buyers split 30% of the supply by packs held. The trading tax then goes 50% to the stock pool, 30% to card stakers, 15% to the creator and 5% to the platform. Packs open into card NFTs that hold tokenized stocks; stake a card to earn tax, burn it to take the stock. If the packs do not sell out, buyers are refunded.";
+    "Packs sell before the coin exists. When they sell out the coin launches: most of the raise seeds the pool, the rest funds the presale packs' prizes, and buyers split 50% of the supply by packs held, at the same price the pool opens at. The trading tax then goes 50% to the stock pool, 30% to card stakers, 15% to the creator and 5% to the platform. Packs open into card NFTs that hold tokenized stocks; stake a card to earn tax, burn it to take the stock. If the packs do not sell out, buyers are refunded.";
 
 /// @notice Payload for `Portal.newLauncher(factory, abi.encode(PackConfig))`.
 /// @param name          Coin name.
@@ -57,7 +57,7 @@ struct PackConfig {
 ///                        ▼                                 redeem() ─► the bStock
 ///                    _launch() ─► Portal ─► token + pool + PackVault
 ///                        │  seedBps of the raise ─► presale reserve
-///                  30% of supply here: buyers claim() by packs held
+///                  50% of supply here: buyers claim() by packs held
 ///
 ///         Presale packs are read by the vault from `packsOf`, so they can be opened there as soon as the pool
 ///         covers a pack's top prize. Once sold out nothing here changes: no more packs, no refunds.
@@ -67,7 +67,9 @@ contract PackLauncher is LauncherBase, Initializable, IStrategy {
     using SafeTransferLib for address;
 
     uint256 public constant TOTAL_SUPPLY = 1_000_000 ether;
-    uint256 public constant POOL_TOKEN = TOTAL_SUPPLY * 7 / 10;
+    /// @dev Half the supply seeds the pool and half goes to presale buyers, so presale buyers pay exactly the price the
+    ///      pool opens at: their coins at that price plus their share of the presale reserve equal what they paid.
+    uint256 public constant POOL_TOKEN = TOTAL_SUPPLY / 2;
     uint256 internal constant DISTRIBUTED_TOKEN = TOTAL_SUPPLY - POOL_TOKEN;
     uint256 public constant MAX_BUY = 50;
 
