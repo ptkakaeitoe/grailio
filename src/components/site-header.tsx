@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, LineChart, Package, Paintbrush, Plus, X } from "lucide-react";
+import { LayoutGrid, LineChart, Package, Paintbrush, Plus, UserRound, X } from "lucide-react";
 import { cleanLink, cn } from "@/components/clean-ui";
 import { HeaderWallet } from "@/components/wallet-entry";
 import { exitDemo, useDemo } from "@/lib/demo";
@@ -18,7 +18,11 @@ const NAV = [
   { label: "Launch", href: "/launch", icon: Plus },
   { label: "Stocks", href: "/app/stocks", icon: LineChart },
   { label: "Studio", href: "/studio", icon: Paintbrush },
+  { label: "Profile", href: "/app/profile", icon: UserRound },
 ] as const;
+
+/** The phone tab bar has five slots: Studio stays in the desktop nav, Profile takes its place. */
+const TABS = NAV.filter((item) => item.href !== "/studio");
 
 const isCurrent = (path: string, href: string) => path === href || path.startsWith(`${href}/`);
 
@@ -66,7 +70,7 @@ export function BottomTabs() {
   return (
     <nav aria-label="App" className="fixed inset-x-0 bottom-0 z-40 border-t border-hair bg-[rgb(17_17_17/.9)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[14px] desk:hidden">
       <ul className="mx-auto grid h-[var(--tabbar-h)] max-w-[560px] grid-cols-5">
-        {NAV.map(({ label, href, icon: Icon }) => {
+        {TABS.map(({ label, href, icon: Icon }) => {
           const current = isCurrent(path, href);
           const center = href === "/launch";
           return (
