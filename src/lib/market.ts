@@ -69,3 +69,6 @@ export const coinBySlug = (slug: string) => MARKET_COINS.find((c) => c.slug === 
 
 /** The basket stock with the biggest weight. */
 export const topStock = (coin: MarketCoin) => [...coin.basket].sort((a, b) => b.weight - a.weight)[0];
+
+/** A launched token's demo price (USD) until it trades on-chain: scaled from its pool. */
+export const demoTokenPrice = (coin: MarketCoin) => Math.max(0.000001, coin.poolUsd / 1e8);

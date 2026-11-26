@@ -12,7 +12,8 @@ import { clearCollection } from "@/lib/collection";
 /** Starting demo balance, in BNB. */
 export const DEMO_START_BNB = 0.5;
 
-export type DemoState = { active: boolean; bnb: number };
+/** `assets`: bStocks (by ticker, e.g. TSLA) and launched tokens (by pack slug) bought in Trade. */
+export type DemoState = { active: boolean; bnb: number; assets?: Record<string, number> };
 
 const KEY = "bsctemp.demo.v1";
 const OFF: DemoState = { active: false, bnb: DEMO_START_BNB };
@@ -38,13 +39,33 @@ export const exitDemo = () => write({ ...read(), active: false });
 /** Wipe the demo wallet and cards and start fresh. */
 export function resetDemo() {
   clearCollection();
-  write({ active: read().active, bnb: DEMO_START_BNB });
+  write({ active: read().active, bnb: DEMO_START_BNB, assets: {} });
 }
 /** Pays from the demo wallet; false if demo is off or the balance is short. */
 export function spendDemoBnb(amount: number) {
   const s = read();
   if (!s.active || !(amount > 0) || amount > s.bnb + 1e-12) return false;
   write({ ...s, bnb: Math.max(0, s.bnb - amount) });
+  return true;
+}
+
+/**
+ * Trades in the demo wallet at the given USD prices. Buy spends `amount` BNB for the asset; sell sells `amount` of the
+ * asset for BNB. False if demo is off or the balance is short.
+ */
+export function tradeDemo(side: "buy" | "sell", asset: string, amount: number, assetUsd: number, bnbUsd: number) {
+  const s = read();
+  if (!s.active || !(amount > 0) || !(assetUsd > 0) || !(bnbUsd > 0)) return false;
+  const assets = { ...(s.assets ?? {}) };
+  if (side === "buy") {
+    if (amount > s.bnb + 1e-12) return false;
+    assets[asset] = (assets[asset] ?? 0) + (amount * bnbUsd) / assetUsd;
+    write({ ...s, bnb: Math.max(0, s.bnb - amount), assets });
+  } else {
+    if (amount > (assets[asset] ?? 0) + 1e-12) return false;
+    assets[asset] = Math.max(0, (assets[asset] ?? 0) - amount);
+    write({ ...s, bnb: s.bnb + (amount * assetUsd) / bnbUsd, assets });
+  }
   return true;
 }
 
