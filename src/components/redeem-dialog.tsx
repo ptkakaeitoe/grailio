@@ -82,7 +82,7 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
           <h2 id="redeem-title" className={revealUi.heading}>
             {phase === "done" ? "Redeemed." : phase === "burning" ? "Burning the card…" : "Burn this card?"}
           </h2>
-          {phase === "done" && <p className={revealUi.body}>{onchain ? `${stock} is in your wallet.` : `${stock} would be in your wallet now. Simulated.`}</p>}
+          {phase === "done" && <p className={revealUi.body}>{onchain ? `${stock} is in your wallet.` : `${stock} is in your demo wallet.`}</p>}
         </div>
       </div>
       <div className={cn(dialogFooter, "flex flex-col")}>
