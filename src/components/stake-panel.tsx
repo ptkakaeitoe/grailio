@@ -10,6 +10,9 @@ import { RARITIES, RARITY_DOT } from "@/lib/pack";
 import { usd } from "@/lib/format";
 import type { MarketCoin } from "@/lib/market";
 
+/** Collection slug of coinless classic cards (see classic-pack-shop). */
+const CLASSIC_SLUG = "classic";
+
 /*
  * Card staking for one coin in demo mode: staked cards earn the stakers' 30% of the trading tax by card value, streamed
  * over 7 days in the vault (a minute here). Staked cards can't be redeemed or listed until unstaked.
@@ -114,6 +117,8 @@ export function CardStakeButton({ card, className }: { card: OwnedCard; classNam
   const coin = useStakeCoin(card);
   const bnbUsd = useBnbUsd();
   if (card.redeemedAt || card.onchain) return null;
+  // Classic cards have no coin, so no trading tax to stake for.
+  if (card.coin === CLASSIC_SLUG || coin?.config.kind === "classic") return <span className={cn(rowButton, "w-full cursor-default border-dashed text-muted hover:border-border", className)}>Not stakeable</span>;
   if (!coin) return <span className={cn(rowButton, "w-full cursor-default border-dashed text-muted hover:border-border", className)}>Coin no longer listed</span>;
   return card.stakedAt ? (
     <button type="button" className={cn(rowButton, "w-full border-black", className)} disabled={!bnbUsd} onClick={() => bnbUsd && unstakeCards(coin, [card], bnbUsd)}>Unstake</button>

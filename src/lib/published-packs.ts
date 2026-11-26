@@ -21,7 +21,8 @@ function readPublished(): Published[] {
 
 /** Publishes the studio's pack; returns its slug. A new launch starts with an empty pool (Low packs only). */
 export function publishPack(config: PackConfig) {
-  const taken = new Set([...MARKET_COINS.map((c) => c.slug), ...readPublished().map((p) => p.slug)]);
+  // "classic" is the built-in classic packs page (/app/packs/classic).
+  const taken = new Set(["classic", ...MARKET_COINS.map((c) => c.slug), ...readPublished().map((p) => p.slug)]);
   const base = slugify(config.name);
   let slug = base;
   for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;

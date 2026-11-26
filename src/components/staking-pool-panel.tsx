@@ -33,7 +33,7 @@ export function CollectionStaking() {
   const now = useNow(on);
 
   const rows: CoinRow[] = coins
-    .filter((c) => !c.config.onchain)
+    .filter((c) => !c.config.onchain && c.config.kind !== "classic")
     .map((coin) => {
       const held = cards.filter((c) => c.coin === coin.slug && !c.redeemedAt && !c.onchain);
       const staked = held.filter((c) => c.stakedAt);
