@@ -16,7 +16,6 @@ import { avatarCard, bioBytes, MAX_BIO, MAX_ZOOM, MIN_ZOOM, NAME_MAX, saveProfil
 /** Card art is 2:3, so it is 1.5× as tall as it is wide. */
 const CARD_ASPECT = 1.5;
 const RARITY = ["Common", "Rare", "Epic", "Legendary"];
-const chip = "inline-flex min-h-11 items-center gap-1.5 rounded-md border border-border px-3 text-sm transition-colors hover:border-black desk:min-h-9";
 
 /** Keeps the focus point far enough from the edges that the art always covers the circle at this zoom (basis points). */
 function clampCrop(x: number, y: number, zoom: number) {
@@ -85,13 +84,13 @@ export function ProfileHeader({ storeKey, fallbackName, initials, cardsEnabled, 
       <ProfileAvatarView profile={profile} cards={cards} fallback={fallback} className="size-20 text-2xl" />
       <div className="flex min-w-0 flex-1 flex-col gap-4 desk:flex-row desk:items-start desk:justify-between">
         <div className="min-w-0">
-          <p className={cn("truncate text-[28px] leading-[1.2] tracking-tight", !profile.name && mono && "tabular-nums")}>{profile.name ? `@${profile.name}` : fallbackName}</p>
+          <div className="flex min-w-0 items-center gap-1">
+            <p className={cn("truncate text-[28px] leading-[1.2] tracking-tight", !profile.name && mono && "tabular-nums")}>{profile.name ? `@${profile.name}` : fallbackName}</p>
+            <button type="button" className="grid size-9 shrink-0 place-items-center rounded-md text-muted transition-colors hover:text-black" aria-label="Edit profile" aria-haspopup="dialog" onClick={() => setEditing(true)}><Pencil className="size-4" /></button>
+          </div>
           {profile.bio && <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed break-words whitespace-pre-line">{profile.bio}</p>}
         </div>
-        <div className="flex shrink-0 flex-wrap gap-1.5 desk:justify-end">
-          <button type="button" className={chip} aria-haspopup="dialog" onClick={() => setEditing(true)}><Pencil className="size-3.5" /> Edit profile</button>
-          {actions}
-        </div>
+        {actions && <div className="flex shrink-0 flex-wrap gap-1.5 desk:justify-end">{actions}</div>}
       </div>
       {editing && <ProfileEditor storeKey={storeKey} profile={profile} cards={cards} initials={initials} onClose={() => setEditing(false)} />}
     </section>

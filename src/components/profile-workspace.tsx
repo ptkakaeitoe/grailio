@@ -12,7 +12,7 @@ import { WalletEntry } from "@/components/wallet-entry";
 import { useCardArt } from "@/lib/design";
 import { explorerUrl } from "@/lib/chain";
 import { useCollection } from "@/lib/collection";
-import { exitDemo, startDemo, useDemo } from "@/lib/demo";
+import { startDemo, useDemo } from "@/lib/demo";
 import { useHoldings } from "@/lib/holdings";
 import { profileKey } from "@/lib/profile";
 import { usd } from "@/lib/format";
@@ -35,16 +35,10 @@ function Identity() {
       initials={demo.active ? "de" : address?.slice(2, 4) ?? ""}
       cardsEnabled={demo.active}
       mono={!demo.active}
-      actions={<>
-        {!demo.active && address && (
-          <a className={chip} href={`${explorerUrl}/address/${address}`} target="_blank" rel="noreferrer">BscScan <ArrowUpRight className="size-3.5" /></a>
-        )}
-        {demo.active ? (
-          <button type="button" className={chip} onClick={exitDemo}><LogOut className="size-3.5" /> Exit demo</button>
-        ) : (
-          address && <button type="button" className={cn(chip, "text-down hover:border-down")} onClick={() => { void logout(); }}><LogOut className="size-3.5" /> Sign out</button>
-        )}
-      </>}
+      actions={!demo.active && address ? <>
+        <a className={chip} href={`${explorerUrl}/address/${address}`} target="_blank" rel="noreferrer">BscScan <ArrowUpRight className="size-3.5" /></a>
+        <button type="button" className={cn(chip, "text-down hover:border-down")} onClick={() => { void logout(); }}><LogOut className="size-3.5" /> Sign out</button>
+      </> : undefined}
     />
   );
 }
