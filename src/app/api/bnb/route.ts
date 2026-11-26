@@ -1,18 +1,27 @@
 import { connection } from "next/server";
 import { createPublicClient, http, parseAbi } from "viem";
-import { bsc } from "viem/chains";
+import { bscTestnet } from "viem/chains";
 
-/** Chainlink BNB/USD on BNB Chain mainnet (8 decimals). Used to value the vault's BNB tax in dollars. */
-const FEED = "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE" as const;
-const abi = parseAbi(["function latestRoundData() view returns (uint80, int256, uint256, uint256, uint80)"]);
-const client = createPublicClient({ chain: bsc, transport: http("https://bsc-rpc.publicnode.com") });
+/**
+ * Atlas BNB/USD on BSC Testnet ("SingleFeed BNB/USD", Chainlink-style, 18 decimals). The same feed the stock market
+ * contract reads on-chain to price bStocks in BNB, so the app and the contracts agree.
+ */
+const FEED = "0x3957d289ee9C38272377786787ea34F9dd29788D" as const;
+const abi = parseAbi([
+  "function latestRoundData() view returns (uint80, int256, uint256, uint256, uint80)",
+  "function decimals() view returns (uint8)",
+]);
+const client = createPublicClient({ chain: bscTestnet, transport: http("https://bsc-testnet.publicnode.com") });
 
 export async function GET() {
   await connection();
   try {
-    const [, answer, , updatedAt] = await client.readContract({ address: FEED, abi, functionName: "latestRoundData" });
-    return Response.json({ price: Number(answer) / 1e8, updatedAt: Number(updatedAt), feed: FEED, source: "Chainlink BNB/USD" });
+    const [[, answer, , updatedAt], decimals] = await Promise.all([
+      client.readContract({ address: FEED, abi, functionName: "latestRoundData" }),
+      client.readContract({ address: FEED, abi, functionName: "decimals" }),
+    ]);
+    return Response.json({ price: Number(answer) / 10 ** decimals, updatedAt: Number(updatedAt), feed: FEED, source: "Atlas BNB/USD" });
   } catch (e) {
-    return Response.json({ error: e instanceof Error ? e.message : "Chainlink read failed" }, { status: 502 });
+    return Response.json({ error: e instanceof Error ? e.message : "Atlas feed read failed" }, { status: 502 });
   }
 }

@@ -9,7 +9,7 @@ import { useMarketCoins } from "@/lib/published-packs";
 
 /*
  * What the demo wallet holds: BNB, bStocks and tokens bought in Trade, the bStocks paid out by redeemed cards, and the
- * bStocks still sealed inside the cards you keep. Valued at live prices: BNB from Chainlink (/api/bnb), bStocks from signed Atlas prices (/api/atlas).
+ * bStocks still sealed inside the cards you keep. Valued at live prices: BNB from the Atlas BNB/USD feed (/api/bnb), bStocks from signed Atlas prices (/api/atlas).
  */
 
 export type Holding = { key: string; label: string; name: string; ticker: string | null; amount: number; price: number | null };
