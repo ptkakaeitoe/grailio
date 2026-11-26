@@ -40,6 +40,8 @@ const solid = cn(cleanButton.solid, "px-5 disabled:hover:bg-black disabled:hover
 const outline = cn(cleanButton.outline, "px-5");
 const stepperButton = "grid size-11 place-items-center disabled:cursor-default disabled:opacity-30";
 /** Carousel arrows, level with the centred pack (340px tall on phones, 380px from 481px, 520px from 801px). */
+/** The Cournot risk check panel is hidden for now; flip this to bring it back. */
+const SHOW_RISK_CHECK = false;
 const stepButton = "absolute top-[168px] z-[3] grid size-11 place-items-center rounded-full border border-border-strong bg-white text-black transition-colors hover:border-black phone:top-[188px] desk:top-[238px]";
 const seal = "h-[15px] bg-[repeating-linear-gradient(90deg,transparent_0_3px,currentColor_3px_4px)] opacity-20";
 const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
@@ -370,7 +372,7 @@ export function PackShop({ market, initialSize }: { market?: MarketCoin; initial
         <p className="num mb-5 text-[13px] text-muted desk:mb-6">
           Stock pool {usd(poolUsd, 0)}{nextUnlock ? ` · ${nextUnlock.name} unlocks at ${usd(unlockAt(unlocks, nextUnlock.id), 0)}` : " · all tiers unlocked"}
         </p>
-        {market?.seed && <RiskPanel coin={market.slug} onDecision={setRiskDecision} />}
+        {SHOW_RISK_CHECK && market?.seed && <RiskPanel coin={market.slug} onDecision={setRiskDecision} />}
 
         <div className="flex items-center justify-between gap-4">
           <details className="group relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }}>
