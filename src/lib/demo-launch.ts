@@ -227,6 +227,29 @@ export function earnedNow(s: LaunchSim, now: number) {
   return Math.min(st.pot, st.earned + (t > st.last ? (t - st.last) * st.rate : 0));
 }
 
+/** Days the vault streams over (STREAM_MS in the demo), and one simulated vault day in demo time. */
+export const STREAM_DAYS = 7;
+export const DAY_MS = STREAM_MS / STREAM_DAYS;
+
+/**
+ * Read-only staking numbers for one coin at `now` (no state change). `streaming`: rewards still to stream out;
+ * `perDay`: what streams per simulated vault day; `daysLeft`: simulated days until the stream ends; `queued`: rewards
+ * waiting for a first staker; `totalWeight`: all staked value (you are the only staker in the demo).
+ */
+export function stakeStats(s: LaunchSim, now: number) {
+  const st = s.stake;
+  const left = now < st.finish ? (st.finish - now) * st.rate : 0;
+  const live = st.weight > 0 && left > 0;
+  return {
+    streaming: live ? left : 0,
+    perDay: live ? st.rate * DAY_MS : 0,
+    daysLeft: live ? (st.finish - now) / DAY_MS : 0,
+    queued: st.queued + (live ? 0 : left),
+    totalWeight: st.weight,
+    claimable: earnedNow(s, now),
+  };
+}
+
 /** Simulated trading tax arrives and is split 50 / 30 / 15 / 5. */
 export function simulateTax(coin: MarketCoin, amountUsd: number) {
   const now = Date.now();

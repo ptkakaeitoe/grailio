@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { cleanButton, cn } from "@/components/clean-ui";
 import { useCollection, type OwnedCard } from "@/lib/collection";
 import { useDemo } from "@/lib/demo";
-import { STREAM_MS, claimRewards, earnedNow, simOf, stakeCards, unstakeCards, useDemoLaunches, type LaunchSim } from "@/lib/demo-launch";
+import { STREAM_MS, claimRewards, earnedNow, stakeCards, unstakeCards, type LaunchSim } from "@/lib/demo-launch";
 import { useMarketCoins } from "@/lib/published-packs";
 import { RARITIES, RARITY_DOT } from "@/lib/pack";
 import { usd } from "@/lib/format";
@@ -21,7 +21,7 @@ const rowButton = "inline-flex min-h-11 min-w-[88px] shrink-0 items-center justi
 const FALLBACK_BNB_USD = 600;
 let bnbPrice: Promise<number> | null = null;
 /** The BNB price, fetched once per page load and shared. */
-function useBnbUsd() {
+export function useBnbUsd() {
   const [price, setPrice] = useState<number | null>(null);
   useEffect(() => {
     bnbPrice ??= fetch("/api/bnb").then((r) => r.json()).then((d) => (typeof d.price === "number" && d.price > 0 ? d.price : FALLBACK_BNB_USD)).catch(() => FALLBACK_BNB_USD);
@@ -33,7 +33,7 @@ function useBnbUsd() {
 }
 
 /** Re-renders every `ms` while `on`, for the streaming rewards. */
-function useNow(on: boolean, ms = 500) {
+export function useNow(on: boolean, ms = 500) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!on) return;
@@ -118,47 +118,5 @@ export function CardStakeButton({ card, className }: { card: OwnedCard; classNam
     <button type="button" className={cn(rowButton, "w-full border-black", className)} disabled={!bnbUsd} onClick={() => bnbUsd && unstakeCards(coin, [card], bnbUsd)}>Unstake</button>
   ) : (
     <button type="button" className={cn(rowButton, "w-full", className)} disabled={card.usd <= 0} onClick={() => stakeCards(coin, [card])}>Stake</button>
-  );
-}
-
-/** Collection: claimable staking rewards per coin, with Claim. */
-export function StakeRewards() {
-  const demo = useDemo();
-  const all = useDemoLaunches();
-  const coins = useMarketCoins();
-  const bnbUsd = useBnbUsd();
-  const active = coins.filter((c) => !c.config.onchain && all[c.slug]).map((c) => ({ coin: c, sim: simOf(all, c) }))
-    .filter(({ sim }) => sim.stake.weight > 0 || sim.stake.earned > 0);
-  const [on, setOn] = useState(false);
-  const now = useNow(on);
-  const streaming = active.some(({ sim }) => sim.stake.weight > 0 && sim.stake.finish > now);
-  if (streaming !== on) setOn(streaming);
-  if (!demo.active || active.length === 0) return null;
-
-  return (
-    <section className="mb-8 rounded-md border border-border p-3 phone:p-4" aria-labelledby="rewards-title">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 id="rewards-title" className="text-base font-normal">Staking <span className="text-muted">· simulated</span></h2>
-        <span className="text-[12px] text-muted">7 days = {Math.round(STREAM_MS / 1000)}s</span>
-      </div>
-      <ul className="mt-1 flex flex-col">
-        {active.map(({ coin, sim }) => {
-          const claimable = earnedNow(sim, now);
-          return (
-            <li key={coin.slug} className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-b-0">
-              <div className="min-w-0">
-                <p className="truncate text-sm">{coin.name}</p>
-                <p className="num truncate text-[12px] text-muted">Staked {usd(sim.stake.weight)}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="num text-base">{usd(claimable, claimable > 0 && claimable < 1 ? 4 : 2)}</span>
-                <button type="button" className={cn(cleanButton.solid, "min-h-11 px-4 disabled:hover:bg-black disabled:hover:text-white")} disabled={!bnbUsd || claimable <= 0}
-                  onClick={() => bnbUsd && claimRewards(coin, bnbUsd)}>Claim</button>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }

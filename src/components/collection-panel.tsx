@@ -11,7 +11,8 @@ import { cleanButton, cn } from "@/components/clean-ui";
 import { useCardArt } from "@/lib/design";
 import { listCard, useCollection, type OwnedCard } from "@/lib/collection";
 import { ListDialog } from "@/components/list-dialog";
-import { CardStakeButton, StakeRewards } from "@/components/stake-panel";
+import { CardStakeButton } from "@/components/stake-panel";
+import { CollectionStaking } from "@/components/staking-pool-panel";
 import { startDemo, useDemo } from "@/lib/demo";
 import { RARITIES } from "@/lib/pack";
 import { usd } from "@/lib/format";
@@ -59,7 +60,7 @@ export function CollectionPanel() {
 
   return (
     <>
-      <StakeRewards />
+      <CollectionStaking />
       {held.length > 0 ? (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-5 gap-y-7 phone:grid-cols-[repeat(auto-fill,minmax(175px,230px))] desk:grid-cols-[repeat(auto-fill,minmax(205px,255px))] desk:gap-x-8 desk:gap-y-12">
           {held.map((card) => {
@@ -74,6 +75,7 @@ export function CollectionPanel() {
                   front={<>
                     <StockCardFront art={art} rarity={card.rarity} brand={card.coinName} decorative className="size-full" sizes="(max-width: 480px) 44vw, (max-width: 800px) 30vw, 17vw" />
                     <Holo rarity={card.rarity} />
+                    {card.stakedAt && <span className="absolute top-[16%] right-1.5 rounded-[4px] bg-black px-2 py-0.5 text-[11px] text-white lowercase">staked</span>}
                   </>}
                   back={<>
                     <span className={cardBack.row}><span>{card.coinName.toUpperCase()}</span><span>{RARITIES[card.rarity].toUpperCase()}</span></span>
@@ -88,7 +90,7 @@ export function CollectionPanel() {
                     <span className={cardBack.foot}>SIMULATED · BSC TESTNET</span>
                   </>}
                 />
-                <p className="mt-2 h-5 text-sm text-muted">{card.stakedAt ? "Staked · earning" : card.listedUsd ? <>Listed · <span className="text-black tabular-nums">{usd(card.listedUsd)}</span></> : null}</p>
+                <p className="mt-2 h-5 text-sm text-muted">{card.stakedAt ? "Staked · unstake to list" : card.listedUsd ? <>Listed · <span className="text-black tabular-nums">{usd(card.listedUsd)}</span></> : null}</p>
                 <div className="mt-2.5 grid grid-cols-2 gap-1.5">
                   {card.stakedAt ? (
                     <button type="button" className={cn(smallAction, "disabled:cursor-not-allowed disabled:border-dashed disabled:hover:border-border")} disabled>List</button>
