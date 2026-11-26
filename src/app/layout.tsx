@@ -1,15 +1,37 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Geist_Mono, Inter, Syne } from "next/font/google";
+import { Providers } from "@/app/providers";
+import { BottomTabs, SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { Toaster } from "@/components/toaster";
 import "./globals.css";
+
+/** Graily's type: Inter for text, Geist Mono for numbers, Syne for the wordmark. */
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+const syne = Syne({ subsets: ["latin"], variable: "--font-syne", weight: "700" });
 
 export const metadata: Metadata = {
   title: "Stock Packs",
   description: "Memecoin trade fees buy stocks, sealed into packs for holders.",
 };
 
+/** Draw under the phone's status bar and home indicator; the header and tab bar pad themselves by the safe areas. */
+export const viewport: Viewport = { viewportFit: "cover", themeColor: "#111111" };
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className={`${inter.variable} ${geistMono.variable} ${syne.variable} overscroll-y-none antialiased`}>
+      <body className="flex min-h-dvh flex-col">
+        <Providers>
+          <SiteHeader />
+          <main id="main-content" className="flex-1">{children}</main>
+          {/* Phones leave room under the footer for the tab bar. */}
+          <div className="pb-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] desk:pb-0"><SiteFooter /></div>
+          <BottomTabs />
+          <Toaster />
+        </Providers>
+      </body>
     </html>
   );
 }
