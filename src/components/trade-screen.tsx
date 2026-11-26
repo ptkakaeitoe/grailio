@@ -9,6 +9,8 @@ import { startDemo, tradeDemo, tradeDemoBnb, useDemo } from "@/lib/demo";
 import { demoTokenPrice } from "@/lib/market";
 import { launchMcap, simOf, simTokenHistory, simTokenPrice, TOTAL_SUPPLY, tradeTokenSim, useDemoLaunches, type LaunchSim } from "@/lib/demo-launch";
 import { PriceChart } from "@/components/price-chart";
+import { tradableTicker } from "@/lib/trade-market";
+import { useMarketPrice, useStockBalance, useTradeMarket, type TradeCurrency } from "@/lib/use-trade-market";
 import type { MarketCoin } from "@/lib/market";
 import { CoinPackLink } from "@/components/coin-link";
 import { useMarketCoins } from "@/lib/published-packs";
@@ -139,7 +141,15 @@ export function TradeScreen({ asset }: { asset: Asset }) {
   const coinHistory = coin ? simTokenHistory(sims, coin) : [];
   const sim = coin ? simOf(sims, coin) : null;
   /** What you pay with: BNB for stocks and tokens, USDT for BNB. */
-  const quote = isBnb ? "USDT" : "BNB";
+  // Real trades: a listed stock, a wallet on BSC testnet and the trade market deployed (lib/use-trade-market).
+  const trade = useTradeMarket();
+  const liveTicker = stock && trade.live && tradableTicker(stock.ticker) ? stock.ticker : null;
+  const [payWith, setPayWith] = useState<TradeCurrency>("USD");
+  // Selling always pays out test USD; buying pays test USD or tBNB.
+  const liveQuote: TradeCurrency = side === "buy" ? payWith : "USD";
+  const marketPrice = useMarketPrice(liveTicker, liveQuote);
+  const liveStock = useStockBalance(liveTicker);
+  const quote = liveTicker ? (liveQuote === "USD" ? "USD" : "tBNB") : isBnb ? "USDT" : "BNB";
   const quoteUsd = isBnb ? 1 : bnbUsd;
   const chartTicker = isBnb ? "BNB" : stock?.ticker;
 
@@ -162,22 +172,32 @@ export function TradeScreen({ asset }: { asset: Asset }) {
 
   const points = coin ? coinHistory : history;
   const change = points.length > 1 ? (points.at(-1)!.p - points[0].p) / points[0].p : null;
-  const held = isBnb ? demo.bnb : demo.assets?.[key] ?? 0;
-  const quoteBalance = isBnb ? demo.usdt : demo.bnb;
-  const payBalance = side === "buy" ? quoteBalance : held;
+  const held = liveTicker ? liveStock.balance ?? 0 : isBnb ? demo.bnb : demo.assets?.[key] ?? 0;
+  const quoteBalance = liveTicker ? (liveQuote === "USD" ? trade.usdBalance : trade.bnbBalance) ?? 0 : isBnb ? demo.usdt : demo.bnb;
+  // Live tBNB keeps 0.001 back for gas.
+  const payBalance = side === "buy" ? (liveTicker && liveQuote === "BNB" ? Math.max(0, quoteBalance - 0.001) : quoteBalance) : held;
   const value = Number(amount);
   const valid = Number.isFinite(value) && value > 0;
   const receive = useMemo(() => {
-    if (!valid || !price || !quoteUsd) return null;
+    if (!valid) return null;
+    // Live: the market's own price (quote units per stock); demo: Atlas price and BNB/USD.
+    if (liveTicker) return marketPrice ? (side === "buy" ? value / marketPrice : value * marketPrice) : null;
+    if (!price || !quoteUsd) return null;
     return side === "buy" ? (value * quoteUsd) / price : (value * price) / quoteUsd;
-  }, [valid, value, price, quoteUsd, side]);
+  }, [valid, value, price, quoteUsd, side, liveTicker, marketPrice]);
   const payLabel = side === "buy" ? quote : symbol;
   const getLabel = side === "buy" ? symbol : quote;
   const short = valid && value > payBalance + 1e-12;
 
   if ((asset.kind === "token" && !coin) || (asset.kind === "stock" && !stock)) return <p className="py-16 text-center text-base text-muted">This isn&apos;t listed.</p>;
 
+  async function submitLive(ticker: string) {
+    const ok = side === "buy" ? await trade.buy(ticker, payWith, amount) : await trade.sell(ticker, amount);
+    if (ok) { setAmount(""); void liveStock.refetch(); }
+  }
+
   function submit() {
+    if (liveTicker) { void submitLive(liveTicker); return; }
     if (!demo.active) { startDemo(); return; }
     if (!valid || !price || !bnbUsd) return;
     if (isBnb ? tradeDemoBnb(side, value, bnbUsd) : tradeDemo(side, key, value, price, bnbUsd)) {
@@ -241,12 +261,22 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         <div className="rounded-md border border-border bg-surface-muted p-4">
           <div className="flex items-baseline justify-between text-sm text-muted">
             <span>You pay</span>
-            <span className="tabular-nums">Balance {fmt(payBalance, 6)}</span>
+            <span className="flex items-baseline gap-2 tabular-nums">
+              Balance {fmt(payBalance, 6)}
+              {liveTicker && side === "buy" && payWith === "USD" && (
+                <button type="button" className="text-black underline-offset-4 hover:underline disabled:opacity-40" disabled={Boolean(trade.busy)} onClick={() => { void trade.claimUsd(); }}>Claim 100</button>
+              )}
+            </span>
           </div>
           <div className="mt-2 flex items-center gap-3">
             <input inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} aria-label={`Amount of ${payLabel}`}
               className="min-w-0 flex-1 bg-transparent text-[32px] leading-none tabular-nums outline-none placeholder:text-muted" />
-            <span className="shrink-0 rounded-full border border-border-strong px-3 py-1.5 text-sm">{payLabel}</span>
+            {liveTicker && side === "buy" ? (
+              <button type="button" onClick={() => { setPayWith(payWith === "USD" ? "BNB" : "USD"); setAmount(""); }} aria-label={`Paying with ${payLabel}; switch`}
+                className="shrink-0 rounded-full border border-border-strong px-3 py-1.5 text-sm transition-colors hover:border-black">{payLabel} ⇄</button>
+            ) : (
+              <span className="shrink-0 rounded-full border border-border-strong px-3 py-1.5 text-sm">{payLabel}</span>
+            )}
           </div>
           <div className="mt-3 flex gap-1.5">
             {[0.25, 0.5, 0.75, 1].map((f) => (
@@ -275,11 +305,11 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         </div>
       </section>
 
-      <button type="button" onClick={submit} disabled={demo.active && (!valid || short || !price || !bnbUsd)}
+      <button type="button" onClick={submit} disabled={liveTicker ? !valid || short || !marketPrice || Boolean(trade.busy) : demo.active && (!valid || short || !price || !bnbUsd)}
         className="min-h-12 rounded-md bg-black text-base text-white transition-opacity disabled:opacity-40">
-        {!demo.active ? "Try the demo" : !valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`}
+        {liveTicker && trade.busy ? trade.busy : !liveTicker && !demo.active ? "Try the demo" : !valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`}
       </button>
-      <p className="-mt-3 text-center text-sm text-muted">Simulated · BSC testnet</p>
+      <p className="-mt-3 text-center text-sm text-muted">{liveTicker ? "BSC testnet" : "Simulated · BSC testnet"}</p>
         </div>
       </div>
     </div>

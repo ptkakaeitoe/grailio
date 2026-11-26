@@ -9,6 +9,8 @@ import { stockOf } from "@/lib/stocks";
 import { usePack } from "@/lib/pack";
 import { buyDemo, startDemo, useDemo } from "@/lib/demo";
 import { showToast } from "@/lib/toast";
+import { tradableTicker } from "@/lib/trade-market";
+import { useTradeMarket } from "@/lib/use-trade-market";
 import { compactUsd, gapPct, useCmc } from "@/lib/use-cmc";
 import { ago, usd } from "@/lib/format";
 import { cn } from "@/components/clean-ui";
@@ -48,6 +50,8 @@ export function StockList() {
   const [sort, setSort] = useState<Sort>("featured");
   const cmc = useCmc();
   const demo = useDemo();
+  // Real trades on the testnet trade market when a wallet is connected and the stock is listed there.
+  const trade = useTradeMarket();
 
   // Quick buy: one size for every row's Buy button (e.g. 0.1 BNB or 10 USDT), remembered in this browser.
   const [quick, setQuick] = useState<{ amount: string; currency: QuickCurrency }>({ amount: QUICK_DEFAULT.BNB, currency: "BNB" });
@@ -66,10 +70,17 @@ export function StockList() {
     fetch("/api/bnb").then((r) => r.json()).then((d) => { if (typeof d.price === "number" && d.price > 0) setBnbUsd(d.price); }).catch(() => {});
   }, []);
   const quickAmount = Number(quick.amount);
+  // On-chain the stable side is Flap's test USD.
+  const quickLabel = trade.live && quick.currency === "USDT" ? "USD" : quick.currency;
   const quickOk = Number.isFinite(quickAmount) && quickAmount > 0;
   /** Simulated buy of `tick` at its Atlas price with the quick-buy size (starts the demo wallet if needed). */
   function quickBuy(tick: string, price: number) {
-    if (!quickOk || !bnbUsd) return;
+    if (!quickOk) return;
+    if (trade.live && tradableTicker(tick)) {
+      void trade.buy(tick, quick.currency === "BNB" ? "BNB" : "USD", quick.amount);
+      return;
+    }
+    if (!bnbUsd) return;
     if (!demo.active) startDemo();
     if (buyDemo(tick, quickAmount, quick.currency, price, bnbUsd)) {
       const got = quick.currency === "BNB" ? (quickAmount * bnbUsd) / price : quickAmount / price;
@@ -82,9 +93,9 @@ export function StockList() {
     <button
       type="button"
       className={cn(toolbarChip, "relative z-10 min-h-9 px-3 desk:min-h-8")}
-      disabled={!quickOk || !bnbUsd || !stockOf(tick)}
+      disabled={!quickOk || !stockOf(tick) || (trade.live && tradableTicker(tick) ? Boolean(trade.busy) : !bnbUsd)}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); quickBuy(tick, price); }}
-      aria-label={`Buy ${tick} with ${quick.amount} ${quick.currency}`}
+      aria-label={`Buy ${tick} with ${quick.amount} ${quickLabel}`}
     >
       Buy
     </button>
@@ -187,6 +198,13 @@ export function StockList() {
         searchLabel="Search by ticker, name or feed ID"
         upper
         actions={<>
+          {trade.live && (
+            <button type="button" className={cn(chip, "inline-flex items-center gap-1.5 whitespace-nowrap desk:min-h-10")} disabled={Boolean(trade.busy)} onClick={() => { void trade.claimUsd(); }} title="Mint 100 free test USD to your wallet">
+              <span className="num">{trade.usdBalance === null ? "—" : trade.usdBalance.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span>
+              <span className="text-muted">USD</span>
+              <span aria-hidden="true">·</span> Claim
+            </button>
+          )}
           <div className="flex h-11 shrink-0 items-center overflow-hidden rounded-md border border-border desk:h-10" role="group" aria-label="Quick buy amount">
             <input
               className="num h-full w-16 bg-transparent px-2.5 text-right text-sm outline-none"
@@ -201,7 +219,7 @@ export function StockList() {
               onClick={() => { const currency = quick.currency === "BNB" ? "USDT" : "BNB"; saveQuick({ currency, amount: QUICK_DEFAULT[currency] }); }}
               aria-label={`Pay with ${quick.currency}; switch currency`}
             >
-              {quick.currency}
+              {quickLabel}
             </button>
           </div>
           <details className="group relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape") e.currentTarget.open = false; }}>
@@ -275,7 +293,7 @@ export function StockList() {
               <th className="px-4 py-2.5 text-right font-normal">CoinMarketCap</th>
               <th className="hidden px-4 py-2.5 text-right font-normal wide:table-cell">Volume</th>
               <th className="px-4 py-2.5 font-normal">Consensus</th>
-              <th className="px-4 py-2.5 text-right font-normal"><span className="sr-only">Buy</span>{quickOk ? `${quick.amount} ${quick.currency}` : ""}</th>
+              <th className="px-4 py-2.5 text-right font-normal"><span className="sr-only">Buy</span>{quickOk ? `${quick.amount} ${quickLabel}` : ""}</th>
             </tr>
           </thead>
           <tbody>
