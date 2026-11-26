@@ -11,7 +11,6 @@ const BUILT_ON = [
   ["Stocks", "bStocks"],
   ["Prices", "Atlas Oracle"],
   ["", "CoinMarketCap"],
-  ["Odds", "Cournot"],
 ] as const;
 
 /** Phones: the two buttons share a row at equal widths, wrapping to full-width rows when they don't fit. */
@@ -37,10 +36,7 @@ export function Hero() {
           >
             <span className="text-muted-soft">Memecoin tax buys real stocks.</span> Holders win them in packs.
           </h1>
-          <p className="mt-4 max-w-[520px] text-base leading-normal text-muted desk:mt-6 desk:text-lg">
-            A pack vault any BNB Chain launchpad can attach to a coin. Trading tax fills a pool of bStocks; holders open packs whose cards hold them.
-          </p>
-          <div className={cn(buttonRow, "mt-4 phone:gap-4 desk:mt-[clamp(32px,6svh,56px)]")}>
+          <div className={cn(buttonRow, "mt-6 phone:gap-4 desk:mt-[clamp(32px,6svh,56px)]")}>
             <Link href="/app/packs" className={cn(cleanButton.solid, "lowercase desk:min-h-[58px]")}>
               browse packs <ArrowUpRight weight="bold" aria-hidden="true" />
             </Link>
