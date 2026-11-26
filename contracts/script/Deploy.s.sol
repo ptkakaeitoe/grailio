@@ -18,6 +18,8 @@ import {PackVaultFactory} from "src/packs/PackVaultFactory.sol";
 contract Deploy is Script {
     /// @notice Atlas's on-chain BNB/USD feed on BNB Testnet ("SingleFeed BNB/USD", 18 decimals).
     address internal constant ATLAS_BNB_USD = 0x3957d289ee9C38272377786787ea34F9dd29788D;
+    /// @notice Flap's testnet USD quote token (free to mint from Flap's faucet), priced at $1.
+    address internal constant FLAP_TEST_USD = 0x190C989D5665a0e404B444b53CAE9AbCfb600157;
 
     function run() external {
         require(block.chainid == 97, "BNB Testnet only");
@@ -31,9 +33,13 @@ contract Deploy is Script {
         // The vault factory needs the launcher factory's address and vice versa: predict the second deployment.
         uint256 nonce = vm.getNonce(deployer);
         address predicted = vm.computeCreateAddress(deployer, nonce + 1);
-        PackVaultFactory vaultFactory = new PackVaultFactory(predicted, address(market));
+        // The deployer also receives the platform's 5% share of vault tax.
+        PackVaultFactory vaultFactory = new PackVaultFactory(predicted, address(market), deployer);
         PackLauncherFactory launcherFactory = new PackLauncherFactory(hub, guardian, address(vaultFactory));
         require(address(launcherFactory) == predicted, "launcher factory address prediction failed");
+
+        // Flap's testnet USD can pay for stocks (and so be a coin's quote) at $1.
+        market.setQuote(FLAP_TEST_USD, 1e18);
 
         // List the mock bStocks at their Atlas USD prices (script/stocks.json).
         string memory json = vm.readFile(string.concat(vm.projectRoot(), "/script/stocks.json"));
