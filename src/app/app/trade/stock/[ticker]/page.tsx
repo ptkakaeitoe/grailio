@@ -10,7 +10,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  return { title: `${(await params).ticker}B` };
+  return { title: (await params).ticker };
 }
 
 async function Body({ params }: Props) {

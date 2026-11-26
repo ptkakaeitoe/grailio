@@ -46,10 +46,10 @@ export function NftMarket() {
               <span className="holo-glare" aria-hidden="true" />
             </div>
             <div className="mt-2.5 flex items-baseline justify-between gap-2">
-              <span className="truncate text-sm capitalize text-muted">{RARITIES[l.rarity]} · {l.ticker}B</span>
+              <span className="truncate text-sm capitalize text-muted">{RARITIES[l.rarity]} · {l.ticker}</span>
               <span className="shrink-0 text-base tabular-nums">{usd(l.priceUsd)}</span>
             </div>
-            <p className="mb-2 truncate text-[13px] text-muted">{ownId !== null ? "Your listing" : l.seller} · holds {usd(l.usd)}</p>
+            <p className="mb-2 truncate text-[13px] text-muted">Holds {usd(l.usd)} · {ownId !== null ? "yours" : l.seller}</p>
             {ownId !== null ? (
               <button type="button" className={cn(action, "border border-border hover:border-black")} onClick={() => listCard(ownId, 0)}>Unlist</button>
             ) : (

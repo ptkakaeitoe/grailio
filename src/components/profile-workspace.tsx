@@ -73,7 +73,7 @@ function ProfileCards() {
               <StockCardFront art={art} rarity={c.rarity} brand={c.coinName} decorative sizes="(max-width: 480px) 45vw, 180px" className="w-full" />
               <Holo rarity={c.rarity} />
             </div>
-            <p className="mt-2 truncate text-sm">{c.ticker}B · {art.name}</p>
+            <p className="mt-2 truncate text-sm">{c.ticker} · {art.name}</p>
           </li>
         );
       })}
