@@ -73,7 +73,9 @@ contract MockRouter {
     function _swap(address token, uint256 amountIn, uint256 minOut, address to) private returns (uint256 out) {
         require(!broken, "broken");
         usdc.transferFrom(msg.sender, address(this), amountIn);
-        out = amountIn * 10 ** (decimalsOf[token] + 2) / price8[token];
+        // tokens = (amountIn / 10^usdcDec) / (price8 / 1e8) * 10^tokenDec
+        uint256 usdcDec = MockToken(address(usdc)).decimals();
+        out = amountIn * 10 ** (decimalsOf[token] + 8) / (price8[token] * 10 ** usdcDec);
         out = out * (10_000 - haircutBps) / 10_000;
         require(out >= minOut, "slippage");
         MockToken(token).mint(to, out);

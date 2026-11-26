@@ -77,8 +77,8 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
     uint256 public constant BPS = 10_000;
     uint256 public constant MAX_BATCH = 10;
     uint256 public constant REVEAL_WINDOW = 256;
-    /// Guard against a mistyped tier: no single card may hold more than $1,000.
-    uint256 public constant MAX_BACKING = 1_000e6;
+    /// Guard against a mistyped tier: no single card may hold more than $1,000 (in USDC units).
+    uint256 public immutable MAX_BACKING;
     uint16 public constant MAX_SLIPPAGE_BPS = 1_000;
 
     enum Route {
@@ -88,9 +88,9 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
     }
 
     struct Tier {
-        uint64 price; // USDC, 6 decimals
+        uint128 price; // USDC, in the token's own decimals
         uint16[4] oddsBps; // per rarity, sums to 10,000
-        uint64[4] backing; // USDC value per rarity, 6 decimals
+        uint128[4] backing; // USDC value per rarity, in the token's own decimals
         bool active;
     }
 
@@ -112,7 +112,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
         uint64 revealBlock;
         uint8 tier;
         bool done; // opened or refunded
-        uint64 paid; // USDC paid, refunded if paused
+        uint128 paid; // USDC paid, refunded if paused
     }
 
     struct Gift {
@@ -121,7 +121,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
         uint8 tier;
         uint8 quantity;
         bool done; // claimed or cancelled
-        uint64 paid; // USDC per pack
+        uint128 paid; // USDC per pack
     }
 
     struct Card {
@@ -129,11 +129,15 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
         uint8 tier;
         uint8 rarity;
         bool filled; // true: holds `amount` tokens; false: holds `usd` in USDC
-        uint64 usd;
+        uint128 usd;
         uint256 amount;
     }
 
     IERC20 public immutable usdc;
+    /// USDC's decimals, read once at deploy (6 on most chains, 18 on BNB Chain).
+    uint8 public immutable usdcDecimals;
+    /// 10 ** usdcDecimals: one whole USDC.
+    uint256 private immutable _usdcUnit;
     ISwapRouter02 public immutable v3Router;
     IV2Router public immutable v2Router;
 
@@ -176,7 +180,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
     /// Surplus kept in the pool before revenue is shared (a buffer for big wins).
     uint256 public minBankroll;
 
-    event TierAdded(uint256 indexed tierId, uint64 price, uint16[4] oddsBps, uint64[4] backing);
+    event TierAdded(uint256 indexed tierId, uint128 price, uint16[4] oddsBps, uint128[4] backing);
     event TierActive(uint256 indexed tierId, bool active);
     event AssetAdded(uint256 indexed assetId, address token, address feed);
     event AssetUpdated(uint256 indexed assetId);
@@ -189,7 +193,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
         address indexed owner,
         uint8 asset,
         uint8 rarity,
-        uint64 usd,
+        uint128 usd,
         bool expired
     );
     event CardFilled(uint256 indexed cardId, uint256 amount);
@@ -233,7 +237,12 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
         Ownable(owner_)
     {
         if (address(usdc_) == address(0)) revert ZeroAddress();
+        uint8 dec = IERC20Metadata(address(usdc_)).decimals();
+        if (dec > 30) revert BadAsset();
         usdc = usdc_;
+        usdcDecimals = dec;
+        _usdcUnit = 10 ** uint256(dec);
+        MAX_BACKING = 1_000 * 10 ** uint256(dec);
         v3Router = v3Router_;
         v2Router = v2Router_;
     }
@@ -242,7 +251,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
 
     /// Buy `quantity` packs of `tierId`, paying in USDC (approve first).
     function buy(uint256 tierId, uint256 quantity) external nonReentrant whenNotPaused returns (uint256 firstPackId) {
-        uint64 price = _pay(tierId, quantity);
+        uint128 price = _pay(tierId, quantity);
         firstPackId = _issue(msg.sender, tierId, quantity, price);
         emit PacksBought(msg.sender, tierId, firstPackId, quantity, uint256(price) * quantity);
     }
@@ -257,7 +266,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
     {
         if (signer == address(0)) revert ZeroAddress();
         if (giftIdOf[signer] != 0) revert GiftCodeUsed();
-        uint64 price = _pay(tierId, quantity);
+        uint128 price = _pay(tierId, quantity);
         giftId = nextGiftId++;
         giftIdOf[signer] = giftId;
         gifts[giftId] = Gift({
@@ -307,7 +316,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
 
         (uint8 assetId, uint8 rarity, bool expired) = _roll(packId, p);
         Tier storage t = _tiers[p.tier];
-        uint64 usd = t.backing[rarity];
+        uint128 usd = t.backing[rarity];
 
         cardId = nextCardId++;
         cards[cardId] = Card({asset: assetId, tier: p.tier, rarity: rarity, filled: false, usd: usd, amount: 0});
@@ -449,7 +458,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
     // ---------------------------------------------------------------- config
 
     /// Tiers are immutable once added (so reserves stay exact); retire one with setTierActive.
-    function addTier(uint64 price, uint16[4] calldata oddsBps, uint64[4] calldata backing)
+    function addTier(uint128 price, uint16[4] calldata oddsBps, uint128[4] calldata backing)
         external
         onlyOwner
         returns (uint256 tierId)
@@ -548,7 +557,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
     // ---------------------------------------------------------------- views
 
     function maxPayout(uint256 tierId) public view returns (uint256 top) {
-        uint64[4] storage backing = _tier(tierId).backing;
+        uint128[4] storage backing = _tier(tierId).backing;
         for (uint256 i; i < 4; ++i) {
             if (backing[i] > top) top = backing[i];
         }
@@ -621,13 +630,13 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
         }
     }
 
-    /// Tokens worth `usd` (6 decimals) at the Chainlink price, or 0 if no valid price.
+    /// Tokens worth `usd` (USDC units, `usdcDecimals`) at the Chainlink price, or 0 if no valid price.
     function fairAmount(uint256 assetId, uint256 usd) public view returns (uint256) {
         uint256 price = priceOf(assetId);
         if (price == 0) return 0;
         Asset storage a = _assets[assetId];
-        // tokens = (usd / 1e6) / (price / 10^feedDec) * 10^tokenDec
-        return Math.mulDiv(usd, 10 ** (uint256(a.tokenDecimals) + a.feedDecimals), price * 1e6);
+        // tokens = (usd / 10^usdcDec) / (price / 10^feedDec) * 10^tokenDec
+        return Math.mulDiv(usd, 10 ** (uint256(a.tokenDecimals) + a.feedDecimals), price * _usdcUnit);
     }
 
     function supportsInterface(bytes4 id) public view override returns (bool) {
@@ -649,7 +658,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
 
     /// Takes payment for `quantity` packs of `tierId`, reserves their top payout and
     /// awards the buyer's points. Returns the price per pack.
-    function _pay(uint256 tierId, uint256 quantity) private returns (uint64 price) {
+    function _pay(uint256 tierId, uint256 quantity) private returns (uint128 price) {
         if (quantity == 0 || quantity > MAX_BATCH) revert BadQuantity();
         Tier storage t = _tier(tierId);
         if (!t.active) revert BadTier();
@@ -664,7 +673,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
 
     /// Creates `quantity` packs for `owner_`, revealing from the next block. Their
     /// top payout must already be in `packReserve`.
-    function _issue(address owner_, uint256 tierId, uint256 quantity, uint64 paid)
+    function _issue(address owner_, uint256 tierId, uint256 quantity, uint128 paid)
         private
         returns (uint256 firstPackId)
     {
@@ -713,7 +722,7 @@ contract CollectPacks is ERC721Enumerable, Ownable2Step, Pausable, ReentrancyGua
         return 3;
     }
 
-    function _lowestRarity(uint64[4] storage backing) private view returns (uint8 lowest) {
+    function _lowestRarity(uint128[4] storage backing) private view returns (uint8 lowest) {
         for (uint8 r = 1; r < 4; ++r) {
             if (backing[r] < backing[lowest]) lowest = r;
         }

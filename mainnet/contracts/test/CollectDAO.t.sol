@@ -33,7 +33,7 @@ contract CollectDAOTest is Test {
         points = new CollectPoints(owner);
         dao = new CollectDAO(IPoints(address(points)), owner);
         vm.startPrank(owner);
-        packs.addTier(1e6, [uint16(5000), 2500, 2000, 500], [uint64(0.82e6), 0.9e6, 1.04e6, 1.34e6]);
+        packs.addTier(1e6, [uint16(5000), 2500, 2000, 500], [uint128(0.82e6), 0.9e6, 1.04e6, 1.34e6]);
         address[] memory none;
         packs.addAsset(
             IERC20Metadata(address(btc)), IAggregatorV3(address(feed)), 1 days, 200, CollectPacks.Route.UniswapV3,

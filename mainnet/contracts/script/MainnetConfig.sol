@@ -9,10 +9,8 @@ import {CollectPacks, IAggregatorV3, ISwapRouter02, IV2Router} from "../src/Coll
 /// (token symbols and decimals, Chainlink feed descriptions, router factories,
 /// pool existence and depth on the PancakeSwap v3 factory).
 ///
-/// Every token here, USDC included, has 18 decimals on BNB Chain. CollectPacks
-/// was written for 6-decimal USDC (tier prices are uint64 USDC amounts, and
-/// fairAmount() divides by 1e6), so `deploy` refuses to run until the pack
-/// contract handles 18-decimal USDC. See mainnet/README.md.
+/// Every token here, USDC included, has 18 decimals on BNB Chain. CollectPacks reads
+/// USDC's decimals at deploy, so all USDC amounts below are written with 18 decimals.
 library MainnetConfig {
     // Tokens
     address internal constant USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d; // Binance-Peg USDC, 18 dec
@@ -37,9 +35,9 @@ library MainnetConfig {
     /// Tier order matches PACK_TIERS in the app: 0 Ember, 1 Flare, 2 Nova.
     function addTiers(CollectPacks packs) internal {
         // Ember: every card holds $0.95 of a random token (5% edge). Rarity no longer changes the value; it sets the staking multiplier.
-        packs.addTier(1e6, [uint16(5000), 2500, 2000, 500], [uint64(0.95e6), 0.95e6, 0.95e6, 0.95e6]);
-        packs.addTier(1e6, [uint16(5000), 2500, 2000, 500], [uint64(0.46e6), 0.8e6, 1.4e6, 4e6]);
-        packs.addTier(1e6, [uint16(6000), 2500, 1200, 300], [uint64(0.2e6), 0.6e6, 2.8e6, 10.13e6]);
+        packs.addTier(1e18, [uint16(5000), 2500, 2000, 500], [uint128(0.95e18), 0.95e18, 0.95e18, 0.95e18]);
+        packs.addTier(1e18, [uint16(5000), 2500, 2000, 500], [uint128(0.46e18), 0.8e18, 1.4e18, 4e18]);
+        packs.addTier(1e18, [uint16(6000), 2500, 1200, 300], [uint128(0.2e18), 0.6e18, 2.8e18, 10.13e18]);
     }
 
     /// Asset order matches the app's cards: BTC, ETH, WBNB, LINK, CAKE.
@@ -95,9 +93,8 @@ library MainnetConfig {
     }
 
     function deploy(address owner) internal returns (CollectPacks) {
-        // CollectPacks assumes 6-decimal USDC; BNB Chain USDC has 18. Remove this guard only
-        // after the pack contract (and its tier amounts above) handle USDC's real decimals.
-        require(IERC20Metadata(USDC).decimals() == 6, "CollectPacks needs 6-decimal USDC; BNB Chain USDC has 18. See README.");
+        // Tier amounts above are written for 18-decimal USDC; stop if that ever stops being true.
+        require(IERC20Metadata(USDC).decimals() == 18, "MainnetConfig tier amounts assume 18-decimal USDC");
         return new CollectPacks(IERC20(USDC), ISwapRouter02(PANCAKE_SMART_ROUTER), IV2Router(PANCAKE_V2_ROUTER), owner);
     }
 }

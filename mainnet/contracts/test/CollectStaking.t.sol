@@ -26,9 +26,9 @@ contract MockCards is ERC721 {
         _mint(to, id);
     }
 
-    function cards(uint256 id) external view returns (uint8, uint8, uint8, bool, uint64, uint256) {
+    function cards(uint256 id) external view returns (uint8, uint8, uint8, bool, uint128, uint256) {
         Card memory c = _cards[id];
-        return (c.asset, 0, c.rarity, true, 0.95e6, 1);
+        return (c.asset, 0, c.rarity, true, 0.95e18, 1); // 18-decimal USDC value, past uint64
     }
 
     function _update(address to, uint256 id, address auth) internal override returns (address from) {

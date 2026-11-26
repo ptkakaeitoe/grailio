@@ -54,7 +54,7 @@ contract CollectMarket is Ownable2Step, ReentrancyGuard {
 
     struct Listing {
         address seller;
-        uint96 price; // AVAX: wei (18 dec). USDC: 6 dec.
+        uint96 price; // BNB: wei (18 dec). USDC: its own decimals (18 on BNB Chain; uint96 holds ~79e9 USDC).
         address nft;
         uint64 expiresAt;
         bool inAvax;

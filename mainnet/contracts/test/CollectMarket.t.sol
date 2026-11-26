@@ -33,7 +33,7 @@ contract CollectMarketTest is Test {
         // Fees land in the pack pool, where the owner withdraws them as surplus.
         market = new CollectMarket(usdc, address(packs), owner);
         vm.startPrank(owner);
-        packs.addTier(1e6, [uint16(5000), 2500, 2000, 500], [uint64(0.46e6), 0.8e6, 1.4e6, 4e6]);
+        packs.addTier(1e6, [uint16(5000), 2500, 2000, 500], [uint128(0.46e6), 0.8e6, 1.4e6, 4e6]);
         address[] memory none;
         packs.addAsset(
             IERC20Metadata(address(btc)),

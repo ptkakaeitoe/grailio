@@ -11,7 +11,7 @@ interface ICollectCards is IERC721 {
     function cards(uint256 cardId)
         external
         view
-        returns (uint8 asset, uint8 tier, uint8 rarity, bool filled, uint64 usd, uint256 amount);
+        returns (uint8 asset, uint8 tier, uint8 rarity, bool filled, uint128 usd, uint256 amount);
     function heldOf(address owner, uint256 assetId) external view returns (uint256);
 }
 

@@ -8,8 +8,7 @@ import {CollectStaking, ICollectCards} from "../src/CollectStaking.sol";
 import {MainnetConfig as M} from "../script/MainnetConfig.sol";
 
 /// Runs against a local fork of BNB Smart Chain mainnet: real USDC, Chainlink feeds and
-/// DEX pools. Nothing is broadcast. Until CollectPacks handles 18-decimal USDC,
-/// MainnetConfig.deploy reverts here on purpose (see MainnetConfig.sol). Run with:
+/// DEX pools. Nothing is broadcast. USDC on BNB Chain has 18 decimals. Run with:
 ///   BSC_RPC_URL=https://bsc-dataseed.bnbchain.org forge test --match-contract Fork -vv
 contract CollectPacksForkTest is Test {
     CollectPacks packs;
@@ -31,10 +30,10 @@ contract CollectPacksForkTest is Test {
         M.addAssets(packs);
         vm.stopPrank();
 
-        deal(M.USDC, owner, 100e6);
-        deal(M.USDC, player, 100e6);
+        deal(M.USDC, owner, 100e18);
+        deal(M.USDC, player, 100e18);
         vm.prank(owner);
-        usdc.transfer(address(packs), 50e6); // seed the pool
+        usdc.transfer(address(packs), 50e18); // seed the pool
         vm.prank(player);
         usdc.approve(address(packs), type(uint256).max);
     }
@@ -66,7 +65,7 @@ contract CollectPacksForkTest is Test {
             vm.prank(player);
             uint256 cardId = packs.open(packId);
 
-            (uint8 asset,, uint8 rarity, bool filled, uint64 usd, uint256 amount) = packs.cards(cardId);
+            (uint8 asset,, uint8 rarity, bool filled, uint128 usd, uint256 amount) = packs.cards(cardId);
             assertEq(asset, a);
             assertEq(rarity, 3);
             uint256 fair = packs.fairAmount(a, usd);
@@ -88,8 +87,8 @@ contract CollectPacksForkTest is Test {
     function test_treasuryRoundTripOnRealUsdc() public {
         vm.prank(player);
         uint256 packId = packs.buy(2, 1); // Futuristic reserves $10.13
-        assertEq(packs.reserved(), 10.13e6);
-        assertEq(packs.surplus(), 51e6 - 10.13e6);
+        assertEq(packs.reserved(), 10.13e18);
+        assertEq(packs.surplus(), 51e18 - 10.13e18);
 
         vm.prank(owner);
         packs.pause();
@@ -97,9 +96,9 @@ contract CollectPacksForkTest is Test {
         packs.refund(packId);
         vm.prank(owner);
         uint256 out = packs.withdrawAll(treasury);
-        assertEq(out, 50e6);
-        assertEq(usdc.balanceOf(treasury), 50e6);
-        assertEq(usdc.balanceOf(player), 100e6);
+        assertEq(out, 50e18);
+        assertEq(usdc.balanceOf(treasury), 50e18);
+        assertEq(usdc.balanceOf(player), 100e18);
     }
 
     /// Finds a block hash that makes `packId` roll `rarity` on the Classic odds.
@@ -131,15 +130,15 @@ contract CollectPacksForkTest is Test {
             vm.roll(revealBlock + 1);
             vm.prank(player);
             ids[i] = packs.open(packId);
-            (,,, bool filled, uint64 usd,) = packs.cards(ids[i]);
+            (,,, bool filled, uint128 usd,) = packs.cards(ids[i]);
             assertTrue(filled, "swap refused on real pools");
-            assertEq(usd, 0.95e6);
+            assertEq(usd, 0.95e18);
         }
-        assertEq(packs.pendingRevenue(), 0.5e6);
+        assertEq(packs.pendingRevenue(), int256(0.5e18));
 
-        assertEq(packs.distribute(), 0.5e6);
-        assertEq(usdc.balanceOf(address(staking)), 0.25e6);
-        assertEq(packs.ownerFree(), 0.25e6);
+        assertEq(packs.distribute(), 0.5e18);
+        assertEq(usdc.balanceOf(address(staking)), 0.25e18);
+        assertEq(packs.ownerFree(), 0.25e18);
 
         vm.prank(player);
         packs.setApprovalForAll(address(staking), true);
@@ -149,7 +148,7 @@ contract CollectPacksForkTest is Test {
         uint256 before = usdc.balanceOf(player);
         vm.prank(player);
         staking.claim(ids);
-        assertApproxEqAbs(usdc.balanceOf(player) - before, 0.125e6, 20); // half of 0.25 in a week
+        assertApproxEqAbs(usdc.balanceOf(player) - before, 0.125e18, 1e9); // half of 0.25 in a week
         vm.prank(player);
         staking.unstake(ids);
         assertEq(packs.ownerOf(ids[0]), player);

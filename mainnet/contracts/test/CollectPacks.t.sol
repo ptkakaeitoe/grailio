@@ -23,14 +23,34 @@ contract CollectPacksTest is Test {
     address treasury = makeAddr("treasury");
 
     uint16[4] oddsClassic = [uint16(5000), 2500, 2000, 500];
-    uint64[4] backingRealistic = [uint64(0.82e6), 0.9e6, 1.04e6, 1.34e6];
-    uint64[4] backingClassic = [uint64(0.46e6), 0.8e6, 1.4e6, 4e6];
+    uint128[4] backingRealistic;
+    uint128[4] backingClassic;
     uint16[4] oddsFuturistic = [uint16(6000), 2500, 1200, 300];
-    uint64[4] backingFuturistic = [uint64(0.2e6), 0.6e6, 2.8e6, 10.13e6];
+    uint128[4] backingFuturistic;
+    /// 10 ** (usdcDecimals - 6): literals below are written in 6-decimal USDC and scaled by u().
+    uint256 scale;
+
+    /// USDC decimals for this run. CollectPacks18Test reruns every test with 18 (BNB Chain).
+    function _usdcDecimals() internal pure virtual returns (uint8) {
+        return 6;
+    }
+
+    /// A 6-decimal USDC literal in this run's USDC units.
+    function u(uint256 amount6) internal view returns (uint256) {
+        return amount6 * scale;
+    }
+
+    function u128(uint256 amount6) internal view returns (uint128) {
+        return uint128(amount6 * scale);
+    }
 
     function setUp() public {
         vm.warp(1_800_000_000);
-        usdc = new MockToken("USDC", 6);
+        scale = 10 ** (_usdcDecimals() - 6);
+        backingRealistic = [u128(0.82e6), u128(0.9e6), u128(1.04e6), u128(1.34e6)];
+        backingClassic = [u128(0.46e6), u128(0.8e6), u128(1.4e6), u128(4e6)];
+        backingFuturistic = [u128(0.2e6), u128(0.6e6), u128(2.8e6), u128(10.13e6)];
+        usdc = new MockToken("USDC", _usdcDecimals());
         btc = new MockToken("BTC.b", 8);
         joe = new MockToken("JOE", 18);
         btcFeed = new MockFeed(60_000e8);
@@ -41,9 +61,9 @@ contract CollectPacksTest is Test {
 
         packs = new CollectPacks(usdc, ISwapRouter02(address(router)), IV2Router(address(router)), owner);
         vm.startPrank(owner);
-        packs.addTier(1e6, oddsClassic, backingRealistic);
-        packs.addTier(1e6, oddsClassic, backingClassic);
-        packs.addTier(1e6, oddsFuturistic, backingFuturistic);
+        packs.addTier(u128(1e6), oddsClassic, backingRealistic);
+        packs.addTier(u128(1e6), oddsClassic, backingClassic);
+        packs.addTier(u128(1e6), oddsFuturistic, backingFuturistic);
         address[] memory none;
         packs.addAsset(
             IERC20Metadata(address(btc)),
@@ -62,9 +82,9 @@ contract CollectPacksTest is Test {
         );
         vm.stopPrank();
 
-        usdc.mint(alice, 100e6);
-        usdc.mint(bob, 100e6);
-        usdc.mint(owner, 1_000e6);
+        usdc.mint(alice, u(100e6));
+        usdc.mint(bob, u(100e6));
+        usdc.mint(owner, u(1_000e6));
         vm.prank(alice);
         usdc.approve(address(packs), type(uint256).max);
         vm.prank(bob);
@@ -100,10 +120,10 @@ contract CollectPacksTest is Test {
     }
 
     function test_giftBuyReservesAndClaimIssuesFreshPacks() public {
-        _seed(20e6);
+        _seed(u(20e6));
         vm.prank(alice);
         uint256 giftId = packs.buyGift(2, 2, vm.addr(GIFT_KEY));
-        assertEq(usdc.balanceOf(alice), 98e6);
+        assertEq(usdc.balanceOf(alice), u(98e6));
         assertEq(packs.packReserve(), 2 * packs.maxPayout(2)); // reserved at purchase
         assertEq(packs.packIdsOf(alice).length, 0); // no packs until claimed
 
@@ -112,11 +132,11 @@ contract CollectPacksTest is Test {
         vm.prank(bob);
         uint256 first = packs.claimGift(giftId, sig);
         assertEq(packs.packIdsOf(bob).length, 2);
-        (address owner_, uint64 revealBlock, uint8 tier_,, uint64 paid) = packs.packs(first);
+        (address owner_, uint64 revealBlock, uint8 tier_,, uint128 paid) = packs.packs(first);
         assertEq(owner_, bob);
         assertEq(revealBlock, vm.getBlockNumber() + 1);
         assertEq(tier_, 2);
-        assertEq(paid, 1e6);
+        assertEq(paid, u(1e6));
         assertEq(packs.packState(first), 1); // waiting, not expired
         assertEq(packs.packReserve(), 2 * packs.maxPayout(2)); // not double counted
 
@@ -128,7 +148,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_giftSignatureIsBoundToTheClaimer() public {
-        _seed(10e6);
+        _seed(u(10e6));
         vm.prank(alice);
         uint256 giftId = packs.buyGift(1, 1, vm.addr(GIFT_KEY));
         // Signatures are built first: the view call inside _giftSig would consume expectRevert.
@@ -154,7 +174,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_cancelGiftReturnsPacksToSenderOnce() public {
-        _seed(10e6);
+        _seed(u(10e6));
         vm.prank(alice);
         uint256 giftId = packs.buyGift(1, 3, vm.addr(GIFT_KEY));
         vm.prank(bob);
@@ -173,7 +193,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_giftValidationAndPause() public {
-        _seed(10e6);
+        _seed(u(10e6));
         vm.startPrank(alice);
         vm.expectRevert(CollectPacks.ZeroAddress.selector);
         packs.buyGift(1, 1, address(0));
@@ -196,39 +216,39 @@ contract CollectPacksTest is Test {
         uint256 first = packs.claimGift(giftId, sig);
         vm.prank(bob);
         packs.refund(first);
-        assertEq(usdc.balanceOf(bob), 101e6); // bob gets the $1 alice paid
+        assertEq(usdc.balanceOf(bob), u(101e6)); // bob gets the $1 alice paid
         assertEq(packs.reserved(), 0);
     }
 
     // ------------------------------------------------------------ buying
 
     function test_buyPullsPriceAndReservesTopPayout() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 first = _buy(alice, 1, 2);
-        assertEq(usdc.balanceOf(alice), 98e6);
-        assertEq(packs.packReserve(), 8e6); // 2 x $4 top payout
-        assertEq(packs.reserved(), 8e6);
-        assertEq(packs.surplus(), 12e6 - 8e6);
-        (address o,, uint8 t, bool done, uint64 paid) = packs.packs(first);
+        assertEq(usdc.balanceOf(alice), u(98e6));
+        assertEq(packs.packReserve(), u(8e6)); // 2 x $4 top payout
+        assertEq(packs.reserved(), u(8e6));
+        assertEq(packs.surplus(), u(12e6) - u(8e6));
+        (address o,, uint8 t, bool done, uint128 paid) = packs.packs(first);
         assertEq(o, alice);
         assertEq(t, 1);
         assertFalse(done);
-        assertEq(paid, 1e6);
+        assertEq(paid, u(1e6));
         assertEq(packs.packIdsOf(alice).length, 2);
     }
 
     function test_saleRevertsWhenPoolCannotCoverTopPayout() public {
         // Empty pool: a $1 Classic pack can owe $4.
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(CollectPacks.PoolTooSmall.selector, 1e6, 4e6));
+        vm.expectRevert(abi.encodeWithSelector(CollectPacks.PoolTooSmall.selector, u(1e6), u(4e6)));
         packs.buy(1, 1);
         // Realistic's top payout is $1.34: still needs a $0.34 seed.
-        _seed(0.34e6);
+        _seed(u(0.34e6));
         _buy(alice, 0, 1);
     }
 
     function test_capacity() public {
-        _seed(30.39e6); // 3 Futuristic packs: each adds $1 and reserves $10.13
+        _seed(u(30.39e6)); // 3 Futuristic packs: each adds $1 and reserves $10.13
         assertEq(packs.capacity(2), 3);
         _buy(alice, 2, 3);
         assertEq(packs.capacity(2), 0);
@@ -238,7 +258,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_badQuantityAndTier() public {
-        _seed(100e6);
+        _seed(u(100e6));
         vm.startPrank(alice);
         vm.expectRevert(CollectPacks.BadQuantity.selector);
         packs.buy(0, 0);
@@ -257,7 +277,7 @@ contract CollectPacksTest is Test {
     // ------------------------------------------------------------ opening
 
     function test_openSwapsIntoTokenAndLocksIt() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 id = _buy(alice, 1, 1);
         vm.prank(alice);
         vm.expectRevert(CollectPacks.RevealNotReady.selector);
@@ -265,7 +285,7 @@ contract CollectPacksTest is Test {
 
         uint256 cardId = _open(alice, id, keccak256("seed"));
         assertEq(packs.ownerOf(cardId), alice);
-        (uint8 a,, uint8 rarity, bool filled, uint64 usd, uint256 amount) = packs.cards(cardId);
+        (uint8 a,, uint8 rarity, bool filled, uint128 usd, uint256 amount) = packs.cards(cardId);
         assertTrue(filled);
         assertEq(usd, backingClassic[rarity]);
         address token = a == 0 ? address(btc) : address(joe);
@@ -275,11 +295,11 @@ contract CollectPacksTest is Test {
         assertEq(packs.packReserve(), 0);
         assertEq(packs.pendingUsdc(), 0);
         // Pool paid the card's value out of the $11.
-        assertEq(usdc.balanceOf(address(packs)), 11e6 - usd);
+        assertEq(usdc.balanceOf(address(packs)), u(11e6) - usd);
     }
 
     function test_onlyOwnerOpensAndOnlyOnce() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 id = _buy(alice, 1, 1);
         vm.roll(vm.getBlockNumber() + 2);
         vm.prank(bob);
@@ -292,20 +312,20 @@ contract CollectPacksTest is Test {
     }
 
     function test_expiredPackOpensAsLowestRarity() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 id = _buy(alice, 2, 1);
         vm.roll(vm.getBlockNumber() + 300); // past the 256-block window
         assertEq(packs.packState(id), 3);
         vm.prank(alice);
         uint256 cardId = packs.open(id);
-        (,, uint8 rarity,, uint64 usd,) = packs.cards(cardId);
+        (,, uint8 rarity,, uint128 usd,) = packs.cards(cardId);
         assertEq(rarity, 0);
-        assertEq(usd, 0.2e6);
+        assertEq(usd, u(0.2e6));
     }
 
     function test_raritiesFollowOdds() public {
-        _seed(1_000e6);
-        usdc.mint(alice, 1_000e6);
+        _seed(u(1_000e6));
+        usdc.mint(alice, u(1_000e6));
         uint256[4] memory counts;
         for (uint256 i; i < 400; ++i) {
             uint256 id = _buy(alice, 1, 1);
@@ -325,11 +345,11 @@ contract CollectPacksTest is Test {
     // ------------------------------------------------------------ swap failures
 
     function test_swapFailureLeavesCardHoldingUsdcThenFill() public {
-        _seed(10e6);
+        _seed(u(10e6));
         router.setBroken(true);
         uint256 id = _buy(alice, 1, 1);
         uint256 cardId = _open(alice, id, keccak256("seed"));
-        (,,, bool filled, uint64 usd,) = packs.cards(cardId);
+        (,,, bool filled, uint128 usd,) = packs.cards(cardId);
         assertFalse(filled);
         assertEq(packs.pendingUsdc(), usd);
         assertEq(packs.reserved(), usd);
@@ -348,7 +368,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_pushedPoolIsRefused() public {
-        _seed(10e6);
+        _seed(u(10e6));
         router.setHaircut(1_500); // DEX gives 15% less than Chainlink: worse than any tolerance
         uint256 id = _buy(alice, 1, 1);
         uint256 cardId = _open(alice, id, keccak256("seed"));
@@ -357,7 +377,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_staleFeedIsRefused() public {
-        _seed(10e6);
+        _seed(u(10e6));
         btcFeed.set(60_000e8, vm.getBlockTimestamp() - 2 days);
         joeFeed.set(0.02e8, vm.getBlockTimestamp() - 2 days);
         uint256 id = _buy(alice, 1, 1);
@@ -369,7 +389,7 @@ contract CollectPacksTest is Test {
     // ------------------------------------------------------------ redeem
 
     function test_redeemFilledCardPaysTokens() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 cardId = _open(alice, _buy(alice, 1, 1), keccak256("seed"));
         (uint8 a,,,,, uint256 amount) = packs.cards(cardId);
         MockToken token = a == 0 ? btc : joe;
@@ -397,10 +417,10 @@ contract CollectPacksTest is Test {
     }
 
     function test_redeemUnfilledCardPaysUsdc() public {
-        _seed(10e6);
+        _seed(u(10e6));
         router.setBroken(true);
         uint256 cardId = _open(alice, _buy(alice, 1, 1), keccak256("seed"));
-        (,,,, uint64 usd,) = packs.cards(cardId);
+        (,,,, uint128 usd,) = packs.cards(cardId);
         uint256 before = usdc.balanceOf(alice);
         vm.prank(alice);
         packs.redeem(cardId);
@@ -411,39 +431,39 @@ contract CollectPacksTest is Test {
     // ------------------------------------------------------------ treasury
 
     function test_withdrawOnlySurplus() public {
-        _seed(10e6);
+        _seed(u(10e6));
         _buy(alice, 1, 2); // balance 12, reserved 8
-        assertEq(packs.surplus(), 4e6);
+        assertEq(packs.surplus(), u(4e6));
 
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         packs.withdraw(alice, 1);
 
         vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(CollectPacks.ExceedsSurplus.selector, 4e6 + 1, 4e6));
-        packs.withdraw(treasury, 4e6 + 1);
+        vm.expectRevert(abi.encodeWithSelector(CollectPacks.ExceedsSurplus.selector, u(4e6) + 1, u(4e6)));
+        packs.withdraw(treasury, u(4e6) + 1);
 
         vm.prank(owner);
-        packs.withdraw(treasury, 3e6);
-        assertEq(usdc.balanceOf(treasury), 3e6);
+        packs.withdraw(treasury, u(3e6));
+        assertEq(usdc.balanceOf(treasury), u(3e6));
         vm.prank(owner);
-        assertEq(packs.withdrawAll(treasury), 1e6);
+        assertEq(packs.withdrawAll(treasury), u(1e6));
         assertEq(packs.surplus(), 0);
-        assertEq(usdc.balanceOf(address(packs)), 8e6); // exactly what's owed stays
+        assertEq(usdc.balanceOf(address(packs)), u(8e6)); // exactly what's owed stays
     }
 
     function test_surplusGrowsAsPacksOpen() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 id = _buy(alice, 1, 1); // balance 11, reserved 4 -> surplus 7
-        assertEq(packs.surplus(), 7e6);
+        assertEq(packs.surplus(), u(7e6));
         uint256 cardId = _open(alice, id, keccak256("seed"));
-        (,,,, uint64 usd,) = packs.cards(cardId);
+        (,,,, uint128 usd,) = packs.cards(cardId);
         // Reserve released; card value left the pool as tokens.
-        assertEq(packs.surplus(), 11e6 - usd);
+        assertEq(packs.surplus(), u(11e6) - usd);
     }
 
     function test_pauseRefundThenWithdrawEverything() public {
-        _seed(20e6); // one Futuristic + one Classic can owe $14.13
+        _seed(u(20e6)); // one Futuristic + one Classic can owe $14.13
         uint256 a1 = _buy(alice, 2, 1);
         uint256 b1 = _buy(bob, 1, 1);
 
@@ -465,12 +485,12 @@ contract CollectPacksTest is Test {
         packs.refund(a1);
         vm.prank(bob);
         packs.refund(b1);
-        assertEq(usdc.balanceOf(alice), 100e6);
-        assertEq(usdc.balanceOf(bob), 100e6);
+        assertEq(usdc.balanceOf(alice), u(100e6));
+        assertEq(usdc.balanceOf(bob), u(100e6));
         assertEq(packs.reserved(), 0);
 
         vm.prank(owner);
-        assertEq(packs.withdrawAll(treasury), 20e6); // the whole seed comes back
+        assertEq(packs.withdrawAll(treasury), u(20e6)); // the whole seed comes back
         assertEq(usdc.balanceOf(address(packs)), 0);
 
         vm.prank(alice);
@@ -479,7 +499,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_openStillWorksWhilePaused() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 id = _buy(alice, 1, 1);
         vm.prank(owner);
         packs.pause();
@@ -487,7 +507,7 @@ contract CollectPacksTest is Test {
     }
 
     function test_rescueNeverTouchesUsdcOrLockedTokens() public {
-        _seed(10e6);
+        _seed(u(10e6));
         uint256 cardId = _open(alice, _buy(alice, 1, 1), keccak256("seed"));
         (uint8 a,,,,, uint256 amount) = packs.cards(cardId);
         MockToken token = a == 0 ? btc : joe;
@@ -516,9 +536,9 @@ contract CollectPacksTest is Test {
     function test_tierValidation() public {
         vm.startPrank(owner);
         vm.expectRevert(CollectPacks.BadTier.selector);
-        packs.addTier(1e6, [uint16(5000), 2500, 2000, 400], backingClassic); // odds sum 9,900
+        packs.addTier(u128(1e6), [uint16(5000), 2500, 2000, 400], backingClassic); // odds sum 9,900
         vm.expectRevert(CollectPacks.BadTier.selector);
-        packs.addTier(1e6, oddsClassic, [uint64(1), 1, 1, 2_000e6]); // over $1,000
+        packs.addTier(u128(1e6), oddsClassic, [uint128(1), 1, 1, u128(2_000e6)]); // over $1,000
         vm.stopPrank();
     }
 
@@ -549,9 +569,9 @@ contract CollectPacksTest is Test {
     }
 
     function test_expectedBackingIs91Cents() public view {
-        assertEq(packs.expectedBacking(0), 0.91e6);
-        assertEq(packs.expectedBacking(1), 0.91e6);
-        assertApproxEqAbs(packs.expectedBacking(2), 0.91e6, 0.0001e6);
+        assertEq(packs.expectedBacking(0), u(0.91e6));
+        assertEq(packs.expectedBacking(1), u(0.91e6));
+        assertApproxEqAbs(packs.expectedBacking(2), u(0.91e6), u(0.0001e6));
     }
 
     // ------------------------------------------------------------ revenue sharing
@@ -560,9 +580,9 @@ contract CollectPacksTest is Test {
     address dao = makeAddr("dao");
 
     /// A Realistic-style tier: every card is worth `value`, whatever its rarity.
-    function _flatTier(uint64 value) internal returns (uint256 tierId) {
+    function _flatTier(uint256 value6) internal returns (uint256 tierId) {
         vm.prank(owner);
-        packs.addTier(1e6, oddsClassic, [value, value, value, value]);
+        packs.addTier(u128(1e6), oddsClassic, [u128(value6), u128(value6), u128(value6), u128(value6)]);
         tierId = packs.tierCount() - 1;
     }
 
@@ -581,13 +601,13 @@ contract CollectPacksTest is Test {
     function test_flatTierEdgeIsRevenueAndNeedsNoSeed() public {
         uint256 flat = _flatTier(0.95e6);
         _buyAndOpen(alice, flat, 4);
-        assertEq(packs.pendingRevenue(), 0.2e6);
-        assertEq(packs.surplus(), 0.2e6);
+        assertEq(packs.pendingRevenue(), int256(u(0.2e6)));
+        assertEq(packs.surplus(), u(0.2e6));
         assertEq(packs.ownerFree(), 0);
         // No shares set: distributing hands it all to the owner.
-        assertEq(packs.distribute(), 0.2e6);
+        assertEq(packs.distribute(), u(0.2e6));
         assertEq(packs.pendingRevenue(), 0);
-        assertEq(packs.ownerFree(), 0.2e6);
+        assertEq(packs.ownerFree(), u(0.2e6));
     }
 
     function test_distributeSendsSharesAndAnyoneCanCall() public {
@@ -595,11 +615,11 @@ contract CollectPacksTest is Test {
         uint256 flat = _flatTier(0.95e6);
         _buyAndOpen(alice, flat, 10); // $0.50 revenue
         vm.prank(bob);
-        assertEq(packs.distribute(), 0.5e6);
-        assertEq(usdc.balanceOf(staking), 0.25e6);
-        assertEq(usdc.balanceOf(dao), 0.15e6);
+        assertEq(packs.distribute(), u(0.5e6));
+        assertEq(usdc.balanceOf(staking), u(0.25e6));
+        assertEq(usdc.balanceOf(dao), u(0.15e6));
         vm.prank(owner);
-        assertEq(packs.withdrawAll(treasury), 0.1e6);
+        assertEq(packs.withdrawAll(treasury), u(0.1e6));
         assertEq(packs.distribute(), 0); // nothing left to share
     }
 
@@ -608,44 +628,44 @@ contract CollectPacksTest is Test {
         uint256 flat = _flatTier(0.95e6);
         _buyAndOpen(alice, flat, 10);
         vm.prank(owner);
-        assertEq(packs.withdrawAll(treasury), 0.1e6);
-        assertEq(usdc.balanceOf(staking), 0.25e6);
-        assertEq(usdc.balanceOf(dao), 0.15e6);
+        assertEq(packs.withdrawAll(treasury), u(0.1e6));
+        assertEq(usdc.balanceOf(staking), u(0.25e6));
+        assertEq(usdc.balanceOf(dao), u(0.15e6));
     }
 
     function test_ownerCannotTakeRevenueHeldBackByBankroll() public {
         _shares(5000, 3000);
-        _seed(1e6); // owner's own money
+        _seed(u(1e6)); // owner's own money
         uint256 flat = _flatTier(0.95e6);
         _buyAndOpen(alice, flat, 10); // surplus 1.5, revenue 0.5
         vm.prank(owner);
-        packs.setMinBankroll(1.4e6); // only 0.1 may be shared now
-        assertEq(packs.distributable(), 0.1e6);
+        packs.setMinBankroll(u(1.4e6)); // only 0.1 may be shared now
+        assertEq(packs.distributable(), u(0.1e6));
         vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(CollectPacks.ExceedsSurplus.selector, 1.1e6, 1.02e6));
-        packs.withdraw(treasury, 1.1e6); // shares 0.1 first (owner keeps 0.02); 0.4 revenue still held back
+        vm.expectRevert(abi.encodeWithSelector(CollectPacks.ExceedsSurplus.selector, u(1.1e6), u(1.02e6)));
+        packs.withdraw(treasury, u(1.1e6)); // shares 0.1 first (owner keeps 0.02); 0.4 revenue still held back
         vm.prank(owner);
-        assertEq(packs.withdrawAll(treasury), 1.02e6); // seed plus the owner's 20%; held-back revenue stays
-        assertEq(uint256(packs.pendingRevenue()), 0.4e6);
-        assertEq(usdc.balanceOf(staking), 0.05e6);
+        assertEq(packs.withdrawAll(treasury), u(1.02e6)); // seed plus the owner's 20%; held-back revenue stays
+        assertEq(uint256(packs.pendingRevenue()), u(0.4e6));
+        assertEq(usdc.balanceOf(staking), u(0.05e6));
     }
 
     function test_lossesAreMadeBackBeforeSharing() public {
         _shares(5000, 3000);
-        _seed(2e6);
+        _seed(u(2e6));
         uint256 losing = _flatTier(1.5e6);
         uint256 flat = _flatTier(0.95e6);
         _buyAndOpen(alice, losing, 1); // pool pays out $0.50 more than it took
-        assertEq(packs.pendingRevenue(), -0.5e6);
+        assertEq(packs.pendingRevenue(), -int256(u(0.5e6)));
         assertEq(packs.distributable(), 0);
-        usdc.mint(bob, 1e6);
+        usdc.mint(bob, u(1e6));
         vm.prank(bob);
-        packs.addRevenue(0.3e6);
-        assertEq(packs.pendingRevenue(), -0.2e6);
+        packs.addRevenue(u(0.3e6));
+        assertEq(packs.pendingRevenue(), -int256(u(0.2e6)));
         _buyAndOpen(alice, flat, 5); // +0.25
-        assertEq(packs.pendingRevenue(), 0.05e6);
-        assertEq(packs.distribute(), 0.05e6);
-        assertEq(usdc.balanceOf(staking), 0.025e6);
+        assertEq(packs.pendingRevenue(), int256(u(0.05e6)));
+        assertEq(packs.distribute(), u(0.05e6));
+        assertEq(usdc.balanceOf(staking), u(0.025e6));
     }
 
     function test_setSharesValidatesAndSharesOnOldTermsFirst() public {
@@ -665,15 +685,35 @@ contract CollectPacksTest is Test {
         _buyAndOpen(alice, flat, 4); // earned before staking existed
         _shares(5000, 3000);
         assertEq(usdc.balanceOf(staking), 0); // that revenue went to the owner, as the terms then said
-        assertEq(packs.ownerFree(), 0.2e6);
+        assertEq(packs.ownerFree(), u(0.2e6));
         assertEq(packs.stakingBps(), 5000);
         assertEq(packs.daoSink(), dao);
     }
 
     function test_addRevenuePullsUsdc() public {
         vm.prank(alice);
-        packs.addRevenue(2e6);
-        assertEq(usdc.balanceOf(address(packs)), 2e6);
-        assertEq(packs.pendingRevenue(), 2e6);
+        packs.addRevenue(u(2e6));
+        assertEq(usdc.balanceOf(address(packs)), u(2e6));
+        assertEq(packs.pendingRevenue(), int256(u(2e6)));
+    }
+}
+
+/// The same suite with 18-decimal USDC, as on BNB Smart Chain.
+contract CollectPacks18Test is CollectPacksTest {
+    function _usdcDecimals() internal pure override returns (uint8) {
+        return 18;
+    }
+
+    function test_usdcDecimalsAndBackingCap() public view {
+        assertEq(packs.usdcDecimals(), 18);
+        assertEq(packs.MAX_BACKING(), 1_000e18);
+        assertEq(packs.tier(2).backing[3], 10.13e18); // past uint64's ~18.4e18
+    }
+
+    function test_fairAmountUses18Decimals() public view {
+        // $1 of BTC at $60,000 = 1/60,000 BTC = 1666 sats (8 decimals)
+        assertEq(packs.fairAmount(0, 1e18), 1666);
+        // $1 of an 18-decimal token at $0.02 = 50 tokens
+        assertEq(packs.fairAmount(1, 1e18), 50e18);
     }
 }
