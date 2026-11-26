@@ -140,6 +140,8 @@ export type PackConfig = {
   cover?: string | null;
   /** Optional coin links set in the Launch flow (short strings, saved with the published coin). */
   links?: CoinLinks;
+  /** "classic": a pack collection with no coin (no ticker, launchpad, presale or tax). Unset or "coin": a coin with its pack. */
+  kind?: "coin" | "classic";
 };
 
 export type CoinLinks = { website?: string; x?: string; telegram?: string };

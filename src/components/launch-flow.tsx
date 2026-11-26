@@ -24,9 +24,15 @@ import { txErrorMessage } from "@/lib/tx-error";
  * pick the Low / Medium / High risk tier per pack, so the creator doesn't. On Four.meme with a wallet connected, launching creates the coin on our
  * OpenFour testnet (the app server signs the create request for the wallet, which sends it). Flap, or demo mode, lists
  * the pack in this browser only, simulated, until Flap enables our launcher factory.
+ *
+ * "Without coin" mode makes a classic pack collection instead: 1 details (cover, name, description), 2 stocks,
+ * 3 design, then publish (simulated, this browser only). No coin, ticker, launchpad, presale or tax. The mode is kept
+ * in the draft as `kind`.
  */
 
 const STEPS = ["Coin", "Stocks", "Design"] as const;
+const CLASSIC_STEPS = ["Details", "Stocks", "Design"] as const;
+const MODES = [{ id: "coin", name: "With coin" }, { id: "classic", name: "Without coin" }] as const;
 const MAX_STOCKS = 4;
 const TICKER_MAX = 10;
 const DESC_MAX = 120;
@@ -54,11 +60,13 @@ export function LaunchFlow() {
   const [dragging, setDragging] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
 
+  const classic = c.kind === "classic";
+  const steps = classic ? CLASSIC_STEPS : STEPS;
   const picked = new Set(c.basket.map((b) => b.ticker));
   // Kept for the on-chain create request's style; drafts start on Classic.
   const tier = TIER_PRESETS.find((t) => JSON.stringify(t.tiers) === JSON.stringify(c.tiers));
   const name = c.name.trim();
-  const done = [name.length > 0 && c.ticker.length >= 2, c.basket.length > 0, true];
+  const done = [name.length > 0 && (classic || c.ticker.length >= 2), c.basket.length > 0, true];
   const canOpen = (i: number) => done.slice(0, i).every(Boolean);
   const q = query.trim().toUpperCase();
   const results = q ? PRICED_STOCKS.filter((s) => s.ticker.includes(q) || s.name.toUpperCase().includes(q)).slice(0, 8) : [];
@@ -84,10 +92,21 @@ export function LaunchFlow() {
   const { writeContractAsync } = useWriteContract();
   const demo = useDemo();
   const [busy, setBusy] = useState("");
-  const onchain = c.launchpad === "four" && isConnected && !demo.active;
+  const onchain = !classic && c.launchpad === "four" && isConnected && !demo.active;
   const unlisted = c.basket.filter((b) => !STOCK_ADDRESSES[b.ticker]).map((b) => b.ticker);
 
+  const setMode = (kind: "coin" | "classic") => { updatePack({ kind }); setStep(0); };
+  /** Start over keeps the chosen mode. */
+  const startOver = () => { const kind = c.kind; resetPack(); if (kind === "classic") updatePack({ kind }); setStep(0); };
+
+  const publishCollection = () => {
+    publishPack({ ...c, ...designPatch(c), kind: "classic", name, ticker: "", links: undefined, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
+    showToast({ kind: "success", title: "Collection published · simulated", detail: name });
+    router.push("/app/packs?tab=classic");
+  };
+
   const launch = () => {
+    if (classic) { publishCollection(); return; }
     if (onchain) { void launchOnchain(); return; }
     const slug = publishPack({ ...c, ...designPatch(c), name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
     showToast({ kind: "success", title: `${name} launched`, detail: `Simulated on ${padName} · BSC testnet` });
@@ -131,14 +150,23 @@ export function LaunchFlow() {
     <div className="mx-auto max-w-[560px] pt-4 desk:grid desk:max-w-[1000px] desk:grid-cols-[minmax(0,1fr)_320px] desk:items-start desk:gap-12 desk:pt-8">
       <div className="flex min-w-0 flex-col gap-6">
         <header className="flex items-center justify-between gap-3">
-          <h1 className="text-[22px] leading-tight">Create coin</h1>
-          <button type="button" className="-mr-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-sm text-muted hover:text-black" onClick={resetPack}>
+          <h1 className="text-[22px] leading-tight">{classic ? "Create collection" : "Create coin"}</h1>
+          <button type="button" className="-mr-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-sm text-muted hover:text-black" onClick={startOver}>
             <RotateCcw className="size-3.5" /> Start over
           </button>
         </header>
 
+        <div className="grid grid-cols-2 gap-1 rounded-md border border-border bg-surface-muted p-1" role="group" aria-label="Mode">
+          {MODES.map((m) => (
+            <button key={m.id} type="button" aria-pressed={(c.kind ?? "coin") === m.id} onClick={() => setMode(m.id)}
+              className="min-h-11 rounded-[5px] text-sm text-muted transition-colors hover:text-black aria-pressed:bg-white aria-pressed:text-black aria-pressed:shadow-[0_0_0_1px_var(--color-border)]">
+              {m.name}
+            </button>
+          ))}
+        </div>
+
         <ol className="flex items-center gap-1" aria-label="Steps">
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <li key={s} className="flex min-w-0 flex-1 items-center gap-1">
               <button type="button" disabled={!canOpen(i)} onClick={() => setStep(i)} aria-current={step === i ? "step" : undefined}
                 className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-sm text-muted transition-colors enabled:hover:text-black disabled:opacity-40 aria-[current=step]:text-black">
@@ -147,7 +175,7 @@ export function LaunchFlow() {
                 </span>
                 <span className="truncate">{s}</span>
               </button>
-              {i < STEPS.length - 1 && <ArrowRight className="size-3.5 shrink-0 text-muted" aria-hidden="true" />}
+              {i < steps.length - 1 && <ArrowRight className="size-3.5 shrink-0 text-muted" aria-hidden="true" />}
             </li>
           ))}
         </ol>
@@ -158,7 +186,7 @@ export function LaunchFlow() {
         {step === 0 && <>
           <div>
             <div className="relative mx-auto aspect-square w-full max-w-[280px] desk:max-w-[300px]">
-              <button type="button" onClick={() => picInput.current?.click()} aria-label={c.image ? "Change image" : "Upload image"}
+              <button type="button" onClick={() => picInput.current?.click()} aria-label={c.image ? (classic ? "Change cover" : "Change image") : (classic ? "Upload cover" : "Upload image")}
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setDragging(false); void choosePic(e.dataTransfer.files?.[0]); }}
                 className={cn("flex size-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border-2 transition-[border-color] hover:border-black",
@@ -168,12 +196,12 @@ export function LaunchFlow() {
                   <img src={c.image} alt="" className="size-full object-cover" />
                 ) : <>
                   <ImagePlus className="size-8 text-muted" aria-hidden="true" />
-                  <span className="text-base">Upload image</span>
+                  <span className="text-base">{classic ? "Upload cover" : "Upload image"}</span>
                   <span className="text-xs text-muted">PNG, JPG, WebP, GIF · 2 MB</span>
                 </>}
               </button>
               {c.image && (
-                <button type="button" onClick={() => updatePack({ image: null })} aria-label="Remove image"
+                <button type="button" onClick={() => updatePack({ image: null })} aria-label={classic ? "Remove cover" : "Remove image"}
                   className="absolute top-1.5 right-1.5 grid size-11 place-items-center rounded-full bg-[#000]/60 text-[#fff] transition-colors hover:bg-[#000]/80">
                   <X className="size-4" />
                 </button>
@@ -183,15 +211,15 @@ export function LaunchFlow() {
             <input ref={picInput} type="file" accept={PIC_TYPES.join(",")} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { void choosePic(e.target.files?.[0]); e.target.value = ""; }} />
           </div>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_128px] gap-3">
+          <div className={cn("grid gap-3", !classic && "grid-cols-[minmax(0,1fr)_128px]")}>
             <div>
               <label htmlFor="coin-name" className={label}>Name</label>
-              <input id="coin-name" className={cn(cleanField, "h-12")} value={c.name} maxLength={28} placeholder="Moon Cats" autoComplete="off" onChange={(e) => updatePack({ name: e.target.value })} />
+              <input id="coin-name" className={cn(cleanField, "h-12")} value={c.name} maxLength={28} placeholder={classic ? "Blue Chips" : "Moon Cats"} autoComplete="off" onChange={(e) => updatePack({ name: e.target.value })} />
             </div>
-            <div>
+            {!classic && <div>
               <label htmlFor="coin-ticker" className={label}>Ticker</label>
               <input id="coin-ticker" className={cn(cleanField, "num h-12 uppercase placeholder:normal-case")} value={c.ticker} placeholder="CATS" autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={(e) => updatePack({ ticker: cleanTicker(e.target.value) })} />
-            </div>
+            </div>}
           </div>
 
           <div>
@@ -199,7 +227,7 @@ export function LaunchFlow() {
             <textarea id="coin-desc" rows={2} maxLength={DESC_MAX} className={cn(cleanField, "h-auto min-h-[76px] resize-none py-2.5 leading-snug")} value={c.tagline} placeholder="Short and sweet" onChange={(e) => updatePack({ tagline: e.target.value })} />
           </div>
 
-          <div>
+          {!classic && <div>
             <button type="button" aria-expanded={linksOpen} aria-controls="coin-links" onClick={() => setLinksOpen(!linksOpen)}
               className="-ml-1 inline-flex min-h-11 items-center gap-1.5 px-1 text-sm text-muted transition-colors hover:text-black">
               {linksOpen ? "Links" : "Add links"}{linkCount > 0 && <span className="tabular-nums">· {linkCount}</span>}
@@ -219,7 +247,7 @@ export function LaunchFlow() {
                 ))}
               </div>
             )}
-          </div>
+          </div>}
 
           <div>
             <span className={label}>Colour</span>
@@ -305,8 +333,10 @@ export function LaunchFlow() {
         </>}
 
         {step === 2 && <>
-          <DesignStep c={c} name={name} />
-          <div>
+          <DesignStep c={c} name={name || (classic ? "Collection" : "")} />
+          {classic ? (
+            <p className="text-sm text-muted">Classic · no coin · simulated</p>
+          ) : <div>
             <span className={label}>Launchpad</span>
             <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Launchpad">
               {PADS.map((p) => (
@@ -320,7 +350,7 @@ export function LaunchFlow() {
                 {onchain ? "On-chain · 0.05 BNB sale, 10 packs" : c.launchpad === "four" && !demo.active ? "Simulated · connect a wallet to launch on-chain" : "Simulated"}
               </p>
             )}
-          </div>
+          </div>}
         </>}
 
         {/* Phones: the actions stick to the bottom of the screen, just above the tab bar. */}
@@ -330,10 +360,10 @@ export function LaunchFlow() {
               <ArrowLeft className="size-4" /> <span className="hidden desk:inline">Back</span>
             </button>
           )}
-          {step < STEPS.length - 1 ? (
+          {step < steps.length - 1 ? (
             <button type="button" className={cn(cleanButton.solid, "min-h-14 flex-1 justify-center gap-2")} disabled={!done[step]} onClick={() => setStep(step + 1)}>Next <ArrowRight className="size-4" /></button>
           ) : (
-            <button type="button" className={cn(cleanButton.solid, "min-h-14 flex-1 justify-center text-lg")} disabled={!done.every(Boolean) || Boolean(busy) || (onchain && unlisted.length > 0)} onClick={launch}>{busy || "Launch coin"}</button>
+            <button type="button" className={cn(cleanButton.solid, "min-h-14 flex-1 justify-center text-lg")} disabled={!done.every(Boolean) || Boolean(busy) || (onchain && unlisted.length > 0)} onClick={launch}>{busy || (classic ? "Publish collection" : "Launch coin")}</button>
           )}
         </div>
       </div>
