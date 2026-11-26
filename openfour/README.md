@@ -31,6 +31,22 @@ buy tokens ──► presale packs                   stockPoolBps of the raise �
 
 Compiler settings are OpenFour's required ones: solc 0.8.24, optimizer 200, viaIR, OpenZeppelin 4.9.6.
 
+## Deployed (BNB Testnet)
+
+Our OpenFour proxy set and the pack preset are live; a full launch has run on it. All addresses are in
+`deployments-97.json`.
+
+| | Address |
+| --- | --- |
+| OpenFour Registry (ours) | [`0x0dF0FC99A64A8a05835D8122fc754012769f3968`](https://testnet.bscscan.com/address/0x0dF0FC99A64A8a05835D8122fc754012769f3968) |
+| OpenFour Core (ours) | [`0xb910c8FB21B64173befe38278DF476CE5fB1cAb1`](https://testnet.bscscan.com/address/0xb910c8FB21B64173befe38278DF476CE5fB1cAb1) |
+| PackMigrateModule | [`0x2D3e682daC66F506Cac3866AD82dF7ebeFE963dd`](https://testnet.bscscan.com/address/0x2D3e682daC66F506Cac3866AD82dF7ebeFE963dd) |
+| PackPresetValidator | [`0xC964812d7a6418461D9E4462eab9fcfCB40a3A53`](https://testnet.bscscan.com/address/0xC964812d7a6418461D9E4462eab9fcfCB40a3A53) |
+| Preset id | `1795680932522` |
+| Stock market (shared with Flap, Atlas BNB/USD) | [`0x1Ef0217aBeF9be772d7956556f7432e3A714C4F7`](https://testnet.bscscan.com/address/0x1Ef0217aBeF9be772d7956556f7432e3A714C4F7) |
+| Demo coin | [`0x284f3d72b3632F8995C9B514D7eE4BfEd1a99846`](https://testnet.bscscan.com/address/0x284f3d72b3632F8995C9B514D7eE4BfEd1a99846) |
+| Its pack vault | [`0x17500b97bbBd63C4F6f7f6C1833b4C6AdD44f05E`](https://testnet.bscscan.com/address/0x17500b97bbBd63C4F6f7f6C1833b4C6AdD44f05E) |
+
 ## Run it
 
 OpenFour only lets officials write the real Registry, so presets are built on a developer-owned proxy set made by

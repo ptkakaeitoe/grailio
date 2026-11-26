@@ -1,0 +1,35 @@
+{
+ "chainId": 97,
+ "network": "BNB Smart Chain Testnet",
+ "deployer": "0x2893bE18282db59477FA1C7A4ebc94C4d73F001b",
+ "note": "Developer-owned OpenFour proxy set (from OpenFour's fork-deploy) with the Grailio pack preset registered on it.",
+ "openfour": {
+  "registry": "0x0dF0FC99A64A8a05835D8122fc754012769f3968",
+  "core": "0xb910c8FB21B64173befe38278DF476CE5fB1cAb1",
+  "feeRouter": "0x5Ac078D38403E809A1E12928e44aA23B61F67B84",
+  "tools": "0x03fA1a2D7a5372aC10625018BB4af7A08826326F",
+  "createDeployer": "0x3ff8f1651EA31886BF8337194934106973e95464",
+  "wbnb": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
+ },
+ "preset": {
+  "id": "1795680932522",
+  "name": "Grailio Stock Packs",
+  "validator": "0xC964812d7a6418461D9E4462eab9fcfCB40a3A53",
+  "vaultImplementation": "0xE1459c2a6dc3644D4E9B58CE69772c522165AAcd",
+  "modules": {
+   "curve": "0x3A4bf9BE31543b62dB447991F18790ae2552108b",
+   "trade": "0x192dcc4a608675b16B4006B9eC1F51DdCA9223fE",
+   "customData": "0x73f6F3f079F8cfC087F517aE8543ba2213e872D1",
+   "migrate": "0x2D3e682daC66F506Cac3866AD82dF7ebeFE963dd"
+  }
+ },
+ "market": "0x1Ef0217aBeF9be772d7956556f7432e3A714C4F7",
+ "demo": {
+  "token": "0x284f3d72b3632F8995C9B514D7eE4BfEd1a99846",
+  "packVault": "0x17500b97bbBd63C4F6f7f6C1833b4C6AdD44f05E",
+  "coreVault": "0xCcb289894a9b8B57D2f91fB07E3d2955AE40f379",
+  "migrateModule": "0x754c6F28175C8F268c43a3f63e03e25106E39C7e",
+  "cardId": "1",
+  "createTx": "0xfa107451df371443985bbef174b7e336babd7ec7b1aa71dd0ce6ef3cdd3391d4"
+ }
+}
