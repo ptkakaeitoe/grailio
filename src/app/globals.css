@@ -88,7 +88,7 @@
 }
 
 @layer components {
-  .page { width: 100%; max-width: 1440px; margin-inline: auto; padding: 0 var(--gutter) 72px; }
+  .page { width: 100%; max-width: 1600px; margin-inline: auto; padding: 0 var(--gutter) 72px; }
 
   .label { font-family: var(--font-geist-mono), monospace; font-size: 11px; letter-spacing: 0.02em; color: var(--ink-faint); text-transform: lowercase; }
   .label::before { content: "[ "; }

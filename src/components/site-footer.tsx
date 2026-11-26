@@ -8,7 +8,7 @@ import { NetworkSwitch } from "@/components/network-switch";
 /** Site footer: wordmark, page links, source and the Testnet / Mainnet switch. Phones have the tab bar, so they only get the demo controls (with the switch). */
 export function SiteFooter() {
   return (
-    <footer className="mx-auto w-full max-w-[1440px] px-[var(--gutter)] desk:mt-32 desk:border-t desk:border-border">
+    <footer className="mx-auto w-full max-w-[1600px] px-[var(--gutter)] desk:mt-32 desk:border-t desk:border-border">
       <div className="hidden flex-wrap items-center justify-between gap-8 pt-6 pb-10 desk:flex">
         <Link href="/" className="wordmark text-2xl">grailio</Link>
         <nav aria-label="Footer navigation" className="order-3 flex w-full flex-wrap gap-x-[22px] gap-y-2 desk:order-none desk:w-auto desk:gap-x-[34px]">
