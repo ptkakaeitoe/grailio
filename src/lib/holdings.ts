@@ -54,5 +54,5 @@ export function useHoldings() {
   const inCards = held.reduce((s, c) => s + c.shares * (priceOf(c.ticker) ?? 0), 0);
 
   const walletValue = holdings.reduce((s, h) => s + (h.price === null ? 0 : h.amount * h.price), 0);
-  return { loaded, holdings, inCards, cardCount: held.length, total: walletValue + inCards };
+  return { loaded, holdings, inCards, cardCount: held.length, walletValue };
 }

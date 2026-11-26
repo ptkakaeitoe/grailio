@@ -12,6 +12,8 @@ import { cardArt } from "@/lib/cards";
 import { explorerUrl } from "@/lib/chain";
 import { useCollection } from "@/lib/collection";
 import { exitDemo, startDemo, useDemo } from "@/lib/demo";
+import { useHoldings } from "@/lib/holdings";
+import { usd } from "@/lib/format";
 import { useWalletAuth } from "@/lib/wallet-auth";
 
 const chip = "inline-flex min-h-11 items-center gap-1.5 rounded-md border border-border px-3 text-sm transition-colors hover:border-black desk:min-h-9";
@@ -32,7 +34,6 @@ function Identity() {
       <div className="flex min-w-0 flex-1 flex-col gap-4 desk:flex-row desk:items-start desk:justify-between">
         <div className="min-w-0">
           <p className={cn("truncate text-[28px] leading-[1.2] tracking-tight", !demo.active && "tabular-nums")}>{name}</p>
-          <p className="mt-1 text-sm text-muted">{demo.active ? "Saved in this browser · BNB Chain testnet" : "BNB Chain testnet"}</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-1.5 desk:justify-end">
           {!demo.active && address && (
@@ -87,6 +88,7 @@ function ProfileCards() {
 export function ProfileWorkspace() {
   const demo = useDemo();
   const { address } = useAccount();
+  const { loaded, inCards, cardCount } = useHoldings();
 
   if (!address && !demo.active) {
     return (
@@ -94,7 +96,7 @@ export function ProfileWorkspace() {
         <h1 className="sr-only">Profile</h1>
         <div className="flex flex-col items-center gap-5 rounded-md border border-dashed border-border-strong px-6 py-16 text-center">
           <p className={sectionLabel}>[ wallet ]</p>
-          <h2 className="text-[clamp(28px,3vw,40px)] leading-[1.15] font-normal tracking-[-0.02em]">Your profile.<br /><span className="text-muted-soft">Connect or try the demo.</span></h2>
+          <h2 className="text-[clamp(28px,3vw,40px)] leading-[1.15] font-normal tracking-[-0.02em]">Your profile.<br /><span className="text-muted-soft">Connect to see it.</span></h2>
           <div className="flex flex-wrap justify-center gap-2">
             <WalletEntry className={cleanButton.solid} />
             <button type="button" className={cleanButton.outline} onClick={startDemo}>Try the demo <ArrowUpRight className="size-4" /></button>
@@ -111,17 +113,19 @@ export function ProfileWorkspace() {
       <div className="mt-10 grid grid-cols-1 border-t border-border desk:mt-16 desk:grid-cols-[minmax(0,1fr)_340px] wide:grid-cols-[minmax(0,1fr)_380px]">
         <section id="collection" className="min-w-0 py-8 desk:pt-10 desk:pr-8" aria-labelledby="cards-title">
           <div className="mb-6 flex items-baseline justify-between gap-3">
-            <h2 id="cards-title" className={sectionTitle}>Collection</h2>
-            <Link href="/app/collection" className={cn(sectionLabel, "inline-flex min-h-11 shrink-0 items-center gap-1 hover:text-black desk:min-h-0")}>[ open collection <ArrowUpRight className="size-3.5" /> ]</Link>
+            <h2 id="cards-title" className={cn(sectionTitle, "whitespace-nowrap")}>
+              Collection
+              {demo.active && loaded && cardCount > 0 && <span className="ml-3 text-base text-muted tabular-nums" title="bStocks inside your cards, at Atlas prices">≈ {usd(inCards, 0)}</span>}
+            </h2>
+            <Link href="/app/collection" className={cn(sectionLabel, "inline-flex min-h-11 shrink-0 items-center gap-1 hover:text-black desk:min-h-0")}>[ open<span className="max-phone:hidden"> collection</span> <ArrowUpRight className="size-3.5" /> ]</Link>
           </div>
-          {demo.active ? <ProfileCards /> : <p className="text-base text-muted">Cards from the vault show here once it&apos;s live on BSC testnet. Until then, try the demo.</p>}
+          {demo.active ? <ProfileCards /> : <p className="text-base text-muted">No cards yet.</p>}
         </section>
         {/* Phones: holdings first. */}
         <aside className="border-border max-desk:order-first max-desk:border-b desk:border-l">
           {demo.active ? <HoldingsPanel /> : (
             <section className="py-8 desk:pt-10 desk:pl-8">
               <h2 className={sectionTitle}>Holdings</h2>
-              <p className="mt-3 text-base text-muted">Wallet balances show here once the vault is live. The demo wallet shows its BNB and bStocks.</p>
             </section>
           )}
         </aside>
