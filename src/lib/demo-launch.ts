@@ -9,7 +9,7 @@ import type { MarketCoin } from "@/lib/market";
 /*
  * Demo mode's pack launch, simulated in this browser with the same numbers as the contracts
  * (contracts/src/packs/PackLauncher.sol, PackVault.sol, PackTypes.sol):
- *  - Presale: PRESALE_PACKS packs at one pack price. The sale that sells the last pack launches the coin:
+ *  - Presale: the coin's presalePacks (default PRESALE_PACKS) packs at one pack price. The sale that sells the last pack launches the coin:
  *    70% of the raise seeds liquidity, 30% becomes the presale reserve, and buyers split 50% of the supply by packs.
  *  - Presale packs pay (reserve left / presale packs left) x a Medium roll / 0.9; the last one gets what remains.
  *  - Bought packs (Low / Medium / High at the pack price): buying sets the top prize aside; the margin, or the
@@ -96,13 +96,14 @@ const EMPTY_STAKE: LaunchSim["stake"] = { pot: 0, queued: 0, rate: 0, finish: 0,
 /** A new launch starts in presale; seed coins are already live with their listed pool. */
 function initial(coin: MarketCoin): LaunchSim {
   const price = packSizeOf(coin).price;
-  const raise = price * PRESALE_PACKS;
+  const packs = coin.config.presalePacks ?? PRESALE_PACKS;
+  const raise = price * packs;
   const base: LaunchSim = {
-    phase: "presale", price, packsForSale: PRESALE_PACKS, packsSold: 0, mine: 0, liquidity: 0, presaleReserve: 0, presaleLeft: 0,
+    phase: "presale", price, packsForSale: packs, packsSold: 0, mine: 0, liquidity: 0, presaleReserve: 0, presaleLeft: 0,
     presaleOpened: 0, tokens: 0, pool: 0, reserved: 0, bought: [0, 0, 0], tax: { pool: 0, stakers: 0, creator: 0, platform: 0 }, stake: EMPTY_STAKE,
   };
   if (!coin.seed) return base;
-  return { ...base, phase: "live", packsSold: PRESALE_PACKS, liquidity: raise * (1 - SEED_SHARE), pool: coin.poolUsd };
+  return { ...base, phase: "live", packsSold: packs, liquidity: raise * (1 - SEED_SHARE), pool: coin.poolUsd };
 }
 
 export const simOf = (all: Record<string, LaunchSim>, coin: MarketCoin) => all[coin.slug] ?? initial(coin);

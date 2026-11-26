@@ -120,6 +120,8 @@ export type PackConfig = {
   cards: CardDesign[];
   season: number;
   presale: Presale;
+  /** Packs in the coin's launch presale (demo launch, PackLauncherFactory packsForSale). See PRESALE_LIMITS. */
+  presalePacks?: number;
   points: Points;
   /** Set once the coin exists on-chain (BSC testnet): its token, sale vault and pack vault. */
   onchain?: { pad: Launchpad; token: `0x${string}`; saleVault: `0x${string}`; packVault: `0x${string}`; createTx: `0x${string}` };
@@ -188,6 +190,7 @@ export const DEFAULT_CONFIG: PackConfig = {
   ],
   season: 1,
   presale: { packs: 300, liquidityUsd: 1500, poolTokenPct: 50 },
+  presalePacks: 10,
   points: { perUsdTraded: 1, perDayPer100k: 1, perPack: 100 },
   platformCut: 5,
   payoutRate: 95,
@@ -196,6 +199,29 @@ export const DEFAULT_CONFIG: PackConfig = {
   risks: DEFAULT_RISKS,
   unlocks: DEFAULT_UNLOCKS,
 };
+
+/**
+ * Presale bounds, mirroring contracts/src/packs/PackLauncherFactory.sol in USD: packs 1 to MAX_PACKS (10,000),
+ * pack price up to MAX_PACK_PRICE (1,000 quote units), raise (packs x price) up to MAX_RAISE (1,000,000).
+ * The contract's tiny minimums (0.001 a pack, 0.1 raise) become $1 a pack in the demo.
+ */
+export const PRESALE_LIMITS = { minPacks: 1, maxPacks: 10_000, minPrice: 1, maxPrice: 1_000, maxRaise: 1_000_000 } as const;
+
+/** The Standard size's price (or the first size's): the coin's pack price. */
+export function standardPrice(c: PackConfig) {
+  const sizes = c.sizes?.length ? c.sizes : DEFAULT_SIZES;
+  return (sizes.find((s) => s.id === "standard") ?? sizes[0]).price;
+}
+
+/** A short error when the presale is out of bounds, else "". */
+export function presaleError(packs: number, price: number) {
+  const L = PRESALE_LIMITS;
+  const n = (v: number) => v.toLocaleString("en-US");
+  if (!Number.isInteger(packs) || packs < L.minPacks || packs > L.maxPacks) return `Packs: ${L.minPacks} to ${n(L.maxPacks)}`;
+  if (!Number.isFinite(price) || price < L.minPrice || price > L.maxPrice) return `Price: $${L.minPrice} to $${n(L.maxPrice)}`;
+  if (packs * price > L.maxRaise) return `Raise: up to $${n(L.maxRaise)}`;
+  return "";
+}
 
 /* ---------- math ---------- */
 
