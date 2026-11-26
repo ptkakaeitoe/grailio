@@ -6,6 +6,7 @@ import { useAccount } from "wagmi";
 import { cleanButton, cn } from "@/components/clean-ui";
 import { CollectionWelcome } from "@/components/collection-welcome";
 import { HoldingsPanel } from "@/components/holdings-panel";
+import { ProfileHeader } from "@/components/profile-identity";
 import { Holo, StockCardFront } from "@/components/stock-card-front";
 import { WalletEntry } from "@/components/wallet-entry";
 import { useCardArt } from "@/lib/design";
@@ -13,6 +14,7 @@ import { explorerUrl } from "@/lib/chain";
 import { useCollection } from "@/lib/collection";
 import { exitDemo, startDemo, useDemo } from "@/lib/demo";
 import { useHoldings } from "@/lib/holdings";
+import { profileKey } from "@/lib/profile";
 import { usd } from "@/lib/format";
 import { useWalletAuth } from "@/lib/wallet-auth";
 
@@ -20,33 +22,30 @@ const chip = "inline-flex min-h-11 items-center gap-1.5 rounded-md border border
 const sectionTitle = "text-[28px] leading-[1.2] font-normal tracking-tight";
 const sectionLabel = "text-base text-muted";
 
-/** Who this is: the demo wallet or the connected address, with its account actions. */
+/** Who this is: your profile (picture, username, bio) over the demo wallet or the connected address, with its account actions. */
 function Identity() {
   const demo = useDemo();
   const { address } = useAccount();
   const { logout } = useWalletAuth();
   const name = demo.active ? "Demo wallet" : address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "";
   return (
-    <section aria-label="Identity" className="mt-4 flex flex-col gap-5 phone:flex-row phone:items-start desk:mt-6">
-      <span className="grid size-20 shrink-0 place-items-center rounded-full bg-surface-muted text-2xl text-muted uppercase" aria-hidden="true">
-        {demo.active ? "de" : address?.slice(2, 4)}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-4 desk:flex-row desk:items-start desk:justify-between">
-        <div className="min-w-0">
-          <p className={cn("truncate text-[28px] leading-[1.2] tracking-tight", !demo.active && "tabular-nums")}>{name}</p>
-        </div>
-        <div className="flex shrink-0 flex-wrap gap-1.5 desk:justify-end">
-          {!demo.active && address && (
-            <a className={chip} href={`${explorerUrl}/address/${address}`} target="_blank" rel="noreferrer">BscScan <ArrowUpRight className="size-3.5" /></a>
-          )}
-          {demo.active ? (
-            <button type="button" className={chip} onClick={exitDemo}><LogOut className="size-3.5" /> Exit demo</button>
-          ) : (
-            address && <button type="button" className={cn(chip, "text-down hover:border-down")} onClick={() => { void logout(); }}><LogOut className="size-3.5" /> Sign out</button>
-          )}
-        </div>
-      </div>
-    </section>
+    <ProfileHeader
+      storeKey={profileKey(demo.active, address)}
+      fallbackName={name}
+      initials={demo.active ? "de" : address?.slice(2, 4) ?? ""}
+      cardsEnabled={demo.active}
+      mono={!demo.active}
+      actions={<>
+        {!demo.active && address && (
+          <a className={chip} href={`${explorerUrl}/address/${address}`} target="_blank" rel="noreferrer">BscScan <ArrowUpRight className="size-3.5" /></a>
+        )}
+        {demo.active ? (
+          <button type="button" className={chip} onClick={exitDemo}><LogOut className="size-3.5" /> Exit demo</button>
+        ) : (
+          address && <button type="button" className={cn(chip, "text-down hover:border-down")} onClick={() => { void logout(); }}><LogOut className="size-3.5" /> Sign out</button>
+        )}
+      </>}
+    />
   );
 }
 
