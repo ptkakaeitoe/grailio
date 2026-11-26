@@ -18,9 +18,12 @@ const BUILT_ON = [
 export const buttonRow =
   "flex flex-wrap gap-3 max-desk:[&>a]:min-w-max max-desk:[&>a]:flex-1 max-desk:[&>a]:justify-center";
 
-/** Headline and tagline: Outfit, one shared size, scaled to the hero's width (and on desktop, the screen height). */
+/** Headline: Outfit, scaled to the hero's width (and on desktop, the screen height). */
 const heroType =
-  "font-[family-name:var(--font-outfit)] text-[clamp(34px,13.5vw,80px)] leading-[1.04] font-light tracking-[-0.03em] desk:text-[clamp(48px,min(7.4cqw,13svh),132px)]";
+  "font-[family-name:var(--font-outfit)] text-[clamp(34px,13.5vw,80px)] leading-[1.04] font-light tracking-[-0.03em] desk:text-[clamp(52px,min(8.4cqw,14.8svh),150px)]";
+
+/** What makes it different, bottom right of the hero. */
+const POINTS = ["Holders own.", "Tax pays.", "Stakers earn."];
 
 /**
  * The hero artwork (1536×1024, transparent background with soft edges), so the hands keep their true colours over the
@@ -57,9 +60,10 @@ function ArtPiece({ crop, className, preload = false }: { crop: Crop; className?
 
 /**
  * Desktop: the two hands pulled apart into the hero's corners, reaching in from the screen edges, with the coin
- * between them. Each hand is 48% of the hero's height; at that size the fingertips sit at 61% (left) and 37% (right) of
- * the height, so the coin goes at 48.8% and the diagonal still rises. The inner cut edges fade over 2% so the fingertip
- * glow never ends in a line. The hands float and the coin bobs (globals.css, .hand-float-* and .coin-float).
+ * between them. They're the hero's backdrop: the headline, button and tagline sit on top of them. Each hand is 60% of
+ * the hero's height; at that size the fingertips sit at about 51% (left) and 46% (right) of the height, so the coin goes
+ * at 48.7% and the diagonal still rises (much past 60% it would flip). The inner cut edges fade over 2% so the
+ * fingertip glow never ends in a line. The hands float and the coin bobs (globals.css, .hand-float-* and .coin-float).
  */
 function HeroHands() {
   return (
@@ -67,15 +71,15 @@ function HeroHands() {
       className="pointer-events-none absolute inset-y-0 right-[calc(50%-50vw)] left-[calc(50%-50vw)] -z-10 hidden overflow-hidden select-none desk:block"
       aria-hidden="true"
     >
-      <ArtPiece crop={CROPS.left} className="hand-float-left bottom-0 left-0 h-[48%] [mask-composite:intersect] mask-[linear-gradient(to_bottom,#000_88%,transparent),linear-gradient(to_left,transparent,#000_2%)]" />
-      <ArtPiece crop={CROPS.right} className="hand-float-right top-0 right-0 h-[48%] mask-[linear-gradient(to_right,transparent,#000_2%)]" />
-      <MemeCoin className="coin-float absolute top-[48.8%] left-1/2 h-[26%] w-auto -translate-x-1/2 -translate-y-1/2" />
+      <ArtPiece crop={CROPS.left} className="hand-float-left bottom-0 left-0 h-[60%] [mask-composite:intersect] mask-[linear-gradient(to_bottom,#000_88%,transparent),linear-gradient(to_left,transparent,#000_2%)]" />
+      <ArtPiece crop={CROPS.right} className="hand-float-right top-0 right-0 h-[60%] mask-[linear-gradient(to_right,transparent,#000_2%)]" />
+      <MemeCoin className="coin-float absolute top-[48.7%] left-1/2 h-[29%] w-auto -translate-x-1/2 -translate-y-1/2" />
     </div>
   );
 }
 
 /**
- * The headline and its actions top left, the tagline bottom right, with the hands reaching in from the other two
+ * The headline and its actions top left, the three points bottom right, with the hands reaching in from the other two
  * corners toward the coin.
  */
 export function Hero() {
@@ -86,34 +90,47 @@ export function Hero() {
       className="grid grid-cols-1 grid-rows-[minmax(0,1fr)_auto] desk:min-h-[calc(100svh_-_var(--header-h))]"
     >
       <div className="relative isolate grid grid-cols-1 gap-4 py-8 desk:@container desk:min-h-[520px] desk:grid-cols-5 desk:grid-rows-[auto_minmax(0,1fr)] desk:gap-x-6 desk:gap-y-6 desk:py-10">
-        {/* Desktop: headline and its one action together, top left. Phones: the block dissolves and the action goes last. */}
+        {/* Desktop: headline and its two actions together, top left. Phones: the block dissolves and the actions go last. */}
         <div className="relative z-10 max-desk:contents desk:col-[1/4] desk:row-1 desk:self-start">
           <h1 id="hero-title" className={heroType}>
             Not your typical<br />memecoin.
           </h1>
-          <div className={cn(buttonRow, "mt-4 phone:gap-4 max-desk:order-last desk:mt-[clamp(20px,4svh,40px)]")}>
-            <Link href="/launch" className={cn(cleanButton.outline, "lowercase desk:min-h-[58px]")}>
+          <div className={cn(buttonRow, "mt-4 phone:gap-4 max-desk:order-last desk:mt-[clamp(32px,7svh,72px)]")}>
+            <Link href="/app/packs" className={cn(cleanButton.solid, "lowercase desk:min-h-[58px]")}>
+              explore packs <ArrowUpRight weight="bold" className="arrow-nudge" aria-hidden="true" />
+            </Link>
+            {/* A translucent dark backing, so the button reads cleanly where it sits over a hand. */}
+            <Link href="/launch" className={cn(cleanButton.outline, "bg-white/70 lowercase backdrop-blur-[6px] desk:min-h-[58px]")}>
               launch a coin <ArrowUpRight weight="bold" className="arrow-nudge" aria-hidden="true" />
             </Link>
           </div>
         </div>
-        {/* Phones: the artwork's own layout, the hands nudged 6% apart to make room for the coin. The mask fades the
-            edges so the forearms dissolve. */}
+        {/* Phones: the artwork's own layout, the hands nudged 6% apart to make room for the coin, running edge to edge
+            past the page gutters. The mask fades the edges so the forearms dissolve. */}
         <div
-          className="pointer-events-none relative -z-10 aspect-[3/2] w-full select-none desk:hidden"
+          className="pointer-events-none relative -z-10 -mx-(--gutter) aspect-[3/2] w-[calc(100%+2*var(--gutter))] select-none desk:hidden"
           aria-hidden="true"
         >
-          <div className="absolute inset-0 overflow-hidden [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,#000_12%,#000_88%,transparent),linear-gradient(to_bottom,#000_80%,transparent)]">
+          <div className="absolute inset-0 overflow-hidden [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,#000_7%,#000_93%,transparent),linear-gradient(to_bottom,#000_80%,transparent)]">
             <ArtPiece crop={CROPS.left} preload className="hand-float-left top-[42%] left-[-6%] w-[46.5%]" />
             <ArtPiece crop={CROPS.right} className="hand-float-right top-0 left-[59.3%] w-[46.7%]" />
           </div>
           <MemeCoin className="coin-float absolute top-[49.4%] left-1/2 w-[13%] -translate-x-1/2 -translate-y-1/2" />
         </div>
         <HeroHands />
-        {/* The tagline, same size as the headline. No paragraph: "How it works" right below explains the vault. */}
-        <p className={cn(heroType, "relative z-10 text-right text-muted-soft desk:col-[3/6] desk:row-2 desk:self-end")}>
-          Holders<br />win them.
-        </p>
+        {/* The three points, bottom right (spanning both rows, so they never make the hero taller). "How it works"
+            right below explains them. */}
+        <ol
+          aria-label="How it's different"
+          className="relative z-10 m-0 flex list-none flex-col gap-2 p-0 font-[family-name:var(--font-outfit)] text-[clamp(22px,6vw,30px)] leading-snug font-light tracking-[-0.02em] desk:col-[3/6] desk:row-[1/3] desk:gap-3 desk:self-end desk:justify-self-end desk:text-[clamp(24px,min(2.5cqw,4.4svh),44px)]"
+        >
+          {POINTS.map((point, i) => (
+            <li key={point} className="flex items-baseline gap-4">
+              <span className="font-mono text-[0.5em] text-muted tabular-nums">[{String(i + 1).padStart(2, "0")}]</span>
+              {point}
+            </li>
+          ))}
+        </ol>
       </div>
       <ul
         aria-label="Built on"
