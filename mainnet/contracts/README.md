@@ -61,13 +61,11 @@ These controls are also on the app's `/treasury` page for the owner wallet.
 
 ## Deploy (you run this; it spends real BNB and USDC)
 
-> **Blocked on purpose.** These contracts were written for 6-decimal USDC.
-> USDC on BNB Chain (`0x8AC7…580d`) has **18** decimals, so `MainnetConfig.deploy`
-> reverts with "CollectPacks needs 6-decimal USDC" until the pack contract and the
-> tier amounts in `MainnetConfig.addTiers` are updated for 18 decimals (the
-> `1e6` in `fairAmount`, the uint64 USDC fields that cap a value at ~$18.4 at
-> 18 decimals, the 6-decimal mocks in the tests, and the market's USDC prices).
-> The fork test shows the guard firing. Do that change, re-run the tests, then:
+> **USDC decimals.** `CollectPacks` reads the payment token's decimals at deploy, so it
+> works with BNB Chain's 18-decimal USDC (`0x8AC7…580d`). USDC amounts are uint128, and
+> `MainnetConfig.addTiers` uses 18-decimal amounts; `deploy()` checks that USDC really has
+> 18 decimals. The unit tests run the pack suite at both 6 and 18 decimals. This is a
+> real-money contract change: have it reviewed and run the fork test (`BSC_RPC_URL`) first, then:
 
 Contracts compile with `via_ir = true` (`foundry.toml`): it keeps `CollectPacks` under the 24 KB deploy limit. Tests read the block with `vm.getBlockNumber()` / `vm.getBlockTimestamp()`, since `via_ir` can cache `block.number` inside a test.
 

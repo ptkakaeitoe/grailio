@@ -36,6 +36,36 @@ This Next.js version has breaking changes from older releases: read `AGENTS.md` 
 
 Cards hold BTCB, ETH, WBNB, LINK or CAKE (1 in 5 each). Payments are in USDC (and BNB on the marketplace). DAO votes use non-transferable points; there is no Grailio token.
 
+## How it works
+
+### Packs
+
+Every pack costs **$1 in USDC** and earns **1 DAO point**. Each card holds one random token: BTCB, ETH, WBNB, LINK or CAKE, 1 in 5 each. Gas is paid in BNB. The three $1 tiers that `contracts/script/MainnetConfig.sol` adds:
+
+| Pack (risk) | Common | Rare | Epic | Legendary | Average in tokens |
+| --- | --- | --- | --- | --- | --- |
+| Low (tier 0) | 50% · $0.95 | 25% · $0.95 | 20% · $0.95 | 5% · $0.95 | $0.95 (5% edge) |
+| Medium (tier 1) | 50% · $0.46 | 25% · $0.80 | 20% · $1.40 | 5% · $4.00 | $0.91 (9% edge) |
+| High (tier 2) | 60% · $0.20 | 25% · $0.60 | 12% · $2.80 | 3% · $10.13 | $0.91 (9% edge) |
+
+In the Low pack every card holds the same $0.95; rarity only sets the card's staking multiplier. `PACK_TIERS` in `lib/contracts.ts` also lists $3 and $5 packs (tiers 3 to 9); those are not added by `MainnetConfig.sol` and would have to be added on chain in id order.
+
+**Where the $1 goes:** into the pack contract's USDC pool. When a pack opens, the contract swaps the card's value from USDC into its token on PancakeSwap v3 (USDC → WBNB through the 0.01% pool, then WBNB → token through that token's deepest WBNB pool) and locks it in the card. Each swap must return at least the Chainlink fair amount minus that asset's slippage limit (1.5% BTCB and WBNB, 2% ETH, 4% LINK and CAKE); if it can't, the card is minted holding its value in USDC and anyone can `fill` it later. The difference between the price and the card value is profit, which `distribute()` shares out to staking and the DAO. The owner can only withdraw USDC above what unopened packs and unfilled cards could still pay out, and never tokens locked in cards. Odds live in `PACK_TIERS` (`lib/contracts.ts`) and `contracts/script/MainnetConfig.sol`.
+
+### Prices (`lib/quotes.ts`)
+
+- **Live price:** read on chain from pinned PancakeSwap v3 pools (WBNB/USDC, then BTCB, ETH, LINK and CAKE against WBNB, converted to USD through the WBNB/USDC pool), cached for 30 seconds. USDC is treated as $1.
+- **24h change and charts:** GeckoTerminal for the same pools, cached for 60 seconds.
+- The LINK and CAKE pools are thinner; the pack contract prices fills with Chainlink, not these pools.
+
+### Swaps (`/trade`)
+
+KyberSwap routes each trade across BSC DEXes (`lib/kyber.ts`). `GET /api/swap/quote` returns the route; `POST /api/swap/build` returns calldata (beta cookie required, slippage capped at 5%). The user's wallet signs; the server never signs or sends. Every swap must target KyberSwap's router, checked on the server and in the browser. Grailio takes a 0.5% fee inside each swap (`lib/swap-fee.ts`): when USDC is on either side, half goes to staking and half to the treasury wallet; otherwise all of it goes to the treasury.
+
+### Beta gate
+
+Anyone can browse and use demo mode. **Connecting a wallet needs a beta code.** The code is checked on the server, which sets a signed httpOnly cookie for 90 days; wallets that connect without it are signed out. This is a UI gate: contracts on a public chain can still be called directly.
+
 ## Environment
 
 Names are in `.env.example`; you fill in the values. Never commit `.env.local`.
@@ -75,7 +105,7 @@ The swap-fee treasury wallet in `lib/swap-fee.ts` (`SWAP_FEE_TREASURY`) is carri
 
 ## What is left for you
 
-1. **Make the pack contract work with 18-decimal USDC.** The contracts were written for 6-decimal USDC; BNB Chain's has 18. `MainnetConfig.deploy` refuses to run until this is done (see `contracts/README.md`). This is a contract change for real money: have it reviewed.
+1. **Review the 18-decimal USDC change** to `CollectPacks` (it now reads USDC's decimals; unit tests cover 6 and 18) and run the fork test with `BSC_RPC_URL` set. It's a real-money contract: have it reviewed before deploying.
 2. **Deploy the contracts yourself** (spends real BNB): the exact commands are in [`contracts/README.md`](contracts/README.md#deploy-you-run-this-it-spends-real-bnb-and-usdc). The script writes every address into `deployments/56.json`; rebuild the app afterwards and seed the pack pool with USDC.
 3. **Fill in `.env.local`** (or your host's env): Privy app ID with BNB Smart Chain enabled, beta codes and cookie secret, an Etherscan API v2 key, and optionally a relayer wallet with a little BNB plus Upstash.
 4. **Set `SWAP_FEE_TREASURY`** in `lib/swap-fee.ts` to your wallet.
