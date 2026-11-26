@@ -9,11 +9,13 @@ import { RedeemDialog } from "@/components/redeem-dialog";
 import { Holo, StockCardFront } from "@/components/stock-card-front";
 import { cleanButton, cn } from "@/components/clean-ui";
 import { cardArt } from "@/lib/cards";
-import { useCollection, type OwnedCard } from "@/lib/collection";
+import { listCard, useCollection, type OwnedCard } from "@/lib/collection";
+import { ListDialog } from "@/components/list-dialog";
 import { startDemo, useDemo } from "@/lib/demo";
 import { RARITIES } from "@/lib/pack";
 import { usd } from "@/lib/format";
 
+const smallAction = "inline-flex min-h-10 items-center justify-center rounded-md border border-border text-sm transition-colors hover:border-black";
 const fmtShares = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 4 });
 
 /**
@@ -25,6 +27,7 @@ export function CollectionPanel() {
   const demo = useDemo();
   const [flipped, setFlipped] = useState<number | null>(null);
   const [redeeming, setRedeeming] = useState<OwnedCard | null>(null);
+  const [listing, setListing] = useState<OwnedCard | null>(null);
   const held = cards.filter((c) => !c.redeemedAt).reverse();
   const redeemed = cards.filter((c) => c.redeemedAt).reverse();
 
@@ -51,11 +54,9 @@ export function CollectionPanel() {
     );
   }
 
-  const total = held.reduce((s, c) => s + c.usd, 0);
 
   return (
     <>
-      <p className="mb-6 text-base text-muted tabular-nums">{held.length} {held.length === 1 ? "card" : "cards"} · {usd(total)} in bStocks when opened</p>
       {held.length > 0 ? (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-5 gap-y-7 phone:grid-cols-[repeat(auto-fill,minmax(175px,230px))] desk:grid-cols-[repeat(auto-fill,minmax(205px,255px))] desk:gap-x-8 desk:gap-y-12">
           {held.map((card) => {
@@ -84,9 +85,14 @@ export function CollectionPanel() {
                     <span className={cardBack.foot}>SIMULATED · BSC TESTNET</span>
                   </>}
                 />
-                <div className="mt-3 flex items-baseline justify-between gap-2">
-                  <p className="min-w-0 truncate text-base">{card.ticker}B · {art.name}</p>
-                  <button type="button" className="shrink-0 text-sm text-muted underline-offset-4 hover:text-black hover:underline" onClick={() => setRedeeming(card)}>Redeem</button>
+                {card.listedUsd && <p className="mt-2 text-sm text-muted">Listed · <span className="text-black tabular-nums">{usd(card.listedUsd)}</span></p>}
+                <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+                  {card.listedUsd ? (
+                    <button type="button" className={smallAction} onClick={() => listCard(card.id, 0)}>Unlist</button>
+                  ) : (
+                    <button type="button" className={smallAction} onClick={() => setListing(card)}>List</button>
+                  )}
+                  <button type="button" className={smallAction} onClick={() => setRedeeming(card)}>Redeem</button>
                 </div>
               </li>
             );
@@ -111,6 +117,7 @@ export function CollectionPanel() {
       )}
 
       {redeeming && <RedeemDialog card={redeeming} onClose={() => setRedeeming(null)} />}
+      {listing && <ListDialog card={listing} onClose={() => setListing(null)} />}
     </>
   );
 }

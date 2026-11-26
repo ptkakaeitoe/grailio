@@ -23,6 +23,8 @@ export type OwnedCard = {
   shares: number;
   openedAt: number;
   redeemedAt?: number;
+  /** Asking price (USD) while listed for sale. */
+  listedUsd?: number;
 };
 
 const KEY = "bsctemp.collection.v1";
@@ -48,7 +50,12 @@ export function addCard(card: Omit<OwnedCard, "id" | "openedAt">) {
 }
 
 export function redeemCard(id: number) {
-  save(load().map((c) => (c.id === id && !c.redeemedAt ? { ...c, redeemedAt: Date.now() } : c)));
+  save(load().map((c) => (c.id === id && !c.redeemedAt ? { ...c, redeemedAt: Date.now(), listedUsd: undefined } : c)));
+}
+
+/** Lists a kept card for sale at a price (USD); 0 or less takes it off sale. */
+export function listCard(id: number, usd: number) {
+  save(load().map((c) => (c.id === id && !c.redeemedAt ? { ...c, listedUsd: usd > 0 ? Math.round(usd * 100) / 100 : undefined } : c)));
 }
 
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
