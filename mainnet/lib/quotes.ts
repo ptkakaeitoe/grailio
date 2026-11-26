@@ -1,15 +1,15 @@
 /**
- * Token prices from Avalanche DEX pools, shared by /api/prices and
+ * Token prices from BNB Chain DEX pools, shared by /api/prices and
  * /api/history.
  *
- * - Live price: read on-chain from pinned pools (Uniswap v3 slot0, LFJ v1
- *   reserves). Pools quoted in WAVAX are converted with the WAVAX/USDC pool.
- *   USDC is treated as $1.
+ * - Live price: read on-chain from pinned PancakeSwap v3 pools (slot0). Pools
+ *   quoted in WBNB are converted with the WBNB/USDC pool. USDC is treated as $1.
  * - 24h change and charts: GeckoTerminal (DEX trade data) for the same pools.
  *
- * Pools were chosen by liquidity on 2026-11-22. LINK and JOE pools are thin
- * (well under $250k), so their prices are easier to move; don't settle real
- * value against them without a TWAP or a second source.
+ * Pools were chosen by liquidity on chain 56 on 2026-11-26 (PancakeSwap v3
+ * factory getPool, deepest quote-side balance). LINK and CAKE pools are
+ * thinner, so their prices are easier to move; don't settle real value
+ * against them without a TWAP or a second source.
  */
 import { createPublicClient, http, type Address } from "viem";
 
@@ -27,36 +27,36 @@ type Pool = {
   address: Address;
   /** The token being priced, and the pool's other side. */
   token: Address;
-  quote: "USDC" | "WAVAX";
+  quote: "USDC" | "WBNB";
 };
 
 const TOKENS = {
-  USDC: { address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", decimals: 6 },
-  WAVAX: { address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7", decimals: 18 },
-  BTCb: { address: "0x152b9d0FdC40C096757F570A51E494bd4b943E50", decimals: 8 },
-  WETHe: { address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", decimals: 18 },
-  LINKe: { address: "0x5947BB275c521040051D82396192181b413227A3", decimals: 18 },
-  JOE: { address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", decimals: 18 },
+  USDC: { address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", decimals: 18 },
+  WBNB: { address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", decimals: 18 },
+  BTCB: { address: "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c", decimals: 18 },
+  ETH: { address: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", decimals: 18 },
+  LINK: { address: "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD", decimals: 18 },
+  CAKE: { address: "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82", decimals: 18 },
 } as const satisfies Record<string, { address: Address; decimals: number }>;
 
 const DECIMALS = new Map<string, number>(
   Object.values(TOKENS).map((t) => [t.address.toLowerCase(), t.decimals]),
 );
 
-/** Card ticker → pool. AVAX (native, used to pay) shares the WAVAX pool. */
-const AVAX_POOL: Pool = { kind: "v3", address: "0xfae3f424a0a47706811521e3ee268f00cfb5c45e", token: TOKENS.WAVAX.address, quote: "USDC" }; // Uniswap v3 WAVAX/USDC 0.05%
+/** Card ticker → pool. BNB (native, used to pay) shares the WBNB pool. */
+const BNB_POOL: Pool = { kind: "v3", address: "0xf2688Fb5B81049DFB7703aDa5e770543770612C4", token: TOKENS.WBNB.address, quote: "USDC" }; // PancakeSwap v3 WBNB/USDC 0.01%
 export const POOLS: Record<string, Pool> = {
-  WAVAX: AVAX_POOL,
-  AVAX: AVAX_POOL,
-  BTC: { kind: "v3", address: "0x2e587b9e7aa638d7eb7db5fe7447513bc4d0d28b", token: TOKENS.BTCb.address, quote: "USDC" }, // Uniswap v3 BTC.b/USDC 0.05%
-  ETH: { kind: "v3", address: "0x7b602f98d71715916e7c963f51bfebc754ade2d0", token: TOKENS.WETHe.address, quote: "WAVAX" }, // Uniswap v3 WETH.e/WAVAX 0.05%
-  LINK: { kind: "v3", address: "0xeb7e0191f4054868d97f33ca7a4176b226ccbd2f", token: TOKENS.LINKe.address, quote: "WAVAX" }, // Uniswap v3 LINK.e/WAVAX 1%
-  JOE: { kind: "v2", address: "0x454e67025631c065d3cfad6d71e6892f74487a15", token: TOKENS.JOE.address, quote: "WAVAX" }, // LFJ v1 JOE/WAVAX
+  WBNB: BNB_POOL,
+  BNB: BNB_POOL,
+  BTC: { kind: "v3", address: "0x6bbc40579ad1BBD243895cA0ACB086BB6300d636", token: TOKENS.BTCB.address, quote: "WBNB" }, // PancakeSwap v3 BTCB/WBNB 0.05%
+  ETH: { kind: "v3", address: "0xD0e226f674bBf064f54aB47F42473fF80DB98CBA", token: TOKENS.ETH.address, quote: "WBNB" }, // PancakeSwap v3 ETH/WBNB 0.05%
+  LINK: { kind: "v3", address: "0x0E1893BEEb4d0913d26B9614B18Aea29c56d94b9", token: TOKENS.LINK.address, quote: "WBNB" }, // PancakeSwap v3 LINK/WBNB 0.25%
+  CAKE: { kind: "v3", address: "0x133B3D95bAD5405d14d53473671200e9342896BF", token: TOKENS.CAKE.address, quote: "WBNB" }, // PancakeSwap v3 CAKE/WBNB 0.25%
 };
 
-/** The pool functions we read: slot0 on Uniswap v3 pools, getReserves on LFJ v1 pairs. */
+/** The pool functions we read: slot0 on PancakeSwap v3 pools (feeProtocol is a uint32 there), getReserves on v2 pairs. */
 const poolAbi = [
-  { type: "function", name: "slot0", inputs: [], outputs: [{ type: "uint160", name: "sqrtPriceX96" }, { type: "int24" }, { type: "uint16" }, { type: "uint16" }, { type: "uint16" }, { type: "uint8" }, { type: "bool" }], stateMutability: "view" },
+  { type: "function", name: "slot0", inputs: [], outputs: [{ type: "uint160", name: "sqrtPriceX96" }, { type: "int24" }, { type: "uint16" }, { type: "uint16" }, { type: "uint16" }, { type: "uint32" }, { type: "bool" }], stateMutability: "view" },
   { type: "function", name: "getReserves", inputs: [], outputs: [{ type: "uint112" }, { type: "uint112" }, { type: "uint32" }], stateMutability: "view" },
   { type: "function", name: "token0", inputs: [], outputs: [{ type: "address" }], stateMutability: "view" },
   { type: "function", name: "token1", inputs: [], outputs: [{ type: "address" }], stateMutability: "view" },
@@ -109,7 +109,7 @@ async function readPoolPrices(pools: Pool[]): Promise<Map<string, number | null>
   return prices;
 }
 
-const GECKO = "https://api.geckoterminal.com/api/v2/networks/avax";
+const GECKO = "https://api.geckoterminal.com/api/v2/networks/bsc";
 const GECKO_HEADERS = { Accept: "application/json;version=20230302" };
 
 /** 24h change per pool address (lowercase), from GeckoTerminal. */
@@ -140,12 +140,12 @@ async function loadQuotes(): Promise<Map<string, StockQuote>> {
   const addresses = [...new Set(pools.map((p) => p.address.toLowerCase()))];
   const [raw, changes] = await Promise.all([readPoolPrices(pools), fetchChanges(addresses)]);
 
-  const avaxUsd = raw.get(AVAX_POOL.address.toLowerCase()) ?? null;
+  const bnbUsd = raw.get(BNB_POOL.address.toLowerCase()) ?? null;
   const quotes = new Map<string, StockQuote>();
   for (const ticker of tickers) {
     const pool = POOLS[ticker];
     const inQuote = raw.get(pool.address.toLowerCase()) ?? null;
-    const price = inQuote === null ? null : pool.quote === "USDC" ? inQuote : avaxUsd === null ? null : inQuote * avaxUsd;
+    const price = inQuote === null ? null : pool.quote === "USDC" ? inQuote : bnbUsd === null ? null : inQuote * bnbUsd;
     const changePct = changes.get(pool.address.toLowerCase()) ?? null;
     quotes.set(ticker, {
       ticker,

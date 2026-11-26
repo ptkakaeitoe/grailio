@@ -1,13 +1,13 @@
 /**
- * Server-side KyberSwap aggregator client (Avalanche). It routes across
- * Avalanche DEXes (Uniswap v3, LFJ, Pharaoh, …) for the best price. Used only
+ * Server-side KyberSwap aggregator client (BNB Chain). It routes across
+ * BNB Chain DEXes (PancakeSwap, Uniswap, Thena, …) for the best price. Used only
  * from API routes, so the browser never talks to the aggregator directly and
  * every route is checked against SWAP_ROUTER before it reaches a wallet.
  */
 import { SWAP_ROUTER } from "@/lib/tokens";
 import { hasCollectFee, swapFeeFor } from "@/lib/swap-fee";
 
-const BASE = "https://aggregator-api.kyberswap.com/avalanche/api/v1";
+const BASE = "https://aggregator-api.kyberswap.com/bsc/api/v1";
 const HEADERS = { "x-client-id": "collect", "Content-Type": "application/json" };
 
 export type RouteSummary = Record<string, unknown> & {
@@ -53,7 +53,7 @@ export async function kyberBuild(routeSummary: RouteSummary, sender: string, sli
   return {
     to: SWAP_ROUTER,
     data: data.data as `0x${string}`,
-    /** Wei to send; non-zero only when paying with AVAX. */
+    /** Wei to send; non-zero only when paying with BNB. */
     value: String(data.transactionValue ?? "0"),
     amountOut: String(data.amountOut ?? routeSummary.amountOut),
   };
