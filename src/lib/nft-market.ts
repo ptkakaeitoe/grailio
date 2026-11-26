@@ -71,6 +71,13 @@ export function buyListing(listing: Listing, bnbUsd: number) {
   return true;
 }
 
+/** Forgets demo NFT purchases (demo reset). */
+export function clearBoughtListings() {
+  cache = [];
+  try { localStorage.setItem(KEY, "[]"); } catch { /* keep in memory */ }
+  listeners.forEach((l) => l());
+}
+
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
 /** Listings still for sale (bought ones drop off). */

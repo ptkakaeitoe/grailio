@@ -37,6 +37,13 @@ export function publishPack(config: PackConfig) {
   return slug;
 }
 
+/** Removes coins launched in this browser in demo mode; coins that exist on-chain stay. */
+export function clearDemoCoins() {
+  cache = readPublished().filter((p) => p.config.onchain);
+  try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch { /* keep in memory */ }
+  listeners.forEach((l) => l());
+}
+
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
 /** Seed packs plus the ones published in this browser (new launches: empty pool, newest first). */
