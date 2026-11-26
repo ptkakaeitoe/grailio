@@ -69,8 +69,8 @@ const MORE = [
   },
 ];
 
-/** The hero's three points, bottom right (balancing the headline top left). */
-const HERO_POINTS = ["Open packs.", "Collect cards.", "Stake or trade."];
+/** The hero's points, bottom right (balancing the headline top left). Testnet leads with memecoin launches. */
+const HERO_POINTS = ["Launch a memecoin.", "Open its packs.", "Collect cards.", "Stake or trade."];
 
 const sectionSpace = "pt-24 desk:pt-32";
 const followingSectionSpace = "pt-32 desk:pt-44";
@@ -124,6 +124,12 @@ export default function Home() {
               >
                 explore packs <ArrowUpRightIcon weight="bold" className="arrow-nudge" aria-hidden="true" />
               </Link>
+              <Link
+                href="/launch"
+                className={cn(cleanButton.outline, "lowercase desk:min-h-[58px]")}
+              >
+                launch a memecoin <ArrowUpRightIcon weight="bold" className="arrow-nudge" aria-hidden="true" />
+              </Link>
               <HeroWalletAction />
             </div>
           </div>
@@ -155,16 +161,19 @@ export default function Home() {
           </li>
           {(
             [
-              ["Chain", "BNB", chainLabel],
-              ["Wallets", "PRIVY", "Privy"],
-              ["Swaps", "KYBER", "KyberSwap"],
-              ["Prices", "ATLAS", "Atlas"],
+              ["Chain", [["BNBCHAIN", chainLabel]]],
+              ["Stocks", [["BSTOCKS", "bStocks"]]],
+              ["Launchpads", [["FOUR", "Four.meme"], ["FLAP", "Flap"]]],
+              ["Wallets", [["PRIVY", "Privy"]]],
+              ["Prices", [["ATLAS", "Atlas Oracle"]]],
             ] as const
-          ).map(([role, icon, name]) => (
+          ).map(([role, partners]) => (
             <li key={role} className="flex flex-col gap-2">
               <span>{role}</span>
-              <span className="inline-flex h-7 items-center gap-2 whitespace-nowrap text-black">
-                <TokenIcon symbol={icon} className="size-6" /> {name}
+              <span className="inline-flex h-7 items-center gap-4 whitespace-nowrap text-black">
+                {partners.map(([icon, name]) => (
+                  <span key={icon} className="inline-flex items-center gap-2"><TokenIcon symbol={icon} className="size-6" /> {name}</span>
+                ))}
               </span>
             </li>
           ))}
@@ -311,8 +320,8 @@ export default function Home() {
           {CARD_ACTIONS.map((action, index) => (
             <li
               key={action.title}
-              className={cn(
               style={{ "--i": index } as CSSProperties}
+              className={cn(
                 "reveal flex flex-col items-start py-6 first:pt-0 last:pb-0 desk:py-0",
                 index < CARD_ACTIONS.length - 1 &&
                   "border-b border-border desk:border-r desk:border-b-0 desk:pr-8",
@@ -362,8 +371,8 @@ export default function Home() {
           {MORE.map((item, index) => (
             <li
               key={item.href}
-              className={cn(
               style={{ "--i": index } as CSSProperties}
+              className={cn(
                 "reveal pt-6 first:pt-0 desk:pt-0",
                 index === 0 &&
                   "border-b border-border pb-6 desk:border-r desk:border-b-0 desk:pb-0 desk:pr-8",
