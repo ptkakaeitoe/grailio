@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
+  // No floating dev badge: it covers the phone tab bar in previews and screenshots.
+  devIndicators: false,
   partialPrefetching: true,
   turbopack: {
     rules: {
