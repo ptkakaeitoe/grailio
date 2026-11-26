@@ -5,7 +5,7 @@ import { parseAbi, type Address } from "viem";
  * openfour/deployments-97.json (our OpenFour proxy set and the pack preset). Server- and client-safe.
  */
 
-/** Atlas-priced stock market shared by the Flap and OpenFour pack vaults. */
+/** Atlas-priced stock market used by the OpenFour pack vaults (BNB only). */
 export const MARKET: Address = "0x1Ef0217aBeF9be772d7956556f7432e3A714C4F7";
 
 /** Mock bStocks listed on the market, by stock ticker (NVDA → NVDAB's address). */
@@ -31,11 +31,17 @@ export const OPENFOUR = {
   presetId: 1795680932522n,
 };
 
-/** Flap Pool Launch: our factories (launches need Flap to enable the launcher factory). */
+/**
+ * Flap Pool Launch: our factories (launches need Flap to enable the launcher factory). v2: BNB or USD quote, pack
+ * tiers, presale reserve, card staking, 50/30/15/5 tax split. Its market is separate from the OpenFour one above.
+ */
 export const FLAP = {
   portal: "0x000042108465206185A077Edc3F3fd2b49060000" as Address,
-  launcherFactory: "0x431fCC1ba18213Cb8858BE2F2ca92C6bFe8Ef73b" as Address,
-  vaultFactory: "0xEF6AbEa35142d14922267487051ea68e787d0024" as Address,
+  launcherFactory: "0xBD8fd9B24054A4332B54e43f77c14304C0cA6B61" as Address,
+  vaultFactory: "0x975CB1bAEAA498B276EdC455681dEFe605Ca2EF7" as Address,
+  market: "0x014497A15e5e16eBf12E6c6aA763fa0cCFa87B37" as Address,
+  /** Flap's free-mint testnet USD (faucet: abc.flap.sh/faucet), usable as a coin's quote. */
+  usd: "0x190C989D5665a0e404B444b53CAE9AbCfb600157" as Address,
 };
 
 /** Sale shape every app-launched OpenFour coin uses: a 0.05 BNB fixed-price sale of 10 presale packs. */
