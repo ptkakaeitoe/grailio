@@ -89,7 +89,7 @@ The **NFTs** tab is a card marketplace: list your cards or buy someone else's.
 | | |
 |---|---|
 | <img src="29-packs-newgen.jpg" width="260"> | **New-gen.** Coin-backed collections, sorted by trending, newest or pool size. |
-| <img src="30-packs-classic.jpg" width="260"> | **Classic.** Packs with no coin: the platform's own line in three sizes. |
+| <img src="30-packs-classic.jpg" width="260"> | **Classic.** Collections with no coin, in the same card style: the built-in Classic line draws from all 105 stocks. |
 | <img src="31-classic-shop.jpg" width="260"> | **Classic shop.** Draws from all 105 stocks. Same tiers: Low, Medium, High. |
 | <img src="32-classic-reveal.jpg" width="260"> | **Reveal.** A Common holding $4.75 of GLW. |
 

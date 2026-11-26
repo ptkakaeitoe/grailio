@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Search } from "lucide-react";
 import { SealedPack } from "@/components/pack-shop";
-import { CLASSIC_SIZES, ClassicPack, lineOf } from "@/components/classic-pack-shop";
+import { ClassicPack, lineOf } from "@/components/classic-pack-shop";
 import { cleanChip, cleanField, cn } from "@/components/clean-ui";
 import type { MarketCoin } from "@/lib/market";
 import { useMarketCoins } from "@/lib/published-packs";
@@ -17,8 +17,8 @@ import { usd } from "@/lib/format";
  * Pack marketplace: a Classic | New-gen selector at the top (kept in the URL as ?tab=classic; New-gen is the default),
  * and the selected collection's grid of compact cards (1 column on phones, 2 from 481px, 3 from 801px,
  * 4 from 1201px):
- *  - Classic collections: packs not backed by a coin. The built-in line, one card per size (/app/packs/classic?size=),
- *    then each classic collection published from Launch (config.kind === "classic"), opening /app/packs/<slug>.
+ *  - Classic collections: packs not backed by a coin, in the same card style as New-gen. Collections published from
+ *    Launch (config.kind === "classic", newest first, opening /app/packs/<slug>), then the built-in line (/app/packs/classic).
  *  - New-gen collections: coin-backed packs, one card per coin (its packs fanned, avatar, name, pool or presale,
  *    launchpad), opening /app/packs/<coin>. Sort and search apply here.
  * Graily's look: section titles and bracketed labels, hairline borders, outlined chips.
@@ -123,19 +123,34 @@ function SectionTitle({ id, title, n, noun }: { id: string; title: string; n: nu
   );
 }
 
-/** A classic collection published from Launch (no coin): its packs fanned, name and pack count. */
-function ClassicCollectionCard({ coin }: { coin: MarketCoin }) {
+/** A classic collection (no coin), styled like a coin card: its packs fanned, avatar, name, price and stock count.
+ *  Without `coin` it's the built-in Classic line. */
+function ClassicCollectionCard({ coin }: { coin?: MarketCoin }) {
   const line = lineOf(coin);
   const sizes = line.sizes.slice(0, 3);
+  const custom = customPack(coin?.config);
+  const from = usd(Math.min(...line.sizes.map((s) => s.price)), 0);
+  const href = coin ? `/app/packs/${coin.slug}` : "/app/packs/classic";
   return (
     <li className="min-w-0">
-      <Link href={`/app/packs/${coin.slug}`} className={card} aria-label={`${coin.name} packs`}>
+      <Link href={href} className={card} aria-label={`${line.name} packs`}>
         <div className={stage} aria-hidden="true">
           {sizes.map((s, i) => (
             <Sleeve key={s.id} i={i} n={sizes.length}><ClassicPack size={s} coin={coin} className="h-full justify-between shadow-none" /></Sleeve>
           ))}
         </div>
-        <CardFoot title={coin.name} meta={`${line.sizes.length} ${line.sizes.length === 1 ? "pack" : "packs"} · from ${usd(Math.min(...line.sizes.map((s) => s.price)), 0)} · No coin`} />
+        <CardFoot
+          title={line.name}
+          meta={`From ${from} · ${line.basket.length} ${line.basket.length === 1 ? "stock" : "stocks"}`}
+          avatar={
+            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full text-base text-[#fff]" style={coin ? custom?.style ?? { background: coin.tone } : { background: "#111", boxShadow: "inset 0 0 0 1px #fff3" }} aria-hidden="true">
+              {coin?.config.image ? (
+                // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the collection
+                <img src={coin.config.image} alt="" className="size-full object-cover" />
+              ) : line.name[0]}
+            </span>
+          }
+        />
       </Link>
     </li>
   );
@@ -148,16 +163,7 @@ function ClassicSection({ published }: { published: MarketCoin[] }) {
       <SectionTitle id="classic-title" title="Classic collections" n={total} noun={total === 1 ? "collection" : "collections"} />
       <ul className={grid}>
         {[...published].reverse().map((c) => <ClassicCollectionCard key={c.slug} coin={c} />)}
-        {CLASSIC_SIZES.map((s) => (
-          <li key={s.id} className="min-w-0">
-            <Link href={`/app/packs/classic?size=${s.id}`} className={card} aria-label={`Classic ${s.name} pack, ${usd(s.price, 0)}`}>
-              <div className={stage} aria-hidden="true">
-                <Sleeve i={0} n={1}><ClassicPack size={s} className="h-full justify-between shadow-none" /></Sleeve>
-              </div>
-              <CardFoot title={s.name} meta={`${usd(s.price, 0)} · No coin`} />
-            </Link>
-          </li>
-        ))}
+        <ClassicCollectionCard />
       </ul>
     </section>
   );
