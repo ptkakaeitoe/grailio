@@ -15,9 +15,6 @@ export default function StockListPage() {
             <br />
             <span className="text-muted">Signed prices, live.</span>
           </h1>
-          <p className="mt-3 max-w-[480px] text-base leading-normal text-muted desk:mt-5">
-            Every stock token Atlas prices on BNB Chain, fetched with our API key and checked against Atlas&apos;s signature. These are the prices the vault will use.
-          </p>
         </div>
       </header>
       <StockList />

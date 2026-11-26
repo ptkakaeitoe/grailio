@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, RefreshCw, Search, TriangleAlert } from "lucide-react";
 import type { AtlasSnapshot } from "@/lib/atlas";
-import { ATLAS_MULTIFEED, underlying } from "@/lib/atlas-feeds";
+import { underlying } from "@/lib/atlas-feeds";
 import { usePack } from "@/lib/pack";
 import { compactUsd, gapPct, useCmc } from "@/lib/use-cmc";
 import { usd } from "@/lib/format";
@@ -240,13 +240,7 @@ export function StockList() {
         </table>
       </div>
 
-      <p className="border-t border-border pt-6 text-[12px] leading-relaxed text-muted">
-        {cmc.error && <span className="text-down">CoinMarketCap: {cmc.error}. </span>}
-        Second source: CoinMarketCap Pro API (bStock token quotes, plus each stock&apos;s average price across all tokenized issuers for the &ldquo;vs stock&rdquo; gap), called server-side.{cmc.snap && <> Last CoinMarketCap request used {cmc.snap.credits} credits{cmc.snap.cached ? " (cached)" : ""}.</>}{" "}
-        Signed prices from Atlas pull mode, checked against Atlas&apos;s signing key on the server. The same feed IDs are on-chain in the BNB Chain MultiFeed{" "}
-        <a className="num break-all underline-offset-2 hover:underline" href={`https://bscscan.com/address/${ATLAS_MULTIFEED}`} target="_blank" rel="noreferrer">{short(ATLAS_MULTIFEED)}</a>.
-        {snap?.creditCount != null && <> Credits used by the last request: {snap.creditCount}.</>}
-      </p>
+      {cmc.error && <p className="text-[12px] text-down">CoinMarketCap: {cmc.error}</p>}
     </div>
   );
 }
