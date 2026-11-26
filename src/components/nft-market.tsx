@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, X } from "lucide-react";
 import { Holo, StockCardFront, tilt } from "@/components/stock-card-front";
-import { cn } from "@/components/clean-ui";
-import { TradeToolbar } from "@/components/trade-toolbar";
+import { cleanDialog, cn, dialogClose, dialogHeader, dialogLabel } from "@/components/clean-ui";
+import { ListDialog } from "@/components/list-dialog";
+import { TradeToolbar, toolbarChip } from "@/components/trade-toolbar";
 import { useCardArt } from "@/lib/design";
-import { listCard, useCollection } from "@/lib/collection";
+import { listCard, useCollection, type OwnedCard } from "@/lib/collection";
 import { startDemo, useDemo } from "@/lib/demo";
 import { buyListing, ownListing, useListings, type Listing } from "@/lib/nft-market";
 import { RARITIES } from "@/lib/pack";
@@ -13,6 +15,42 @@ import { showToast } from "@/lib/toast";
 import { usd } from "@/lib/format";
 
 const action = "inline-flex min-h-10 w-full items-center justify-center rounded-md text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40";
+
+/** Pick one of your cards to list: kept cards that aren't staked or already for sale. */
+function PickCardDialog({ cards, onPick, onClose }: { cards: OwnedCard[]; onPick: (card: OwnedCard) => void; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const cardArt = useCardArt();
+  useEffect(() => { dialog.current?.showModal(); }, []);
+  return (
+    <dialog ref={dialog} className={cn(cleanDialog, "w-[min(640px,calc(100%-32px))]")} aria-labelledby="pick-title"
+      onCancel={(e) => { e.preventDefault(); onClose(); }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <header className={dialogHeader}>
+        <span className={dialogLabel} id="pick-title">List a card</span>
+        <button type="button" className={dialogClose} aria-label="Close" onClick={onClose}><X className="size-5" /></button>
+      </header>
+      {cards.length === 0 ? (
+        <p className="px-5 py-12 text-center text-sm text-muted">No cards to list. Open a pack first, or unstake a card.</p>
+      ) : (
+        <ul className="grid grid-cols-2 gap-3 p-5 phone:grid-cols-3">
+          {cards.map((c) => (
+            <li key={c.id}>
+              <button type="button" onClick={() => onPick(c)} className="flex w-full flex-col gap-2 rounded-md border border-border p-2 text-left transition-colors hover:border-black">
+                <span className="relative block overflow-hidden rounded-[4px]">
+                  <StockCardFront art={cardArt(c)} rarity={c.rarity} brand={c.coinName} decorative sizes="180px" className="w-full" />
+                  <Holo rarity={c.rarity} />
+                </span>
+                <span className="flex items-baseline justify-between gap-2 px-0.5 text-sm">
+                  <span className="truncate capitalize text-muted">{RARITIES[c.rarity]} · {c.ticker}</span>
+                  <span className="shrink-0 tabular-nums">{usd(c.usd)}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </dialog>
+  );
+}
 
 /**
  * Pack cards for sale: your listings first, then other collectors'. Buying pays from the demo wallet. Same toolbar as
@@ -22,7 +60,12 @@ export function NftMarket() {
   const demo = useDemo();
   const listings = useListings();
   const cardArt = useCardArt();
-  const mine = useCollection().filter((c) => c.listedUsd && !c.redeemedAt);
+  const collection = useCollection();
+  const mine = collection.filter((c) => c.listedUsd && !c.redeemedAt);
+  // Cards you could list: kept, not staked, not already for sale.
+  const listable = collection.filter((c) => !c.redeemedAt && !c.stakedAt && !c.listedUsd);
+  const [picking, setPicking] = useState(false);
+  const [toList, setToList] = useState<OwnedCard | null>(null);
   const [bnbUsd, setBnbUsd] = useState<number | null>(null);
   const [view, setView] = useState<"all" | "mine">("all");
   const [query, setQuery] = useState("");
@@ -64,9 +107,17 @@ export function NftMarket() {
         onQuery={setQuery}
         placeholder="Search cards"
         searchLabel="Search cards by name, coin or ticker"
+        actions={
+          <button type="button" className={cn(toolbarChip, "inline-flex items-center gap-1.5 desk:min-h-10")} onClick={() => setPicking(true)}>
+            <Plus className="size-4" aria-hidden="true" /> List a card
+          </button>
+        }
       />
       {items.length === 0 && (
-        <p className="border-y border-border py-12 text-center text-sm text-muted">{view === "mine" ? "You haven't listed any cards." : "No cards match."}</p>
+        <div className="flex flex-col items-center gap-3 border-y border-border py-12 text-center text-sm text-muted">
+          <p>{view === "mine" ? "You haven't listed any cards." : "No cards match."}</p>
+          {view === "mine" && <button type="button" className={cn(toolbarChip, "inline-flex items-center gap-1.5")} onClick={() => setPicking(true)}><Plus className="size-4" aria-hidden="true" /> List a card</button>}
+        </div>
       )}
       <ul className="grid grid-cols-2 gap-x-3.5 gap-y-7 phone:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] desk:gap-x-6 desk:gap-y-10">
         {items.map(({ listing: l, ownId }) => {
@@ -94,6 +145,8 @@ export function NftMarket() {
           );
         })}
       </ul>
+      {picking && <PickCardDialog cards={listable} onClose={() => setPicking(false)} onPick={(c) => { setPicking(false); setToList(c); }} />}
+      {toList && <ListDialog card={toList} onClose={() => { setToList(null); setView("mine"); }} />}
     </div>
   );
 }
