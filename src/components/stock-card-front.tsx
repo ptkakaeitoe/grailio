@@ -36,7 +36,7 @@ export function StockCardFront({ art, className, priority = false, sizes, decora
       </div>
       <div className="stock-card-front__nameplate">
         <strong>{art.name}</strong>
-        <div><span className="stock-card-front__coin">{art.ticker && <StockLogo ticker={art.ticker} size={14} className="stock-card-front__coin-logo" />}{art.ticker ? `${art.ticker}B` : "ANY STOCK"}</span><span>BSC</span></div>
+        <div><span className="stock-card-front__coin">{art.ticker && <StockLogo ticker={art.ticker} size={14} className="stock-card-front__coin-logo" />}{art.ticker || "ANY STOCK"}</span><span>BSC</span></div>
       </div>
     </div>
   );

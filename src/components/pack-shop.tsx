@@ -188,7 +188,7 @@ function RevealDialog({ size, risk, count, coin, coinSlug, color, basket, onClos
           <h2 className="text-[22px] leading-[1.2] font-normal tracking-tight">
             {phase === "ready" ? `${left} ${left === 1 ? "pack" : "packs"} ready` : phase === "opening" ? "Opening…" : <span className="capitalize">{RARITIES[pull!.rarity]}</span>}
           </h2>
-          {phase === "revealed" && pull && <p className="num mt-1 text-sm text-muted">Holds {usd(pull.value)} of {pull.ticker ? `${pull.ticker}B` : "bStocks"} · {risk.tiers[pull.rarity].mult}× the price</p>}
+          {phase === "revealed" && pull && <p className="num mt-1 text-sm text-muted">Holds {usd(pull.value)} of {pull.ticker || "stocks"} · {risk.tiers[pull.rarity].mult}× the price</p>}
         </div>
         <div className="mt-4 flex flex-col gap-2">
           {phase !== "opening" && (

@@ -54,7 +54,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
   const stock = asset.kind === "stock" ? stockOf(asset.ticker) : null;
   const coin = asset.kind === "token" ? coins.find((c) => c.slug === asset.slug) : null;
   const key = asset.kind === "stock" ? asset.ticker : `token:${asset.slug}`;
-  const symbol = stock ? `${stock.ticker}B` : coin?.name ?? "";
+  const symbol = stock ? stock.ticker : coin?.name ?? "";
   const price = stock ? livePrice : coin ? demoTokenPrice(coin) : null;
 
   useEffect(() => {

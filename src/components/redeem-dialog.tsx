@@ -18,7 +18,7 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
   const dialog = useRef<HTMLDialogElement>(null);
   const art = cardArt(card.ticker, card.rarity, card.set);
   const [phase, setPhase] = useState<"confirm" | "burning" | "done">(card.redeemedAt ? "done" : "confirm");
-  const payout = { amount: fmt(card.shares), symbol: `${card.ticker}B` };
+  const payout = { amount: fmt(card.shares), symbol: card.ticker };
   const stock = `${payout.amount} ${payout.symbol}`;
 
   useEffect(() => { dialog.current?.showModal(); }, []);

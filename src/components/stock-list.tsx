@@ -159,10 +159,10 @@ export function StockList() {
               <StockLogo ticker={r.symbol} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2">
-                  <span className="num truncate text-base">{r.symbol}</span>
+                  <span className="num truncate text-base">{tick}</span>
                   {inPack.has(tick) && <span className="shrink-0 rounded-[4px] bg-surface-muted px-1.5 py-0.5 text-[11px] text-muted">in pack</span>}
                 </p>
-                <p className="truncate text-[13px] text-muted">{tick === r.symbol ? "token" : `${tick} · bStock`}</p>
+                <p className="truncate text-[13px] text-muted">{stockOf(tick)?.name ?? "Token"}</p>
               </div>
               <div className="shrink-0 text-right">
                 <p className="num text-base">{usd(r.price, r.price < 1 ? 4 : 2)}</p>
@@ -201,10 +201,10 @@ export function StockList() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <StockLogo ticker={r.symbol} size={24} />
-                      {stockOf(tick) ? <Link href={`/app/trade/stock/${tick}`} className="num underline-offset-4 hover:underline">{r.symbol}</Link> : <span className="num">{r.symbol}</span>}
+                      {stockOf(tick) ? <Link href={`/app/trade/stock/${tick}`} className="num underline-offset-4 hover:underline">{tick}</Link> : <span className="num">{tick}</span>}
                       {inPack.has(tick) && <span className="rounded-[4px] bg-surface-muted px-1.5 py-0.5 text-[11px] text-muted">in pack</span>}
                     </div>
-                    <span className="text-[12px] text-muted">{tick === r.symbol ? "token" : `${tick} · bStock`}</span>
+                    <span className="text-[12px] text-muted">{stockOf(tick)?.name ?? "Token"}</span>
                   </td>
                   <td className="num px-4 py-3 text-right">{usd(r.price, r.price < 1 ? 4 : 2)}</td>
                   <td className={cn("num px-4 py-3 text-right", changeTone(r.changePct))}>{changeText(r.changePct)}</td>
