@@ -119,7 +119,8 @@ contract PackVault is DirectLaunchVaultBase, ERC721, Initializable {
 
     /// @notice Tax dispatch and the presale seed arrive here. Kept cheap: the Portal may forward limited gas.
     receive() external payable {
-        emit Funded(msg.sender, msg.value);
+        // Zero-value "pings" can arrive spuriously; they carry no funds, so they log nothing.
+        if (msg.value > 0) emit Funded(msg.sender, msg.value);
     }
 
     function version() external pure returns (string memory) {
