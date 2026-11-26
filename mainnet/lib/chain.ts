@@ -1,17 +1,17 @@
-import { avalanche } from "viem/chains";
+import { bsc } from "viem/chains";
 
 /**
- * Grailio runs on Avalanche C-Chain mainnet (43114), in beta. Every chain
+ * Grailio runs on BNB Smart Chain mainnet (chain 56), in beta. Every chain
  * reference in the app goes through this module, so switching networks is a
  * one-file change.
  */
-export const appChain = avalanche;
+export const appChain = bsc;
 
-/** Public RPC is rate-limited; set NEXT_PUBLIC_AVALANCHE_RPC_URL for production. */
+/** Public RPC is rate-limited; set NEXT_PUBLIC_BSC_RPC_URL for production. */
 export const rpcUrl =
-  process.env.NEXT_PUBLIC_AVALANCHE_RPC_URL ?? "https://api.avax.network/ext/bc/C/rpc";
+  process.env.NEXT_PUBLIC_BSC_RPC_URL ?? "https://bsc-dataseed.bnbchain.org";
 
-export const explorerUrl = "https://snowtrace.io";
+export const explorerUrl = "https://bscscan.com";
 
 /** Shown in the header and footer while the app is in beta. */
 export const BETA = true;

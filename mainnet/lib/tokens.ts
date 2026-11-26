@@ -1,25 +1,31 @@
 import type { Address } from "viem";
 
 /**
- * Real Avalanche C-Chain tokens the app prices and swaps, keyed by the symbol
- * the UI shows. Card tickers (lib/cards.ts) map onto these. AVAX is the native
+ * Real BNB Smart Chain tokens the app prices and swaps, keyed by the symbol
+ * the UI shows. Card tickers (lib/cards.ts) map onto these. BNB is the native
  * coin, which aggregators address with the 0xEeee… sentinel.
+ *
+ * Every address and decimals value was read on chain 56 on 2026-11-26. Note
+ * that USDC on BNB Chain (Binance-Peg) has 18 decimals, not 6.
  */
 export const NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" as const;
 
 export type TokenInfo = { symbol: string; address: Address; decimals: number; native?: true };
 
 export const TOKENS: Record<string, TokenInfo> = {
-  USDC: { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", decimals: 6 },
-  AVAX: { symbol: "AVAX", address: NATIVE, decimals: 18, native: true },
-  WAVAX: { symbol: "WAVAX", address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7", decimals: 18 },
-  BTC: { symbol: "BTC.b", address: "0x152b9d0FdC40C096757F570A51E494bd4b943E50", decimals: 8 },
-  ETH: { symbol: "WETH.e", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", decimals: 18 },
-  LINK: { symbol: "LINK.e", address: "0x5947BB275c521040051D82396192181b413227A3", decimals: 18 },
-  JOE: { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", decimals: 18 },
+  USDC: { symbol: "USDC", address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", decimals: 18 },
+  BNB: { symbol: "BNB", address: NATIVE, decimals: 18, native: true },
+  WBNB: { symbol: "WBNB", address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", decimals: 18 },
+  BTC: { symbol: "BTCB", address: "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c", decimals: 18 },
+  ETH: { symbol: "ETH", address: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", decimals: 18 },
+  LINK: { symbol: "LINK", address: "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD", decimals: 18 },
+  CAKE: { symbol: "CAKE", address: "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82", decimals: 18 },
 };
+
+/** USDC decimals on this chain: every USD amount from the contracts uses it. */
+export const USDC_DECIMALS = TOKENS.USDC.decimals;
 
 export const tokenFor = (key: string): TokenInfo | undefined => TOKENS[key];
 
-/** KyberSwap's MetaAggregationRouterV2. Swaps may only be sent here. */
+/** KyberSwap's MetaAggregationRouterV2 (same address on BNB Chain). Swaps may only be sent here. */
 export const SWAP_ROUTER = "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5" as Address;

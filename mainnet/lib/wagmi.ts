@@ -10,8 +10,8 @@ import { appChain, rpcUrl } from "@/lib/chain";
  * don't have one. Privy supplies the connectors, so its wagmi config has none.
  *
  * Without an app ID (local development before Privy is set up) the app falls
- * back to a browser wallet (MetaMask, Core) through wagmi's injected connector.
- * Avalanche C-Chain is the only chain registered either way.
+ * back to a browser wallet (MetaMask, Trust Wallet) through wagmi's injected connector.
+ * BNB Smart Chain is the only chain registered either way.
  */
 export const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
 export const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
