@@ -3,16 +3,21 @@
 import { ArrowRightIcon, ArrowUpRightIcon, XIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { StockCardFront } from "@/components/stock-card-front";
 import { cleanButton, cleanDialog, cleanLink, cn, dialogFooter, dialogLabel, revealUi } from "@/components/clean-ui";
 import { cardArt } from "@/lib/cards";
 import { redeemCard, type OwnedCard } from "@/lib/collection";
+import { appChain } from "@/lib/chain";
+import { packVaultAbi } from "@/lib/onchain";
+import { showToast } from "@/lib/toast";
+import { txErrorMessage } from "@/lib/tx-error";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 6 });
 
 /**
- * Redeem = burn the card, receive the bStocks inside (ported from collectX's redeem dialog). A confirm step first,
- * since it can't be undone, then the result. Simulated until the vault contract is on BSC testnet.
+ * Redeem = burn the card, receive the stock inside. A confirm step first, since it can't be undone, then the result.
+ * On-chain cards burn through their pack vault on BSC testnet; demo cards are simulated.
  */
 export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -21,12 +26,32 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
   const payout = { amount: fmt(card.shares), symbol: card.ticker };
   const stock = `${payout.amount} ${payout.symbol}`;
 
+  const onchain = card.onchain;
+  const { address } = useAccount();
+  const client = usePublicClient({ chainId: appChain.id });
+  const { writeContractAsync } = useWriteContract();
+
   useEffect(() => { dialog.current?.showModal(); }, []);
+
+  async function burnOnchain() {
+    if (!onchain || !client) return;
+    setPhase("burning");
+    try {
+      const hash = await writeContractAsync({ chainId: appChain.id, address: onchain.vault, abi: packVaultAbi, functionName: "redeem", args: [BigInt(onchain.cardId)] });
+      await client.waitForTransactionReceipt({ hash });
+      redeemCard(card.id);
+      setPhase("done");
+    } catch (e) {
+      showToast({ kind: "error", title: "Redeem failed", detail: txErrorMessage(e) });
+      setPhase("confirm");
+    }
+  }
+
   useEffect(() => {
-    if (phase !== "burning") return;
+    if (phase !== "burning" || onchain) return;
     const t = setTimeout(() => { redeemCard(card.id); setPhase("done"); }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 900);
     return () => clearTimeout(t);
-  }, [phase, card.id]);
+  }, [phase, card.id, onchain]);
 
   const closable = phase !== "burning";
 
@@ -40,7 +65,7 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
     >
       <div className={revealUi.content}>
         {closable && <button type="button" className={revealUi.close} onClick={onClose} aria-label="Close"><XIcon /></button>}
-        <p className={dialogLabel}>Redeem · card #{card.id} · simulated</p>
+        <p className={dialogLabel}>Redeem · card #{onchain ? onchain.cardId : card.id} · {onchain ? "BSC testnet" : "simulated"}</p>
 
         {/* Burning shakes the card; once done it greys out and the stock takes over. */}
         <div className="mt-[26px] mb-[22px] flex items-center justify-center gap-[18px]" aria-hidden="true">
@@ -57,13 +82,13 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
           <h2 id="redeem-title" className={revealUi.heading}>
             {phase === "done" ? "Redeemed." : phase === "burning" ? "Burning the card…" : "Burn this card?"}
           </h2>
-          {phase === "done" && <p className={revealUi.body}>{`${stock} would be in your wallet now. Simulated until the vault is on BSC testnet.`}</p>}
+          {phase === "done" && <p className={revealUi.body}>{onchain ? `${stock} is in your wallet.` : `${stock} would be in your wallet now. Simulated.`}</p>}
         </div>
       </div>
       <div className={cn(dialogFooter, "flex flex-col")}>
         {phase === "confirm" && (
           <div className={revealUi.actions}>
-            <button type="button" className={cleanButton.solid} onClick={() => setPhase("burning")}>
+            <button type="button" className={cleanButton.solid} disabled={Boolean(onchain) && !address} onClick={() => (onchain ? void burnOnchain() : setPhase("burning"))}>
               Redeem for {stock} <ArrowUpRightIcon weight="bold" />
             </button>
             <button type="button" className={cn(cleanLink, "text-sm text-muted")} onClick={onClose}>Keep the card</button>
@@ -72,7 +97,7 @@ export function RedeemDialog({ card, onClose }: { card: OwnedCard; onClose: () =
         {phase === "done" && (
           <div className={revealUi.actions}>
             <Link className={cleanButton.solid} href="/app/trade" onClick={onClose}>
-              See {card.ticker}B price <ArrowUpRightIcon weight="bold" />
+              See {card.ticker} price <ArrowUpRightIcon weight="bold" />
             </Link>
             <button type="button" className={cn(cleanLink, "text-sm text-muted")} onClick={onClose}>Back to collection</button>
           </div>

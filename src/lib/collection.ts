@@ -25,6 +25,8 @@ export type OwnedCard = {
   redeemedAt?: number;
   /** Asking price (USD) while listed for sale. */
   listedUsd?: number;
+  /** On-chain card (BSC testnet): its pack vault, NFT id and the bStock amount it holds (wei). */
+  onchain?: { vault: `0x${string}`; cardId: string; amount: string };
 };
 
 const KEY = "bsctemp.collection.v1";
