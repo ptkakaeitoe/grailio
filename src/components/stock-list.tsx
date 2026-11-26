@@ -16,8 +16,10 @@ import { TradeToolbar, toolbarChip, tradeList, tradeTable } from "@/components/t
 import { StockLogo } from "@/components/stock-logo";
 
 const REFRESH_MS = 30_000;
-/** The quick views above the list: everything, your pack's stocks, or the biggest moves first. */
-type View = "all" | "pack" | "movers";
+/** The quick views above the list: everything, S&P 500 companies (and the SPY fund), or ETFs. */
+type View = "all" | "sp500" | "etf";
+/** bStocks whose company is in the S&P 500 (checked 2026-11-27), plus SPY, the index fund. */
+const SP500 = new Set(["TSLA", "NVDA", "MU", "AMD", "INTC", "MSFT", "META", "PLTR", "GOOGL", "QCOM", "COIN", "WDC", "GLW", "IBM", "AVGO", "HOOD", "ORCL", "AAPL", "AMZN", "DELL", "AMAT", "PYPL", "GS", "NFLX", "SMCI", "CRWD", "STX", "MRNA", "CRM", "HPE", "ADBE", "JPM", "LLY", "VST", "BRK.B", "GEV", "APP", "SPY"]);
 type Consensus = "any" | "healthy" | "degraded";
 type Sort = "featured" | "symbol" | "price" | "change" | "score" | "volume" | "gap";
 const AGREE_PCT = 1;
@@ -121,8 +123,8 @@ export function StockList() {
     const q = query.trim().toUpperCase();
     const list = snap.quotes.filter((r) => {
       if (q && !r.symbol.includes(q) && !String(r.id).includes(q) && !stockOf(underlying(r.symbol))?.name.toUpperCase().includes(q)) return false;
-      if (view === "pack" && !inPack.has(underlying(r.symbol))) return false;
-      if (view === "movers" && r.changePct == null) return false;
+      if (view === "sp500" && !SP500.has(underlying(r.symbol))) return false;
+      if (view === "etf" && stockOf(underlying(r.symbol))?.kind !== "etf") return false;
       if (consensus === "healthy") return r.consensusStatus === "HEALTHY";
       if (consensus === "degraded") return r.consensusStatus !== null && r.consensusStatus !== "HEALTHY";
       return true;
@@ -140,9 +142,7 @@ export function StockList() {
       volume: (a, b) => volume(b) - volume(a),
       gap: (a, b) => Math.abs(gapPct(b.price, cmc.byTicker.get(underlying(b.symbol))?.price) ?? -1) - Math.abs(gapPct(a.price, cmc.byTicker.get(underlying(a.symbol))?.price) ?? -1),
     };
-    // Movers: the biggest moves first, up or down, whatever the sort says.
-    const order = view === "movers" ? (a: Row, b: Row) => Math.abs(b.changePct ?? 0) - Math.abs(a.changePct ?? 0) : by[sort];
-    return [...list].sort(order);
+    return [...list].sort(by[sort]);
   }, [snap, query, view, consensus, sort, inPack, cmc.byTicker]);
 
   const agree = useMemo(() => {
@@ -174,10 +174,10 @@ export function StockList() {
   return (
     <div className="flex flex-col gap-5 desk:gap-6">
 
-      {/* Quick views (All, In pack, Movers), the status line, then search, a Filter panel (consensus, sort,
+      {/* Quick views (All, S&P 500, ETFs), the status line, then search, a Filter panel (consensus, sort,
           auto-refresh) and Refresh. */}
       <TradeToolbar
-        views={[["all", "All"], ["pack", "In pack"], ["movers", "Movers"]] as const}
+        views={[["all", "All"], ["sp500", "S&P 500"], ["etf", "ETFs"]] as const}
         view={view}
         onView={setView}
         status={status}
@@ -216,10 +216,10 @@ export function StockList() {
                   <button key={id} type="button" className={chip} aria-pressed={consensus === id} onClick={() => setConsensus(id)}>{label}</button>
                 ))}
               </div>
-              <p className="mt-4 mb-2 text-sm text-muted">Sort{view === "movers" && <span className="text-[12px]"> · Movers sorts by the size of the move</span>}</p>
+              <p className="mt-4 mb-2 text-sm text-muted">Sort</p>
               <div className="flex flex-wrap gap-1.5" role="group" aria-label="Sort">
                 {([["featured", "Featured"], ["symbol", "A–Z"], ["price", "Price"], ["change", "Change"], ["score", "Score"], ["volume", "Volume"], ["gap", "Atlas↔CMC gap"]] as const).map(([id, label]) => (
-                  <button key={id} type="button" className={chip} aria-pressed={sort === id} disabled={view === "movers"} onClick={() => setSort(id)}>{label}</button>
+                  <button key={id} type="button" className={chip} aria-pressed={sort === id} onClick={() => setSort(id)}>{label}</button>
                 ))}
               </div>
               <label className="mt-4 flex min-h-11 items-center justify-between gap-3 border-t border-border pt-3 text-sm">
