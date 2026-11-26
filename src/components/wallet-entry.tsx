@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Copy, KeyRound, LogOut, Play, Wallet, X } from "lucide-react";
+import { ArrowUpRight, Copy, KeyRound, LogOut, Wallet, X } from "lucide-react";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 
@@ -98,17 +98,12 @@ export function WalletEntry({ className = headerButton, disabled = false }: { cl
               <span className={cn("shrink-0 text-[13px]", available ? "text-up" : "text-muted")}>{available ? "Detected" : "Not found"}</span>
             </button>
           )}
-          <button type="button" className={walletRow} onClick={() => closeThen(dialog.current, startDemo)}>
-            <span className={rowIcon}><Play className="size-5" aria-hidden="true" /></span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-base">Try the demo</span>
-              <span className="block text-[13px] text-muted">No wallet needed</span>
-            </span>
-            <ArrowUpRight className="size-4 text-muted" aria-hidden="true" />
-          </button>
         </div>
       </div>
-      <p className="px-5 pb-5 text-[13px] text-muted phone:px-6">{appChain.name}</p>
+      <div className="flex items-center justify-between gap-3 px-5 pb-5 text-[13px] text-muted phone:px-6">
+        <span>{appChain.name}</span>
+        <button type="button" className="underline-offset-4 transition-colors hover:text-black hover:underline" onClick={() => closeThen(dialog.current, startDemo)}>Try without a wallet (simulated)</button>
+      </div>
     </dialog>
   </>;
 }

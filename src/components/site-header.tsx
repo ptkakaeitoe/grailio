@@ -32,14 +32,13 @@ function DemoChip() {
   return (
     <button type="button" onClick={exitDemo} aria-label="Exit demo mode"
       className="inline-flex h-10 items-center gap-1.5 rounded-md border border-border-strong px-2.5 text-sm lowercase transition-colors hover:border-black">
-      demo <span className="num text-muted max-phone:hidden">{demo.bnb.toFixed(3)} bnb</span> <X className="size-3.5" aria-hidden="true" />
+      <span className="max-phone:hidden">simulated</span><span className="phone:hidden">sim</span> <span className="num text-muted max-phone:hidden">{demo.bnb.toFixed(3)} bnb</span> <X className="size-3.5" aria-hidden="true" />
     </button>
   );
 }
 
 export function SiteHeader() {
   const path = usePathname();
-  const demo = useDemo();
   return (
     <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-[var(--header-h)] max-w-[1600px] items-center gap-4 px-[var(--gutter)] desk:grid desk:grid-cols-[1fr_auto_1fr] desk:gap-6">
@@ -56,7 +55,7 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-3 desk:justify-self-end">
           <DemoChip />
-          {!demo.active && <HeaderWallet />}
+          <HeaderWallet />
         </div>
       </div>
     </header>

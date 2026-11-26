@@ -1,9 +1,8 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 
 import { cleanButton, cn } from "@/components/clean-ui";
 import { MemeCoin } from "@/components/meme-coin";
+import { HeroPrimaryCta, HeroSecondaryCta } from "@/components/hero-cta";
 
 /** The "built on" row: each role on top, its projects (logo and name) underneath. Logos live in /public/brands. */
 const BUILT_ON = [
@@ -96,13 +95,9 @@ export function Hero() {
             Not your typical<br />memecoin.
           </h1>
           <div className={cn(buttonRow, "mt-4 phone:gap-4 max-desk:order-last desk:mt-[clamp(32px,7svh,72px)]")}>
-            <Link href="/app/packs" className={cn(cleanButton.solid, "lowercase desk:min-h-[58px]")}>
-              explore packs <ArrowUpRight weight="bold" className="arrow-nudge" aria-hidden="true" />
-            </Link>
+            <HeroPrimaryCta />
             {/* A translucent dark backing, so the button reads cleanly where it sits over a hand. */}
-            <Link href="/launch" className={cn(cleanButton.outline, "bg-white/70 lowercase backdrop-blur-[6px] desk:min-h-[58px]")}>
-              launch a coin <ArrowUpRight weight="bold" className="arrow-nudge" aria-hidden="true" />
-            </Link>
+            <HeroSecondaryCta className={cn(cleanButton.outline, "bg-white/70 lowercase backdrop-blur-[6px] desk:min-h-[58px]")} />
           </div>
         </div>
         {/* Phones: the artwork's own layout, the hands nudged 6% apart to make room for the coin, running edge to edge

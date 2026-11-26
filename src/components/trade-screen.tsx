@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowDownUp, ArrowLeft } from "lucide-react";
 import { StockLogo } from "@/components/stock-logo";
-import { cn } from "@/components/clean-ui";
+import { cleanButton, cn } from "@/components/clean-ui";
+import { TryDemoLink } from "@/components/get-started";
+import { WalletEntry } from "@/components/wallet-entry";
+import { useAccount } from "wagmi";
 import { startDemo, tradeDemo, tradeDemoBnb, useDemo } from "@/lib/demo";
 import { demoTokenPrice } from "@/lib/market";
 import { launchMcap, simOf, simTokenHistory, simTokenPrice, TOTAL_SUPPLY, tradeTokenSim, useDemoLaunches, type LaunchSim } from "@/lib/demo-launch";
@@ -19,6 +22,7 @@ import { showToast } from "@/lib/toast";
 import { ago, usd } from "@/lib/format";
 import type { AtlasQuote } from "@/lib/atlas";
 import { gapPct, useCmc } from "@/lib/use-cmc";
+import { CoinAvatar } from "@/components/coin-avatar";
 
 /*
  * Trade one asset, minimal: the price and a chart on top, a swap box below (pay BNB, receive the asset; flip to sell).
@@ -121,6 +125,7 @@ function PoolPanel({ coin, sim, price }: { coin: MarketCoin; sim: LaunchSim; pri
 
 export function TradeScreen({ asset }: { asset: Asset }) {
   const demo = useDemo();
+  const wallet = useAccount();
   const coins = useMarketCoins();
   const sims = useDemoLaunches();
   const [period, setPeriod] = useState<(typeof PERIODS)[number]>("24H");
@@ -216,12 +221,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         {isBnb ? (
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f0b90b] text-[13px] font-semibold text-[#111]" aria-hidden="true">BNB</span>
         ) : stock ? <StockLogo ticker={stock.ticker} size={40} /> : (
-          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full text-[#fff]" style={{ background: coin!.tone }} aria-hidden="true">
-            {coin!.config.image ? (
-              // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
-              <img src={coin!.config.image} alt="" className="size-full object-cover" />
-            ) : coin!.name[0]}
-          </span>
+          <CoinAvatar seed={coin!.slug || coin!.name} tone={coin!.tone} image={coin!.config.image} className="size-10 rounded-full" />
         )}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[22px] leading-tight">{symbol}</h1>
@@ -305,11 +305,18 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         </div>
       </section>
 
-      <button type="button" onClick={submit} disabled={liveTicker ? !valid || short || !marketPrice || Boolean(trade.busy) : demo.active && (!valid || short || !price || !bnbUsd)}
-        className="min-h-12 rounded-md bg-black text-base text-white transition-opacity disabled:opacity-40">
-        {liveTicker && trade.busy ? trade.busy : !liveTicker && !demo.active ? "Try the demo" : !valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`}
-      </button>
-      <p className="-mt-3 text-center text-sm text-muted">{liveTicker ? "BSC testnet" : "Simulated · BSC testnet"}</p>
+      {!liveTicker && !demo.active && !wallet.isConnected ? (
+        <div className="flex flex-col items-center gap-3">
+          <WalletEntry className={cn(cleanButton.solid, "min-h-12 w-full justify-center")} />
+          <TryDemoLink />
+        </div>
+      ) : (
+        <button type="button" onClick={submit} disabled={liveTicker ? !valid || short || !marketPrice || Boolean(trade.busy) : demo.active && (!valid || short || !price || !bnbUsd)}
+          className="min-h-12 rounded-md bg-black text-base text-white transition-opacity disabled:opacity-40">
+          {liveTicker && trade.busy ? trade.busy : !liveTicker && !demo.active ? "Try it simulated" : !valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`}
+        </button>
+      )}
+      <p className="-mt-3 text-center text-sm text-muted">{liveTicker ? "BSC testnet · real transaction" : "Simulated"}</p>
         </div>
       </div>
     </div>

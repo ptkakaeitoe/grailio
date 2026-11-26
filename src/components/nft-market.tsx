@@ -92,7 +92,7 @@ export function NftMarket() {
       <span>{all.length} cards for sale</span>
       {cheapest !== null && <><span aria-hidden="true">·</span><span>from {usd(cheapest)}</span></>}
       <span aria-hidden="true">·</span>
-      <span>paid in BNB</span>
+      <span>Simulated</span>
     </>
   );
 
@@ -138,7 +138,7 @@ export function NftMarket() {
                 <button type="button" className={cn(action, "border border-border hover:border-black")} onClick={() => listCard(ownId, 0)}>Unlist</button>
               ) : (
                 <button type="button" className={cn(action, "bg-black text-white hover:opacity-90")} disabled={demo.active && !bnbUsd} onClick={() => buy(l)}>
-                  {demo.active ? (bnbUsd ? `Buy · ${(l.priceUsd / bnbUsd).toFixed(4)} BNB` : "Loading…") : "Try the demo"}
+                  {demo.active ? (bnbUsd ? `Buy · ${(l.priceUsd / bnbUsd).toFixed(4)} BNB` : "Loading…") : "Try it simulated"}
                 </button>
               )}
             </li>

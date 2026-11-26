@@ -13,7 +13,8 @@ import { listCard, useCollection, type OwnedCard } from "@/lib/collection";
 import { ListDialog } from "@/components/list-dialog";
 import { CardStakeButton } from "@/components/stake-panel";
 import { CollectionStaking } from "@/components/staking-pool-panel";
-import { startDemo, useDemo } from "@/lib/demo";
+import { useDemo } from "@/lib/demo";
+import { ConnectOrDemo } from "@/components/get-started";
 import { RARITIES } from "@/lib/pack";
 import { usd } from "@/lib/format";
 
@@ -40,8 +41,8 @@ export function CollectionPanel() {
       <CollectionWelcome
         label="Your collection"
         title="Your cards live here."
-        body="Try the demo to open packs now."
-        action={<button type="button" className={cleanButton.solid} onClick={startDemo}>Try the demo <ArrowUpRightIcon weight="bold" className="arrow-nudge" /></button>}
+        body="Connect a wallet on BSC testnet, or try it simulated."
+        action={<ConnectOrDemo />}
       />
     );
   }
@@ -49,7 +50,7 @@ export function CollectionPanel() {
   if (held.length === 0 && redeemed.length === 0) {
     return (
       <CollectionWelcome
-        label="Demo collection"
+        label="Demo collection · simulated"
         title="Your first find awaits."
         body="Open a pack and its card lands here."
         action={<Link className={cleanButton.solid} href="/app/packs">Browse packs <ArrowUpRightIcon weight="bold" className="arrow-nudge" /></Link>}
@@ -60,6 +61,7 @@ export function CollectionPanel() {
 
   return (
     <>
+      <p className="mb-4 inline-flex items-center gap-2 rounded-[4px] bg-surface-muted px-2.5 py-1 text-[13px] text-muted">Demo cards · Simulated</p>
       <CollectionStaking />
       {held.length > 0 ? (
         <ul className="grid grid-cols-2 gap-x-4 gap-y-8 phone:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] desk:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] desk:gap-x-6 desk:gap-y-10 wide:grid-cols-6">

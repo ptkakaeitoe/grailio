@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useAccount } from "wagmi";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, RefreshCw, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import type { AtlasSnapshot } from "@/lib/atlas";
@@ -52,6 +53,7 @@ export function StockList() {
   const demo = useDemo();
   // Real trades on the testnet trade market when a wallet is connected and the stock is listed there.
   const trade = useTradeMarket();
+  const wallet = useAccount();
 
   // Quick buy: one size for every row's Buy button (e.g. 0.1 BNB or 10 USDT), remembered in this browser.
   const [quick, setQuick] = useState<{ amount: string; currency: QuickCurrency }>({ amount: QUICK_DEFAULT.BNB, currency: "BNB" });
@@ -81,10 +83,14 @@ export function StockList() {
       return;
     }
     if (!bnbUsd) return;
+    if (!demo.active && !wallet.isConnected) {
+      showToast({ kind: "error", title: "Connect a wallet to trade", detail: "Or use “Try without a wallet” above (simulated)." });
+      return;
+    }
     if (!demo.active) startDemo();
     if (buyDemo(tick, quickAmount, quick.currency, price, bnbUsd)) {
       const got = quick.currency === "BNB" ? (quickAmount * bnbUsd) / price : quickAmount / price;
-      showToast({ kind: "success", title: `Bought ${got.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${tick}`, detail: `${quick.amount} ${quick.currency} · simulated · BSC testnet` });
+      showToast({ kind: "success", title: `Bought ${got.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${tick}`, detail: `${quick.amount} ${quick.currency} · Simulated` });
     } else {
       showToast({ kind: "error", title: `Not enough ${quick.currency}`, detail: "Lower the quick-buy amount or reset the demo wallet." });
     }

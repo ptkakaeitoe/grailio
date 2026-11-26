@@ -5,6 +5,7 @@ import { StockList } from "@/components/stock-list";
 import { TokenList } from "@/components/token-list";
 import { NftMarket } from "@/components/nft-market";
 import { cn } from "@/components/clean-ui";
+import { GetStarted } from "@/components/get-started";
 
 const TABS = [
   { id: "stocks", label: "bStocks" },
@@ -33,6 +34,7 @@ export function TradeWorkspace() {
           ))}
         </div>
       </header>
+      <GetStarted />
       <div role="tabpanel">{tab === "stocks" ? <StockList /> : tab === "tokens" ? <TokenList /> : <NftMarket />}</div>
     </div>
   );
