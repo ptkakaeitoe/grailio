@@ -10,6 +10,9 @@ import { startDemo } from "@/lib/demo";
 import { useWalletAuth } from "@/lib/wallet-auth";
 import { NetworkSwitch } from "@/components/network-switch";
 
+/** The header's wallet buttons: the hero's outlined button, a touch smaller on phones. */
+const headerButton = cn(cleanButton.outline, "shrink-0 max-phone:min-h-10 max-phone:px-3");
+
 /**
  * Closes a dialog, then runs `action` once its close transition has played. For actions that unmount the dialog
  * (starting demo hides the header's Connect; signing out swaps the wallet button), so it isn't torn out mid-animation.
@@ -51,7 +54,7 @@ const walletRow = "flex min-h-[72px] w-full items-center gap-3.5 rounded-lg bord
 const rowIcon = "grid size-10 shrink-0 place-items-center rounded-full bg-surface-muted";
 
 /** "Connect": a centred wallet-connect modal with the network switch and the ways in. */
-export function WalletEntry({ className = "btn btn-ghost shrink-0", disabled = false }: { className?: string; disabled?: boolean }) {
+export function WalletEntry({ className = headerButton, disabled = false }: { className?: string; disabled?: boolean }) {
   const { mode, available, login } = useWalletAuth();
   const dialog = useRef<HTMLDialogElement>(null);
   const close = () => dialog.current?.close();
@@ -111,7 +114,7 @@ export function HeaderWallet() {
   if (!isConnected || !address) return <WalletEntry disabled={!auth.ready || auth.restoring} />;
   if (chainId !== appChain.id) {
     return (
-      <button type="button" className="btn btn-ghost shrink-0 text-warning" disabled={isPending} onClick={() => switchChain({ chainId: appChain.id })}>
+      <button type="button" className={cn(headerButton, "text-warning")} disabled={isPending} onClick={() => switchChain({ chainId: appChain.id })}>
         {isPending ? "Switching…" : <>Switch<span className="max-phone:hidden"> network</span></>}
       </button>
     );
@@ -119,7 +122,7 @@ export function HeaderWallet() {
   const short = `${address.slice(0, 6)}…${address.slice(-4)}`;
   const row = "flex w-full items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-surface-muted";
   return <>
-    <button type="button" className="btn btn-ghost shrink-0 max-phone:px-2.5" aria-haspopup="dialog" aria-label={`Wallet ${address}`} onClick={(e) => open(e.currentTarget)}>
+    <button type="button" className={cn(headerButton, "max-phone:px-2.5")} aria-haspopup="dialog" aria-label={`Wallet ${address}`} onClick={(e) => open(e.currentTarget)}>
       <Wallet className="size-4" aria-hidden="true" /><span className="num max-phone:hidden">{short}</span>
     </button>
     <DropPanel panel={panel} label="wallet" title="Your wallet">
