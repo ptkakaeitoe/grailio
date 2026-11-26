@@ -1,4 +1,4 @@
-# [Project name TBD]: stock packs for memecoins
+# Grailio: stock packs for memecoins
 
 **Memecoin tax buys real stocks. Holders win them back in packs.**
 

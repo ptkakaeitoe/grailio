@@ -132,7 +132,7 @@ export function WalletProviders({ children }: { children: ReactNode }) {
         appearance: {
           theme: "light",
           accentColor: "#000000",
-          landingHeader: "Sign in to bsctemp",
+          landingHeader: "Sign in to Grailio",
           loginMessage: "Use your email or Google account and we’ll make a wallet for you, or connect the wallet you already have.",
           showWalletLoginFirst: false,
           walletList: ["detected_ethereum_wallets", "metamask", "coinbase_wallet", "rainbow", "wallet_connect"],

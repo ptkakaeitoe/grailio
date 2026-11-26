@@ -9,7 +9,7 @@ export function SiteFooter() {
   return (
     <footer className="mx-auto w-full max-w-[1440px] px-[var(--gutter)] desk:mt-32 desk:border-t desk:border-border">
       <div className="hidden flex-wrap items-center justify-between gap-8 pt-6 pb-6 desk:flex">
-        <Link href="/" className="wordmark text-2xl">bsctemp</Link>
+        <Link href="/" className="wordmark text-2xl">grailio</Link>
         <nav aria-label="Footer navigation" className="order-3 flex w-full flex-wrap gap-x-[22px] gap-y-2 desk:order-none desk:w-auto desk:gap-x-[34px]">
           <Link href="/app/packs" className={cleanLink}>packs</Link>
           <Link href="/app/stocks" className={cleanLink}>stocks</Link>

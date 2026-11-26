@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", weight: "700" });
 
 export const metadata: Metadata = {
-  title: "Stock Packs",
+  title: { default: "Grailio", template: "%s · Grailio" },
   description: "Memecoin trade fees buy stocks, sealed into packs for holders.",
 };
 

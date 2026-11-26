@@ -43,7 +43,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-hair bg-[rgb(17_17_17/.82)] pt-[env(safe-area-inset-top)] backdrop-blur-[14px]">
       <div className="mx-auto flex h-[var(--header-h)] max-w-[1600px] items-center gap-4 px-[var(--gutter)] desk:grid desk:grid-cols-[1fr_auto_1fr] desk:gap-6">
         <Link href="/" className="inline-flex shrink-0 items-center gap-2 desk:justify-self-start">
-          <span className="wordmark text-[24px] desk:text-[26px]">bsctemp</span>
+          <span className="wordmark text-[24px] desk:text-[26px]">grailio</span>
           <span className="rounded-[3px] bg-black px-1.5 py-[3px] font-mono text-[10px] leading-none font-medium tracking-[0.08em] text-white uppercase">testnet</span>
         </Link>
         <nav aria-label="Main navigation" className="hidden items-center gap-5 desk:flex wide:gap-[34px]">
