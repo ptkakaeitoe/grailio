@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { parseEventLogs } from "viem";
+import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { ArrowLeft, ArrowRight, Check, ImagePlus, RotateCcw, Search, X } from "lucide-react";
 import { StockLogo } from "@/components/stock-logo";
 import { cleanButton, cleanChip, cleanField, cn } from "@/components/clean-ui";
@@ -9,11 +11,16 @@ import { publishPack } from "@/lib/published-packs";
 import { showToast } from "@/lib/toast";
 import { BASKET_PRESETS, DEFAULT_SIZES, TIER_PRESETS, evenSplit, resetPack, risksFor, updatePack, usePack, type Launchpad } from "@/lib/pack";
 import { PRICED_STOCKS, stockOf } from "@/lib/stocks";
+import { appChain } from "@/lib/chain";
+import { useDemo } from "@/lib/demo";
+import { OPENFOUR, STOCK_ADDRESSES, coreAbi, migrateModuleAbi } from "@/lib/onchain";
+import { txErrorMessage } from "@/lib/tx-error";
 
 /*
  * Launch a coin with its pack, in three steps: 1 the coin (picture, name, ticker, colour), 2 up to four bStocks for
- * its pack, 3 risk style and launchpad. Launching lists the pack on the marketplace (in this browser; the on-chain
- * launch is simulated until the contracts are on BSC testnet).
+ * its pack, 3 risk style and launchpad. On Four.meme with a wallet connected, launching creates the coin on our
+ * OpenFour testnet (the app server signs the create request for the wallet, which sends it). Flap, or demo mode, lists
+ * the pack in this browser only, simulated, until Flap enables our launcher factory.
  */
 
 const STEPS = ["Coin", "Stocks", "Risk"] as const;
@@ -84,11 +91,51 @@ export function LaunchFlow() {
       ) : name[0]}
     </span>
   );
+  const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient({ chainId: appChain.id });
+  const { writeContractAsync } = useWriteContract();
+  const demo = useDemo();
+  const [busy, setBusy] = useState("");
+  const onchain = c.launchpad === "four" && isConnected && !demo.active;
+  const unlisted = c.basket.filter((b) => !STOCK_ADDRESSES[b.ticker]).map((b) => b.ticker);
+
   const launch = () => {
+    if (onchain) { void launchOnchain(); return; }
     const slug = publishPack({ ...c, name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
     showToast({ kind: "success", title: `${name} launched`, detail: `Simulated on ${padName} · BSC testnet` });
     router.push(`/app/packs/${slug}`);
   };
+
+  async function launchOnchain() {
+    if (!address || !publicClient) return;
+    try {
+      setBusy("Preparing…");
+      const res = await fetch("/api/openfour/create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ creator: address, name, symbol: c.ticker, basket: c.basket, style: tier?.id ?? "classic" }),
+      });
+      const signed = await res.json();
+      if (!res.ok) throw new Error(signed.error ?? "Couldn't prepare the launch");
+      setBusy("Confirm in your wallet…");
+      const hash = await writeContractAsync({ chainId: appChain.id, address: OPENFOUR.core, abi: coreAbi, functionName: "createToken", args: [signed.createArgs, signed.signature] });
+      setBusy("Creating…");
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const created = parseEventLogs({ abi: coreAbi, logs: receipt.logs, eventName: "TokenCreated" })[0];
+      if (!created) throw new Error("The coin wasn't created");
+      const packVault = await publicClient.readContract({ address: created.args.migrateModule, abi: migrateModuleAbi, functionName: "packVault" });
+      const slug = publishPack({
+        ...c, name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES,
+        onchain: { pad: "four", token: created.args.token, saleVault: created.args.vault, packVault, createTx: hash },
+      });
+      showToast({ kind: "success", title: `${name} is live`, detail: "Four.meme · BSC testnet" });
+      router.push(`/app/packs/${slug}`);
+    } catch (e) {
+      showToast({ kind: "error", title: "Launch failed", detail: txErrorMessage(e) });
+    } finally {
+      setBusy("");
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-[560px] flex-col gap-6 pt-4 desk:pt-8">
@@ -254,6 +301,13 @@ export function LaunchFlow() {
               <button key={p.id} type="button" className={cn(option, "justify-center")} aria-pressed={c.launchpad === p.id} onClick={() => updatePack({ launchpad: p.id })}>{p.name}</button>
             ))}
           </div>
+          {onchain && unlisted.length > 0 ? (
+            <p className="mt-2 text-sm text-down" role="alert">Not on testnet yet: {unlisted.join(", ")}</p>
+          ) : (
+            <p className="mt-2 text-sm text-muted">
+              {onchain ? "On-chain · 0.05 BNB sale, 10 packs" : c.launchpad === "four" && !demo.active ? "Simulated · connect a wallet to launch on-chain" : "Simulated"}
+            </p>
+          )}
         </div>
       </>}
 
@@ -267,7 +321,7 @@ export function LaunchFlow() {
         {step < STEPS.length - 1 ? (
           <button type="button" className={cn(cleanButton.solid, "flex-1 justify-center gap-2")} disabled={!done[step]} onClick={() => setStep(step + 1)}>Next <ArrowRight className="size-4" /></button>
         ) : (
-          <button type="button" className={cn(cleanButton.solid, "flex-1 justify-center")} disabled={!done.every(Boolean)} onClick={launch}>Launch on {padName}</button>
+          <button type="button" className={cn(cleanButton.solid, "flex-1 justify-center")} disabled={!done.every(Boolean) || Boolean(busy) || (onchain && unlisted.length > 0)} onClick={launch}>{busy || `Launch on ${padName}`}</button>
         )}
       </div>
     </div>
