@@ -14,7 +14,8 @@ import {PackVaultFactory} from "./PackVaultFactory.sol";
 ///         Strict checks in `_newLauncher` (rejected, never defaulted):
 ///           - `data` is exactly one canonical `PackConfig`;
 ///           - `vaultFactory == pairedVaultFactory`, fixed at construction;
-///           - the basket passes the paired vault factory's `checkBasket`;
+///           - the quote (native or ERC20) is supported by the paired vault factory, and the basket passes its
+///             `checkBasket`;
 ///           - pack price, presale size, raise, window and seed share within bounds;
 ///           - non-empty name, symbol, salt.
 ///
@@ -26,15 +27,16 @@ contract PackLauncherFactory is LauncherFactoryBase {
     address public immutable pairedVaultFactory;
 
     uint256 public constant MIN_PACK_PRICE = 0.001 ether;
-    uint256 public constant MAX_PACK_PRICE = 10 ether;
+    uint256 public constant MAX_PACK_PRICE = 1_000 ether; // quote units: room for USD-priced packs
     uint256 public constant MAX_PACKS = 10_000;
     uint256 public constant MIN_RAISE = 0.1 ether;
-    uint256 public constant MAX_RAISE = 10_000 ether;
+    uint256 public constant MAX_RAISE = 1_000_000 ether;
     uint256 public constant MAX_SALE_DURATION = 30 days;
     uint16 public constant MAX_SEED_BPS = 5000;
 
     error ZeroAddress();
     error WrongVaultFactory(address got, address expected);
+    error UnsupportedQuote(address quote);
     error PackPriceOutOfRange(uint256 got);
     error PacksOutOfRange(uint256 got);
     error RaiseOutOfRange(uint256 got);
@@ -67,6 +69,7 @@ contract PackLauncherFactory is LauncherFactoryBase {
         if (keccak256(abi.encode(c)) != keccak256(data)) revert InvalidData();
 
         if (c.vaultFactory != pairedVaultFactory) revert WrongVaultFactory(c.vaultFactory, pairedVaultFactory);
+        if (!PackVaultFactory(pairedVaultFactory).isQuoteTokenSupported(c.quoteToken)) revert UnsupportedQuote(c.quoteToken);
         PackVaultFactory(pairedVaultFactory).checkBasket(c.basket);
         if (c.packPrice < MIN_PACK_PRICE || c.packPrice > MAX_PACK_PRICE) revert PackPriceOutOfRange(c.packPrice);
         if (c.packsForSale == 0 || c.packsForSale > MAX_PACKS) revert PacksOutOfRange(c.packsForSale);
@@ -92,18 +95,19 @@ contract PackLauncherFactory is LauncherFactoryBase {
 
     function launcherDataSchema() external pure override returns (LauncherDataSchema memory schema) {
         schema.description =
-            "Stock pack presale: packs sell before the coin exists. When they sell out the coin launches; most of the raise seeds the pool, the rest seeds a paired vault's stock pool, and buyers split 50% of the supply by packs held. 80% of the trading tax then refills the stock pool, packs open into card NFTs that hold tokenized stocks, and burning a card takes the stock out. If the packs do not sell out, buyers are refunded.";
-        FieldDescriptor[] memory f = new FieldDescriptor[](10);
+            "Stock pack presale: packs sell before the coin exists, in BNB or a supported ERC20 quote. When they sell out the coin launches; most of the raise seeds the pool, the rest funds the presale packs' prizes, and buyers split 30% of the supply by packs held. The tax then goes 50% to the stock pool, 30% to card stakers, 15% to the creator and 5% to the platform. Packs open into card NFTs holding tokenized stocks; stake cards to earn tax, burn them to take the stock. If the packs do not sell out, buyers are refunded.";
+        FieldDescriptor[] memory f = new FieldDescriptor[](11);
         f[0] = FieldDescriptor("name", "string", "Coin name", 0);
         f[1] = FieldDescriptor("symbol", "string", "Coin symbol", 0);
         f[2] = FieldDescriptor("meta", "string", "Metadata URI", 0);
         f[3] = FieldDescriptor("salt", "bytes32", "Vanity-mined launch salt", 0);
-        f[4] = FieldDescriptor("packPrice", "uint256", "BNB per pack (0.001 to 10)", 18);
-        f[5] = FieldDescriptor("packsForSale", "uint256", "Presale packs (1 to 10000)", 0);
-        f[6] = FieldDescriptor("saleDuration", "uint256", "Presale window in seconds (max 30 days)", 0);
-        f[7] = FieldDescriptor("vaultFactory", "address", "Must be the paired PackVaultFactory", 0);
-        f[8] = FieldDescriptor("seedBps", "uint16", "Share of the raise for the stock pool (0-5000)", 0);
-        f[9] = FieldDescriptor("basket", "bytes", "(market, stocks[], weights[], style)", 0);
+        f[4] = FieldDescriptor("quoteToken", "address", "address(0) for BNB, or a supported ERC20 quote", 0);
+        f[5] = FieldDescriptor("packPrice", "uint256", "Quote per pack (0.001 to 1000)", 18);
+        f[6] = FieldDescriptor("packsForSale", "uint256", "Presale packs (1 to 10000)", 0);
+        f[7] = FieldDescriptor("saleDuration", "uint256", "Presale window in seconds (max 30 days)", 0);
+        f[8] = FieldDescriptor("vaultFactory", "address", "Must be the paired PackVaultFactory", 0);
+        f[9] = FieldDescriptor("seedBps", "uint16", "Share of the raise for presale pack prizes (0-5000)", 0);
+        f[10] = FieldDescriptor("basket", "bytes", "(market, stocks[], weights[])", 0);
         schema.fields = f;
     }
 }
