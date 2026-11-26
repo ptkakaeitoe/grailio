@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowUpRightIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import { SealedPack } from "@/components/launch/pack-shop";
 import { ClassicPack, lineOf } from "@/components/launch/classic-pack-shop";
@@ -13,6 +13,11 @@ import { useLaunchSim } from "@/lib/launch/demo-launch";
 import { customPack } from "@/lib/launch/design";
 import { usd } from "@/lib/launch/format";
 import { CoinAvatar } from "@/components/launch/coin-avatar";
+import { TokenIcon } from "@/components/token-icon";
+import { usePublicClient } from "wagmi";
+import { appChain } from "@/lib/launch/chain";
+import { SALE, saleVaultAbi } from "@/lib/launch/onchain";
+import { launcherAbi } from "@/lib/launch/flap";
 
 /*
  * Launched packs (testnet): every launched coin's packs and every collection published from Launch, as compact cards
@@ -56,12 +61,12 @@ function Sleeve({ i, n, children }: { i: number; n: number; children: React.Reac
   );
 }
 
-function CardFoot({ title, meta, avatar }: { title: string; meta: string; avatar?: React.ReactNode }) {
+function CardFoot({ title, meta, avatar, badge }: { title: string; meta: ReactNode; avatar?: React.ReactNode; badge?: ReactNode }) {
   return (
     <div className="flex min-h-11 items-center gap-2.5 px-0.5 pt-2.5">
       {avatar}
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-base leading-tight font-normal">{title}</h3>
+        <h3 className="flex min-w-0 items-center gap-2 text-base leading-tight font-normal"><span className="truncate">{title}</span>{badge}</h3>
         <p className="tabular-nums mt-0.5 truncate text-[13px] text-muted">{meta}</p>
       </div>
       <ArrowUpRightIcon weight="bold" className="size-4 shrink-0 text-muted transition-colors group-hover:text-black" aria-hidden="true" />
@@ -69,14 +74,52 @@ function CardFoot({ title, meta, avatar }: { title: string; meta: string; avatar
   );
 }
 
+/** An on-chain coin's sale progress, read from its sale vault (Four.meme) or launcher (Flap). null until read. */
+function useOnchainSale(coin: MarketCoin) {
+  const client = usePublicClient({ chainId: appChain.id });
+  const oc = coin.config.onchain;
+  const [sale, setSale] = useState<{ live: boolean; sold: number; forSale: number } | null>(null);
+  useEffect(() => {
+    if (!client || !oc) return;
+    let on = true;
+    const read = oc.pad === "flap" && oc.launcher
+      ? Promise.all([
+          client.readContract({ address: oc.launcher, abi: launcherAbi, functionName: "launched" }),
+          client.readContract({ address: oc.launcher, abi: launcherAbi, functionName: "packsSold" }),
+          client.readContract({ address: oc.launcher, abi: launcherAbi, functionName: "packsForSale" }),
+        ]).then(([launched, sold, forSale]) => ({ live: launched as boolean, sold: Number(sold), forSale: Number(forSale) }))
+      : Promise.all([
+          client.readContract({ address: oc.saleVault, abi: saleVaultAbi, functionName: "phase" }),
+          client.readContract({ address: oc.saleVault, abi: saleVaultAbi, functionName: "remainingForSale" }),
+        ]).then(([phase, remaining]) => {
+          const forSale = Number(SALE.saleAmount / SALE.tokensPerPack);
+          return { live: Number(phase) >= 3, sold: forSale - Number((remaining as bigint) / SALE.tokensPerPack), forSale };
+        });
+    read.then((v) => { if (on) setSale(v); }, () => {});
+    return () => { on = false; };
+  }, [client, oc]);
+  return sale;
+}
+
+const phaseBadge = (live: boolean) => (
+  <span className={cn("inline-flex h-5 shrink-0 items-center gap-1 rounded px-1.5 text-[11px]", live ? "bg-up/15 text-up" : "bg-surface-muted text-muted")}>
+    <span className={cn("size-1 rounded-full", live ? "bg-up" : "bg-black")} aria-hidden="true" />{live ? "Live" : "Presale"}
+  </span>
+);
+
 function CoinCard({ coin }: { coin: MarketCoin }) {
   const sim = useLaunchSim(coin);
+  const chainSale = useOnchainSale(coin);
   const offered = coin.config.sizes.filter((s) => coin.packs.some((p) => p.size === s.id));
   const sizes = (offered.length ? offered : coin.config.sizes).slice(0, 3);
   const custom = customPack(coin.config);
-  const status = !coin.config.onchain && sim.phase === "presale"
-    ? `Presale · ${sim.packsSold}/${sim.packsForSale} packs`
-    : `Pool ${compact(coin.config.onchain ? coin.poolUsd : sim.pool)}`;
+  const onchain = Boolean(coin.config.onchain);
+  // On-chain coins show what the chain says; simulated ones their simulation.
+  const live = onchain ? Boolean(chainSale?.live) : sim.phase === "live";
+  const status = onchain
+    ? chainSale ? (chainSale.live ? "Packs open" : `${chainSale.sold}/${chainSale.forSale} sold`) : "…"
+    : live ? `Pool ${compact(sim.pool)}` : `${sim.packsSold}/${sim.packsForSale} sold`;
+  const pad = coin.config.onchain?.pad ?? coin.launchpad;
   return (
     <li className="min-w-0">
       <Link href={`/packs/${coin.slug}`} className={card} aria-label={`${coin.name} packs`}>
@@ -89,7 +132,13 @@ function CoinCard({ coin }: { coin: MarketCoin }) {
         </div>
         <CardFoot
           title={coin.name}
-          meta={`${status} · ${PAD_NAME[coin.launchpad]}`}
+          badge={phaseBadge(live)}
+          meta={
+            <span className="inline-flex items-center gap-1.5">
+              {status} ·
+              {onchain ? <><TokenIcon symbol={pad === "flap" ? "FLAP" : "FOUR"} className="size-3.5" /> {PAD_NAME[pad as keyof typeof PAD_NAME] ?? "On-chain"}</> : "Simulated"}
+            </span>
+          }
           avatar={
             <CoinAvatar seed={coin.slug || coin.name} tone={coin.tone} image={coin.config.image} style={custom?.style} className="size-9 rounded-full" />
           }
