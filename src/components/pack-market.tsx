@@ -12,6 +12,7 @@ import { useMarketCoins } from "@/lib/published-packs";
 import { useLaunchSim } from "@/lib/demo-launch";
 import { customPack } from "@/lib/design";
 import { usd } from "@/lib/format";
+import { CoinAvatar } from "@/components/coin-avatar";
 
 /*
  * Pack marketplace: a Classic | New-gen selector at the top (kept in the URL as ?tab=classic; New-gen is the default),
@@ -100,12 +101,7 @@ function CoinCard({ coin }: { coin: MarketCoin }) {
           title={coin.name}
           meta={`${status} · ${PAD_NAME[coin.launchpad]}`}
           avatar={
-            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full text-base text-[#fff]" style={custom?.style ?? { background: coin.tone }} aria-hidden="true">
-              {coin.config.image ? (
-                // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
-                <img src={coin.config.image} alt="" className="size-full object-cover" />
-              ) : coin.name[0]}
-            </span>
+            <CoinAvatar seed={coin.slug || coin.name} tone={coin.tone} image={coin.config.image} style={custom?.style} className="size-9 rounded-full" />
           }
         />
       </Link>
@@ -143,12 +139,7 @@ function ClassicCollectionCard({ coin }: { coin?: MarketCoin }) {
           title={line.name}
           meta={`From ${from} · ${line.basket.length} ${line.basket.length === 1 ? "stock" : "stocks"}`}
           avatar={
-            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full text-base text-[#fff]" style={coin ? custom?.style ?? { background: coin.tone } : { background: "#111", boxShadow: "inset 0 0 0 1px #fff3" }} aria-hidden="true">
-              {coin?.config.image ? (
-                // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the collection
-                <img src={coin.config.image} alt="" className="size-full object-cover" />
-              ) : line.name[0]}
-            </span>
+            <CoinAvatar seed={coin ? coin.slug || coin.name : line.name} tone={coin?.tone} image={coin?.config.image} style={coin ? custom?.style : undefined} className="size-9 rounded-full" />
           }
         />
       </Link>

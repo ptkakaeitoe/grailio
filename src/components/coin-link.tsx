@@ -8,6 +8,7 @@ import { cn } from "@/components/clean-ui";
 import { SEED_SHARE, TAX_SPLIT, launchMcap, packSizeOf, useLaunchSim } from "@/lib/demo-launch";
 import { usd } from "@/lib/format";
 import type { MarketCoin } from "@/lib/market";
+import { CoinAvatar, TickerBadge } from "@/components/coin-avatar";
 
 /*
  * How a coin and its packs feed each other, as a small loop on both the pack page and the coin's trade page:
@@ -43,13 +44,8 @@ export function CoinPackLink({ market, page }: { market: MarketCoin; page: "pack
   const taxPct = ((market.config.buyTax ?? 3) + (market.config.sellTax ?? 3)) / 2;
 
   const coinInner = <>
-    <span className="grid size-10 place-items-center overflow-hidden rounded-full text-base text-[#fff]" style={{ background: market.tone }}>
-      {market.config.image ? (
-        // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
-        <img src={market.config.image} alt="" className="size-full object-cover" />
-      ) : market.name[0]}
-    </span>
-    <span className="w-full truncate text-sm">{ticker}</span>
+    <CoinAvatar seed={market.slug || market.name} tone={market.tone} image={market.config.image} className="size-10 rounded-full" />
+    <TickerBadge ticker={ticker} tone={market.tone} />
     <span className="num w-full truncate text-[11px] text-muted">{presale ? `${compact(mcap)} at launch` : `${compact(mcap)} mcap`}</span>
   </>;
 

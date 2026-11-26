@@ -7,6 +7,7 @@ import { TradeToolbar, tradeList, tradeTable } from "@/components/trade-toolbar"
 import { useMarketCoins } from "@/lib/published-packs";
 import type { MarketCoin } from "@/lib/market";
 import { useDemoLaunches } from "@/lib/demo-launch";
+import { CoinAvatar } from "@/components/coin-avatar";
 
 const PAD_NAME = { flap: "Flap", four: "Four.meme" } as const;
 type View = "all" | keyof typeof PAD_NAME;
@@ -14,12 +15,7 @@ const compact = (v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(v >= 10000 ? 
 
 function CoinMark({ coin, size }: { coin: MarketCoin; size: "sm" | "md" }) {
   return (
-    <span className={cn("grid shrink-0 place-items-center overflow-hidden rounded-full text-[#fff]", size === "sm" ? "size-6 text-[11px]" : "size-9 text-sm")} style={{ background: coin.tone }} aria-hidden="true">
-      {coin.config.image ? (
-        // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
-        <img src={coin.config.image} alt="" className="size-full object-cover" />
-      ) : coin.name[0]}
-    </span>
+    <CoinAvatar seed={coin.slug || coin.name} tone={coin.tone} image={coin.config.image} className={cn("rounded-full", size === "sm" ? "size-6" : "size-9")} />
   );
 }
 
