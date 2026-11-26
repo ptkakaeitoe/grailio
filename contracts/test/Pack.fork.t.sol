@@ -25,6 +25,8 @@ contract PackBSCTestForkTest is ForkBase {
     PackLauncherFactory internal launcherFactory;
 
     uint256 internal constant PRICE = 0.5 ether;
+    /// @dev Atlas's on-chain BNB/USD feed on BNB Testnet.
+    address internal constant ATLAS_BNB_USD = 0x3957d289ee9C38272377786787ea34F9dd29788D;
     uint256 internal constant PACKS = 10;
 
     function _addrs() internal pure override returns (ForkAddresses.Addrs memory) {
@@ -32,9 +34,9 @@ contract PackBSCTestForkTest is ForkBase {
     }
 
     function _deploy() internal {
-        market = new MockStockMarket(address(this));
-        nvda = market.list("NVIDIA bStock", "NVDAB", 0.25 ether);
-        amd = market.list("AMD bStock", "AMDB", 0.2 ether);
+        market = new MockStockMarket(address(this), ATLAS_BNB_USD);
+        nvda = market.list("NVIDIA bStock", "NVDAB", 150 ether);
+        amd = market.list("AMD bStock", "AMDB", 120 ether);
 
         uint256 nonce = vm.getNonce(address(this));
         address predicted = vm.computeCreateAddress(address(this), nonce + 1);

@@ -8,6 +8,23 @@ import {MockBStock} from "src/stocks/MockBStock.sol";
 import {PackVault} from "src/packs/PackVault.sol";
 import {PackBasket, PackOdds} from "src/packs/PackTypes.sol";
 
+/// @dev Chainlink-style feed with 8 decimals, standing in for Atlas BNB/USD.
+contract MockFeed {
+    int256 public answer = 500e8;
+
+    function decimals() external pure returns (uint8) {
+        return 8;
+    }
+
+    function set(int256 a) external {
+        answer = a;
+    }
+
+    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80) {
+        return (1, answer, block.timestamp, block.timestamp, 1);
+    }
+}
+
 /// @dev Stands in for `PackLauncher`: the vault only reads these.
 contract FakeLauncher {
     address public creator;
@@ -29,6 +46,7 @@ contract FakeLauncher {
 /// @notice The vault on its own (no Portal): packs, solvency, reveals, cards and redemption.
 contract PackVaultTest is Test {
     MockStockMarket market;
+    MockFeed feed;
     address nvda;
     address amd;
     FakeLauncher launcher;
@@ -40,10 +58,12 @@ contract PackVaultTest is Test {
     uint256 constant PRICE = 0.01 ether;
 
     function setUp() public {
-        market = new MockStockMarket(owner);
+        feed = new MockFeed();
+        market = new MockStockMarket(owner, address(feed));
         vm.startPrank(owner);
-        nvda = market.list("NVIDIA bStock", "NVDAB", 0.25 ether);
-        amd = market.list("AMD bStock", "AMDB", 0.2 ether);
+        // At $500 per BNB: $125 = 0.25 BNB, $100 = 0.2 BNB.
+        nvda = market.list("NVIDIA bStock", "NVDAB", 125 ether);
+        amd = market.list("AMD bStock", "AMDB", 100 ether);
         vm.stopPrank();
 
         launcher = new FakeLauncher(makeAddr("creator"));
@@ -216,6 +236,29 @@ contract PackVaultTest is Test {
         uint256 avgBps = paid * 10_000 / (200 * PRICE);
         assertGt(avgBps, 7500);
         assertLt(avgBps, 10_500);
+    }
+
+    function test_marketPricesFollowAtlasBnbUsd() public {
+        assertEq(market.bnbUsd(), 500 ether);
+        assertEq(market.priceWei(nvda), 0.25 ether);
+        feed.set(1000e8); // BNB doubles: the stock costs half as much BNB
+        assertEq(market.priceWei(nvda), 0.125 ether);
+
+        address[] memory s = new address[](1);
+        s[0] = nvda;
+        uint256[] memory p = new uint256[](1);
+        p[0] = 250 ether;
+        vm.prank(owner);
+        market.setUsdPrices(s, p);
+        assertEq(market.priceWei(nvda), 0.25 ether);
+
+        vm.prank(alice);
+        vm.expectRevert();
+        market.setUsdPrices(s, p);
+
+        feed.set(0);
+        vm.expectRevert(MockStockMarket.BadFeed.selector);
+        market.priceWei(nvda);
     }
 
     function test_tokenURIAndName() public {
