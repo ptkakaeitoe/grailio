@@ -24,7 +24,7 @@ const SETS: ArtSet[] = ["fable", "saga", "mythos"];
 const PREVIEW_SIZE = DEFAULT_SIZES.find((s) => s.id === "standard") ?? DEFAULT_SIZES[0];
 
 const label = "mb-2 block text-sm text-muted";
-const option = "flex min-h-14 items-center gap-3 rounded-md border border-border px-4 text-left transition-colors hover:border-border-strong aria-pressed:border-black aria-pressed:bg-surface-muted";
+const option = "flex min-h-14 items-center gap-3 rounded-md border border-border px-4 text-left transition-colors hover:border-border-strong aria-pressed:border-black aria-pressed:bg-black aria-pressed:text-white";
 const tile = "relative grid h-14 place-items-center overflow-hidden rounded-md border-2 border-border text-xs capitalize transition-[border-color] hover:border-border-strong aria-pressed:border-black";
 const swatch = "grid h-11 place-items-center rounded-md border-2 border-transparent transition-[border-color] aria-pressed:border-black";
 
@@ -137,7 +137,7 @@ export function DesignStep({ c, name }: { c: PackConfig; name: string }) {
           <div className="grid grid-cols-2 rounded-md bg-surface-muted p-1" role="tablist" aria-label="Design part">
             {(["pack", "cards"] as const).map((t) => (
               <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => { setTab(t); setError(""); }}
-                className="min-h-11 rounded-[5px] text-sm text-muted capitalize transition-colors aria-selected:bg-white aria-selected:text-black">{t}</button>
+                className="min-h-11 rounded-[5px] text-sm text-muted capitalize transition-colors aria-selected:bg-black aria-selected:text-white">{t}</button>
             ))}
           </div>
 
