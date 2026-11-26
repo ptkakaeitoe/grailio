@@ -3,7 +3,7 @@
 import { cn } from "@/components/clean-ui";
 
 /**
- * Testnet / Mainnet beta. This app is the testnet; mainnet is a separate deployment (the `mainnet/` app), linked by
+ * Testnet / Mainnet beta. This app is the testnet; mainnet is a separate app and repo (grailio-mainnet), linked by
  * NEXT_PUBLIC_MAINNET_URL (in development it falls back to the mainnet dev server on port 3300). Without a URL the
  * mainnet side shows as coming soon.
  */

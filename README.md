@@ -108,6 +108,10 @@ The same vault, attached as an OpenFour launch mechanism.
 
 Cournot's output is an assessment of market pricing, not investment advice.
 
+## Mainnet beta
+
+The BNB Smart Chain mainnet app is its own repo, `grailio-mainnet`. The Testnet / Mainnet switch in Connect and in the footer links the two (`NEXT_PUBLIC_MAINNET_URL` here, `NEXT_PUBLIC_TESTNET_URL` there).
+
 ## Tech
 
 Next.js 16, React 19, TypeScript, Tailwind CSS 4, viem.
