@@ -12,14 +12,15 @@ const TESTNET_URL = process.env.NEXT_PUBLIC_TESTNET_URL || (process.env.NODE_ENV
 /** On the testnet build (lib/network.ts) the switch points the other way: Testnet is current, Mainnet is a link. */
 const MAINNET_URL = process.env.NEXT_PUBLIC_MAINNET_URL || "https://www.grailio.xyz";
 
-const pill = "inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm transition-colors";
+/** A segment in the track (as the trade page's category tabs): the current one is a solid block. */
+const pill = "inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-[4px] px-4 text-sm transition-colors";
 
 /** `wide`: two equal halves across the full width (the connect modal). */
 export function NetworkSwitch({ className, wide = false }: { className?: string; wide?: boolean }) {
-  const half = wide ? "justify-center min-h-10" : "";
+  const half = wide ? "min-h-10" : "";
   if (IS_TESTNET) {
     return (
-      <div role="group" aria-label="Network" className={cn(wide ? "grid w-full grid-cols-2" : "inline-flex items-center", "gap-1 rounded-full border border-border p-1", className)}>
+      <div role="group" aria-label="Network" className={cn(wide ? "grid w-full grid-cols-2" : "inline-flex items-center", "gap-1 rounded-md bg-surface-muted p-1", className)}>
         <span aria-current="true" className={cn(pill, half, "bg-black text-white")}>
           <span className="size-1.5 rounded-full bg-up" aria-hidden="true" />
           Testnet
@@ -29,7 +30,7 @@ export function NetworkSwitch({ className, wide = false }: { className?: string;
     );
   }
   return (
-    <div role="group" aria-label="Network" className={cn(wide ? "grid w-full grid-cols-2" : "inline-flex items-center", "gap-1 rounded-full border border-border p-1", className)}>
+    <div role="group" aria-label="Network" className={cn(wide ? "grid w-full grid-cols-2" : "inline-flex items-center", "gap-1 rounded-md bg-surface-muted p-1", className)}>
       {TESTNET_URL ? (
         <a href={TESTNET_URL} className={cn(pill, half, "text-muted hover:text-black")}>Testnet</a>
       ) : (
