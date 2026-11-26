@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Copy, KeyRound, LogOut, Wallet, X } from "lucide-react";
+import { ArrowUpRight, Copy, KeyRound, LogOut, Play, Wallet, X } from "lucide-react";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 
@@ -46,25 +46,20 @@ export function WalletEntry({ className = "btn btn-ghost shrink-0", disabled = f
     <button type="button" className={className} disabled={disabled} aria-haspopup="dialog" onClick={(e) => open(e.currentTarget)}>
       <Wallet className="size-4 max-phone:hidden" aria-hidden="true" /><span>Connect<span className="max-phone:hidden"> wallet</span></span>
     </button>
-    <DropPanel panel={panel} label="get started" title="Connect a wallet">
+    <DropPanel panel={panel} label="bsc testnet" title="Connect a wallet">
       <div className="p-6">
         <h2 className="display text-3xl">Your next move.</h2>
-        <p className="mt-4 text-sm leading-relaxed text-muted">Connect to buy, open and redeem packs on {appChain.name}.</p>
-      </div>
-      <div className={cn(dialogFooter, "flex flex-col")}>
-        <button type="button" className={cn(cleanButton.solid, "w-full justify-between")} disabled={!available} onClick={() => { close(); login(); }}>
-          Connect wallet <ArrowUpRight className="size-5" />
-        </button>
-        <button type="button" className={cn(cleanButton.outline, "w-full justify-between")} onClick={() => { close(); startDemo(); }}>
-          Try the demo <ArrowUpRight className="size-5" />
-        </button>
-        {mode === "privy" ? (
-          <small className={note}>Email, Google, or the wallet you already use.</small>
-        ) : available ? (
-          <small className={note}>Browser wallet only (email sign-in isn’t set up here).</small>
-        ) : (
-          <small className={note}>No browser wallet found. Install MetaMask or another wallet to connect (email sign-in isn’t set up here).</small>
-        )}
+        <div className="mt-6 grid grid-cols-2 gap-2.5">
+          <button type="button" className="flex min-h-24 flex-col items-start justify-between gap-3 rounded-md bg-black p-4 text-left text-base text-white transition-opacity hover:opacity-90 disabled:opacity-40" disabled={!available} onClick={() => { close(); login(); }}>
+            <Wallet className="size-5" aria-hidden="true" />
+            Connect wallet
+          </button>
+          <button type="button" className="flex min-h-24 flex-col items-start justify-between gap-3 rounded-md border border-border-strong p-4 text-left text-base transition-colors hover:border-black" onClick={() => { close(); startDemo(); }}>
+            <Play className="size-5" aria-hidden="true" />
+            Try the demo
+          </button>
+        </div>
+        {mode !== "privy" && !available && <small className={note}>No browser wallet found.</small>}
       </div>
     </DropPanel>
   </>;
