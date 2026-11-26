@@ -12,8 +12,8 @@ interface IRevenuePool {
     function addRevenue(uint256 amount) external;
 }
 
-/// @title Collect market: peer-to-peer card sales, priced in AVAX or USDC.
-/// @notice Each listing is priced in the currency the seller picks, AVAX or
+/// @title Grailio market: peer-to-peer card sales, priced in BNB or USDC.
+/// @notice Each listing is priced in the currency the seller picks, BNB or
 /// USDC. The buyer pays in that currency and the seller receives it directly;
 /// nothing is swapped.
 ///
@@ -28,9 +28,9 @@ interface IRevenuePool {
 /// own valid listing.
 ///
 /// Fees: USDC fees go to `treasury`; when it is the pack pool (`treasuryIsPool`)
-/// they are added as revenue there, shared out by its `distribute`. AVAX fees collect here (the pack
-/// pool can't take AVAX) and the owner sends them out with `withdrawAvaxFees`.
-/// That is the only AVAX this contract ever holds.
+/// they are added as revenue there, shared out by its `distribute`. BNB fees collect here (the pack
+/// pool can't take BNB) and the owner sends them out with `withdrawAvaxFees`.
+/// That is the only BNB this contract ever holds.
 contract CollectMarket is Ownable2Step, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -47,7 +47,7 @@ contract CollectMarket is Ownable2Step, ReentrancyGuard {
     bool public treasuryIsPool;
     /// 1% by default, on both currencies.
     uint256 public feeBps = 100;
-    /// AVAX fees collected, withdrawable by the owner.
+    /// BNB fees collected, withdrawable by the owner.
     uint256 public avaxFees;
     /// Collections that can be listed (CollectPacks cards).
     mapping(address nft => bool) public listable;
@@ -115,7 +115,7 @@ contract CollectMarket is Ownable2Step, ReentrancyGuard {
 
     // ---- listing -----------------------------------------------------------
 
-    /// Lists a card you own, priced in AVAX (`inAvax`) or USDC. Nothing moves
+    /// Lists a card you own, priced in BNB (`inAvax`) or USDC. Nothing moves
     /// until it sells. Needs `setApprovalForAll(market, true)` on the collection.
     function list(address nft, uint256 tokenId, uint256 price, bool inAvax, uint64 expiresAt) external {
         if (!listable[nft]) revert NotListable(nft);
@@ -157,8 +157,8 @@ contract CollectMarket is Ownable2Step, ReentrancyGuard {
 
     // ---- buying ------------------------------------------------------------
 
-    /// Buys a listing in its own currency. AVAX listings: send exactly the price
-    /// as msg.value. USDC listings: approve this market first, send no AVAX.
+    /// Buys a listing in its own currency. BNB listings: send exactly the price
+    /// as msg.value. USDC listings: approve this market first, send no BNB.
     /// `inAvax` and `maxPrice` guard against the seller changing currency or
     /// price just before. The seller gets the price minus the fee.
     function buy(address nft, uint256 tokenId, bool inAvax, uint256 maxPrice) external payable nonReentrant {
@@ -262,7 +262,7 @@ contract CollectMarket is Ownable2Step, ReentrancyGuard {
         emit TreasurySet(newTreasury, isPool);
     }
 
-    /// Sends all collected AVAX fees to `to`.
+    /// Sends all collected BNB fees to `to`.
     function withdrawAvaxFees(address payable to) external onlyOwner nonReentrant returns (uint256 amount) {
         if (to == address(0)) revert InvalidTreasury();
         amount = avaxFees;

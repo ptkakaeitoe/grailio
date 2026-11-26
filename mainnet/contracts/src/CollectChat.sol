@@ -11,8 +11,8 @@ interface ICardHoldings {
     function heldOf(address owner, uint256 assetId) external view returns (uint256);
 }
 
-/// @notice On-chain community chat for Collect. Messages are events on
-/// Avalanche; the contract enforces who may post in each room: open rooms let
+/// @notice On-chain community chat for Grailio. Messages are events on
+/// BNB Chain; the contract enforces who may post in each room: open rooms let
 /// any registered wallet post, card rooms need at least one card of that
 /// room's token (e.g. a BTC card for the BTC room).
 ///

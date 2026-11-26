@@ -9,7 +9,7 @@ interface IPoints {
     function pastTotalPoints(uint256 blockNumber) external view returns (uint256);
 }
 
-/// @title Collect DAO: proposals and votes weighted by Collect points.
+/// @title Grailio DAO: proposals and votes weighted by Grailio points.
 /// @notice Signal governance for the beta. A vote's weight is the points the
 /// voter held at the block before the proposal was made, so points earned
 /// mid-vote don't count. Results are recorded on chain; nothing executes

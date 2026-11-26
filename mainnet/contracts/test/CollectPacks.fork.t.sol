@@ -7,9 +7,10 @@ import {CollectPacks} from "../src/CollectPacks.sol";
 import {CollectStaking, ICollectCards} from "../src/CollectStaking.sol";
 import {MainnetConfig as M} from "../script/MainnetConfig.sol";
 
-/// Runs against a local fork of Avalanche mainnet: real USDC, Chainlink feeds and
-/// DEX pools. Nothing is broadcast. Run with:
-///   AVALANCHE_RPC_URL=https://api.avax.network/ext/bc/C/rpc forge test --match-contract Fork -vv
+/// Runs against a local fork of BNB Smart Chain mainnet: real USDC, Chainlink feeds and
+/// DEX pools. Nothing is broadcast. Until CollectPacks handles 18-decimal USDC,
+/// MainnetConfig.deploy reverts here on purpose (see MainnetConfig.sol). Run with:
+///   BSC_RPC_URL=https://bsc-dataseed.bnbchain.org forge test --match-contract Fork -vv
 contract CollectPacksForkTest is Test {
     CollectPacks packs;
     address owner = makeAddr("owner");
@@ -18,7 +19,7 @@ contract CollectPacksForkTest is Test {
     IERC20 usdc = IERC20(M.USDC);
 
     function setUp() public {
-        string memory rpc = vm.envOr("AVALANCHE_RPC_URL", string(""));
+        string memory rpc = vm.envOr("BSC_RPC_URL", string(""));
         if (bytes(rpc).length == 0) {
             vm.skip(true);
             return;
@@ -46,7 +47,7 @@ contract CollectPacksForkTest is Test {
 
     /// Every asset's real route fills a $4 card within its Chainlink guard.
     function test_everyAssetFillsOnRealPools() public {
-        string[5] memory names = ["BTC.b", "WETH.e", "WAVAX", "LINK.e", "JOE"];
+        string[5] memory names = ["BTCB", "ETH", "WBNB", "LINK", "CAKE"];
         for (uint256 a; a < packs.assetCount(); ++a) {
             // Leave only this asset active so the roll must pick it.
             vm.startPrank(owner);

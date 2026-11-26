@@ -15,7 +15,7 @@ import {CollectStaking, ICollectCards} from "../src/CollectStaking.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {MainnetConfig} from "./MainnetConfig.sol";
 
-/// Deploys the Collect contracts on Avalanche: packs (three $1 tiers, five tokens; Ember on sale),
+/// Deploys the Grailio contracts on BNB Smart Chain: packs (three $1 tiers, five tokens; Ember on sale),
 /// staking, market, points, DAO, chat, names, profiles.
 ///
 /// Revenue split (pack edge + market USDC fees), set from env at deploy:
@@ -25,9 +25,9 @@ import {MainnetConfig} from "./MainnetConfig.sol";
 /// The rest stays in the pack pool for the owner to withdraw. Change later with setShares.
 ///
 /// Dry run (simulates against mainnet, sends nothing):
-///   forge script script/DeployCollectPacks.s.sol --rpc-url avalanche --account collect-deployer
+///   forge script script/DeployCollectPacks.s.sol --rpc-url bsc --account grailio-deployer
 /// Real deploy:
-///   forge script script/DeployCollectPacks.s.sol --rpc-url avalanche --account collect-deployer --broadcast --verify
+///   forge script script/DeployCollectPacks.s.sol --rpc-url bsc --account grailio-deployer --broadcast --verify
 ///
 /// The deployer stays owner unless NEW_OWNER is set; then ownership is offered to it
 /// and NEW_OWNER (e.g. a Safe) must call acceptOwnership() to take over.
@@ -47,7 +47,7 @@ contract DeployCollectPacks is Script {
         packs.setTierActive(1, false);
         packs.setTierActive(2, false);
         MainnetConfig.addAssets(packs);
-        // Card market: AVAX or USDC listings; USDC fees are pack-pool revenue.
+        // Card market: BNB or USDC listings; USDC fees are pack-pool revenue.
         market = new CollectMarket(IERC20(MainnetConfig.USDC), address(packs), deployer);
         market.setListable(address(packs), true);
         market.setTreasury(address(packs), true); // USDC fees count as pool revenue
@@ -86,7 +86,7 @@ contract DeployCollectPacks is Script {
 
         // Only a real broadcast updates the app's deployment file.
         if (vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
-            string memory path = "../deployments/43114.json";
+            string memory path = "../deployments/56.json";
             vm.writeJson(vm.toString(address(packs)), path, ".collectPacks");
             vm.writeJson(vm.toString(block.number), path, ".deployBlocks.collectPacks");
             vm.writeJson(vm.toString(address(market)), path, ".collectMarket");
@@ -117,8 +117,8 @@ contract DeployCollectPacks is Script {
     {
         c.chat = new CollectChat(deployer);
         c.chat.addRoom("The lounge", CollectChat.Gate.Open, address(0), 0, 0, false);
-        // Room names are the card tickers, in asset order (MainnetConfig.addAssets).
-        string[5] memory tickers = ["$BTC", "$ETH", "$WAVAX", "$LINK", "$JOE"];
+        // Room names are "$" + the card ticker (the app strips the "$" to find the card), in asset order (MainnetConfig.addAssets).
+        string[5] memory tickers = ["$BTC", "$ETH", "$WBNB", "$LINK", "$CAKE"];
         for (uint256 i; i < tickers.length; ++i) {
             c.chat.addRoom(tickers[i], CollectChat.Gate.Card, address(staking), i, 1, true);
         }

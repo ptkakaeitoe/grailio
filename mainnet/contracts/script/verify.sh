@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
-# Verify every deployed Collect contract on Snowtrace (Routescan), reading the
-# addresses from ../deployments/43114.json. Safe to re-run: verified contracts
-# are skipped by the explorer. Constructor arguments are read from the
+# Verify every deployed Grailio contract on BscScan (Etherscan API v2, chain 56),
+# reading the addresses from ../deployments/56.json. Safe to re-run: verified
+# contracts are skipped by the explorer. Constructor arguments are read from the
 # deployment transactions (--guess-constructor-args), so it needs an RPC.
-# Snowtrace only (--verifier etherscan): nothing is sent to other services.
 #
-#   cd contracts && AVALANCHE_RPC_URL=https://api.avax.network/ext/bc/C/rpc ./script/verify.sh
+#   cd contracts && BSC_RPC_URL=https://bsc-dataseed.bnbchain.org ETHERSCAN_API_KEY=... ./script/verify.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-: "${AVALANCHE_RPC_URL:?set AVALANCHE_RPC_URL (any Avalanche C-Chain RPC)}"
-# Routescan doesn't need a real key; any value works.
-export SNOWTRACE_API_KEY="${SNOWTRACE_API_KEY:-verifyContract}"
+: "${BSC_RPC_URL:?set BSC_RPC_URL (any BNB Smart Chain RPC)}"
+: "${ETHERSCAN_API_KEY:?set ETHERSCAN_API_KEY (an Etherscan API v2 key)}"
 
-deployment="../deployments/43114.json"
+deployment="../deployments/56.json"
 address_of() {
   python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1])).get(sys.argv[2], ""))' "$deployment" "$1"
 }
@@ -40,10 +38,9 @@ for pair in "${pairs[@]}"; do
   fi
   echo "verify $key at $address"
   forge verify-contract "$address" "$contract" \
-    --chain 43114 \
+    --chain 56 \
     --verifier etherscan \
-    --verifier-url "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan" \
-    --rpc-url "$AVALANCHE_RPC_URL" \
+    --rpc-url "$BSC_RPC_URL" \
     --guess-constructor-args \
     --watch
 done

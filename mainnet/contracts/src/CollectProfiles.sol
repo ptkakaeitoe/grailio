@@ -7,7 +7,7 @@ interface IStakes {
     function stakes(uint256 tokenId) external view returns (address owner, uint64 since);
 }
 
-/// @notice Profiles for Collect: a picture cropped from a card you own, a
+/// @notice Profiles for Grailio: a picture cropped from a card you own, a
 /// short bio and social handles. The username lives in CollectNames; the app
 /// joins the two.
 /// @dev Ownership counts cards in your wallet, or staked for you if a staking
@@ -63,7 +63,7 @@ contract CollectProfiles {
         staking = staking_;
     }
 
-    /// Uses one of your Collect cards as your picture.
+    /// Uses one of your Grailio cards as your picture.
     function setAvatar(uint256 tokenId, uint16 x, uint16 y, uint16 zoom) external {
         if (x > FULL || y > FULL || zoom < MIN_ZOOM || zoom > MAX_ZOOM) revert BadCrop();
         if (!owns(msg.sender, tokenId)) revert NotYourCard(tokenId);
@@ -115,7 +115,7 @@ contract CollectProfiles {
         return _socials[account];
     }
 
-    /// @notice The account's picture: which NFT (the Collect cards contract for
+    /// @notice The account's picture: which NFT (the Grailio cards contract for
     /// card avatars), token and crop. `ok` is false if unset or it has left them.
     function avatarOf(address account)
         public

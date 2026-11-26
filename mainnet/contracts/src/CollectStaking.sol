@@ -15,7 +15,7 @@ interface ICollectCards is IERC721 {
     function heldOf(address owner, uint256 assetId) external view returns (uint256);
 }
 
-/// @title Collect staking: stake cards, earn a share of Collect's USDC revenue.
+/// @title Grailio staking: stake cards, earn a share of Grailio's USDC revenue.
 /// @notice
 /// Rewards are real revenue only: CollectPacks.distribute() sends the staking
 /// share here as USDC. Nothing is minted and there is no fixed rate.

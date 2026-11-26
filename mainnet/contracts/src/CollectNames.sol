@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-/// @notice On-chain usernames for Collect. One name per wallet, one wallet per
+/// @notice On-chain usernames for Grailio. One name per wallet, one wallet per
 /// name. Names are 3–16 characters of a–z, 0–9 and underscore, so they stay
 /// unambiguous (no look-alike capitals or unicode). Changing your name frees
 /// the old one; `clearName` gives it up.

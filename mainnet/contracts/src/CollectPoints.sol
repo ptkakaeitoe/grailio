@@ -5,7 +5,7 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-/// @title Collect points: non-transferable activity points used for DAO votes.
+/// @title Grailio points: non-transferable activity points used for DAO votes.
 /// @notice Not a token. There is no transfer, approve or sell: points can only
 /// be awarded by approved contracts (the pack contract gives one per $1 pack)
 /// and stay with the wallet that earned them. Balances are checkpointed by

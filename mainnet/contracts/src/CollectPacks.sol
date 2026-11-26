@@ -47,7 +47,7 @@ interface IV2Router {
     ) external returns (uint256[] memory amounts);
 }
 
-/// @title Collect packs: $1 USDC mystery packs whose cards hold real Avalanche tokens.
+/// @title Grailio packs: $1 USDC mystery packs whose cards hold real BNB Chain tokens.
 /// @notice
 /// Buy: pay a tier's price in USDC. The pack commits to the next block's hash.
 /// Open: that hash rolls a token and a rarity. A card NFT is minted and, in the
