@@ -5,7 +5,7 @@ import type { ArtSet } from "@/lib/launch/cards";
 
 /*
  * Your cards, simulated in this browser until the vault contract is on BSC testnet: every opened pack adds a card;
- * redeeming burns it and records the bStocks it paid out. Same idea as collectX's demo collection.
+ * redeeming burns it and records the bStocks it paid out.
  */
 
 export type OwnedCard = {

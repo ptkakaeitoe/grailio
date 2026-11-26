@@ -1,8 +1,8 @@
 import { stockOf } from "@/lib/launch/stocks";
 
 /*
- * Card identities (ported from collectX's lib/cards.ts). The art follows the pack size and the rarity; the bStock a
- * card holds only sets its label, logo and stripe. Art: collectX's Fable, Saga and Mythos sets, ordered Common →
+ * Card identities. The art follows the pack size and the rarity; the bStock a
+ * card holds only sets its label, logo and stripe. Art: the Fable, Saga and Mythos sets, ordered Common →
  * Legendary, with no labels or frame (StockCardFront draws those).
  */
 
@@ -47,7 +47,7 @@ const SETS: Record<ArtSet, { name: string; src: string }[]> = {
 /** Each pack size opens one art set. */
 export const SET_FOR_SIZE: Record<string, ArtSet> = { starter: "fable", standard: "saga", grail: "mythos" };
 
-/** Pack cover art per set (collectX's pack covers). */
+/** Pack cover art per set. */
 export const PACK_COVER: Record<ArtSet, string> = {
   fable: "/art/packs/fable-cover-v1.jpg",
   saga: "/art/packs/saga-cover-v1.jpg",

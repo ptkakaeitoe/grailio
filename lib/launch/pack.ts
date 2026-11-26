@@ -23,7 +23,7 @@ export type CardDesign = {
 };
 
 /**
- * Pack sizes x risk tiers (the Graily model). The size sets the price; the risk tier sets how the payout swings.
+ * Pack sizes x risk tiers. The size sets the price; the risk tier sets how the payout swings.
  *  - Low: every rarity pays the same share of the price (0.95x). Fully paid by the buyer, so it never needs the pool.
  *  - Medium / High: payouts swing by rarity and average a little less (about 0.91x); the swing is paid by the stock
  *    pool, so a risky pack is only sold while the pool could pay its top prize in full.
