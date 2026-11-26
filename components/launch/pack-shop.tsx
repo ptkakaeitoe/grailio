@@ -47,7 +47,7 @@ const statValue = "tabular-nums mt-0.5 block truncate text-base";
 const pctOf = (v: number) => `${Math.round(v * 100)}%`;
 const sticky = "mt-6 flex items-center justify-between gap-3 border-t border-border pt-5 max-desk:sticky max-desk:bottom-[calc(0px+env(safe-area-inset-bottom))] max-desk:z-20 max-desk:-mx-[18px] max-desk:bg-white max-desk:px-[18px] max-desk:py-3";
 
-export function SealedPack({ size, coin, color, className, style }: { size: PackSize; coin: string; color?: PackColor; className?: string; style?: CSSProperties }) {
+export function SealedPack({ size, coin, color, className, style, priceLabel }: { size: PackSize; coin: string; color?: PackColor; className?: string; style?: CSSProperties; /** e.g. "0.005 TBNB"; defaults to the configured USD price. */ priceLabel?: string }) {
   const p = color ?? PALETTE[size.id] ?? PALETTE.standard;
   const shape = size.id === "grail" ? "rounded-[45%_45%_6px_6px]" : "rounded-full";
   return (
@@ -55,7 +55,7 @@ export function SealedPack({ size, coin, color, className, style }: { size: Pack
       <div className={seal} />
       <div className="flex flex-1 flex-col items-center justify-between px-5 pt-5 pb-4">
         <span className="max-w-full truncate text-[13px] tracking-[0.12em] uppercase">{coin}</span>
-        <span className="mt-[9px] text-[7px] tracking-[0.14em] opacity-75">STOCK PACK · {usd(size.price, 0)}</span>
+        <span className="mt-[9px] text-[7px] tracking-[0.14em] opacity-75">STOCK PACK · {priceLabel ?? usd(size.price, 0)}</span>
         <div className={cn("relative my-4 grid size-[84px] place-items-center border border-current before:absolute before:inset-[5px] before:rounded-[inherit] before:border before:border-current before:opacity-40 [&_svg]:size-[44%]", shape)}>
           <svg viewBox="0 0 100 100" aria-hidden="true"><EmblemGlyph emblem={coinArt(coin).emblem} tilt={coinArt(coin).tilt} /></svg>
         </div>
