@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // No floating dev badge: it covers the phone tab bar in previews and screenshots.
+  devIndicators: false,
   /**
    * @coinbase/cdp-sdk reaches wagmi's dependency tree via the Base Account
    * connector, which RainbowKit imports unconditionally. It references its
