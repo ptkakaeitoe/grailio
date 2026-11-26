@@ -91,7 +91,6 @@ export function PackMarket() {
             <h1 className="text-[32px] leading-[1.1] font-normal tracking-[-0.02em] desk:text-[clamp(40px,4.5vw,56px)]">Packs</h1>
             <span className="num text-sm text-muted desk:hidden">[ {String(MARKET_COINS.length).padStart(2, "0")} coins ]</span>
           </div>
-          <p className="mt-2 max-w-[440px] text-base text-muted desk:mt-4">Every coin launches with its own packs. Pick a coin, then a pack.</p>
         </div>
       </header>
 
@@ -116,7 +115,6 @@ export function PackMarket() {
       {coins.length ? coins.map((c) => <Shelf key={c.slug} coin={c} />) : (
         <p className="border-t border-border py-12 text-center text-base text-muted">No coins match &ldquo;{query.trim()}&rdquo;.</p>
       )}
-      <p className="border-t border-border pt-6 text-sm text-muted">Demo coins and pools. Purchases are simulated until launches are live on BSC testnet.</p>
     </div>
   );
 }

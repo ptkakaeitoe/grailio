@@ -88,7 +88,6 @@ export function LaunchForm() {
           <h1 id="launch-title" className="min-w-0 text-[28px] leading-[1.15] font-normal tracking-[-0.02em] phone:text-[36px]">Launch a coin</h1>
           <span className="shrink-0 text-sm text-muted">[ bsc testnet ]</span>
         </div>
-        <p className="mt-3 max-w-[560px] text-base leading-normal text-muted">Name it, pick a launchpad, and it launches with its pack vault: trading tax buys the basket below, and holders open packs that pay out in those stocks.</p>
       </header>
 
       <div className="mt-8 grid grid-cols-1 border-t border-border desk:mt-10 desk:grid-cols-[minmax(0,1fr)_360px] wide:grid-cols-[minmax(0,1fr)_400px]">
@@ -180,9 +179,9 @@ export function LaunchForm() {
           </section>
 
           {/* Phones: the note sits above, and the Launch button sticks just above the tab bar while the form scrolls. */}
-          <p className="-mb-4 border-t border-border pt-6 text-[13px] text-muted desk:hidden">BSC testnet · simulated until the launch contracts are connected</p>
+          <p className="-mb-4 border-t border-border pt-6 text-[13px] text-muted desk:hidden">Simulated · BSC testnet</p>
           <div className="flex items-center justify-between gap-4 desk:border-t desk:border-border desk:pt-6 max-desk:sticky max-desk:bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] max-desk:z-20 max-desk:-mx-[var(--gutter)] max-desk:-mb-8 max-desk:bg-white max-desk:px-[var(--gutter)] max-desk:py-3">
-            <p className="text-[13px] text-muted max-desk:hidden">BSC testnet · simulated until the launch contracts are connected</p>
+            <p className="text-[13px] text-muted max-desk:hidden">Simulated · BSC testnet</p>
             <button type="submit" className={cn(cleanButton.solid, "shrink-0 justify-between px-5 max-desk:w-full")} disabled={!ready}>Launch on {padName} <ArrowUpRight className="size-4" /></button>
           </div>
         </form>
