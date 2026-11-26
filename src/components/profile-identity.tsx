@@ -133,7 +133,7 @@ function ProfileEditor({ storeKey, profile, cards, initials, onClose }: { storeK
   }
 
   return (
-    <dialog ref={dialog} className={cn(cleanDrawerRight, "w-[min(420px,calc(100vw-16px))]")} aria-labelledby="edit-profile-title"
+    <dialog ref={dialog} className={cn(cleanDrawerRight, "w-[min(420px,calc(100vw-16px))] max-phone:top-auto max-phone:h-auto max-phone:max-h-[calc(100dvh-80px)]")} aria-labelledby="edit-profile-title"
       onCancel={(e) => { e.preventDefault(); dismiss(); }} onClick={(e) => { if (e.target === e.currentTarget) dismiss(); }}>
       <header className={dialogHeader}>
         <h2 id="edit-profile-title" className={dialogLabel}>Edit profile</h2>
