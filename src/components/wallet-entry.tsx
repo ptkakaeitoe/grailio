@@ -55,7 +55,7 @@ const rowIcon = "grid size-10 shrink-0 place-items-center rounded-full bg-surfac
 
 /** "Connect": a centred wallet-connect modal with the network switch and the ways in. */
 export function WalletEntry({ className = headerButton, disabled = false }: { className?: string; disabled?: boolean }) {
-  const { mode, available, login } = useWalletAuth();
+  const { mode, available, login, wallets = [] } = useWalletAuth();
   const dialog = useRef<HTMLDialogElement>(null);
   const close = () => dialog.current?.close();
 
@@ -77,8 +77,19 @@ export function WalletEntry({ className = headerButton, disabled = false }: { cl
               <span className="min-w-0 flex-1"><span className="block text-base">Email, Google or wallet</span></span>
               <ArrowUpRight className="size-4 text-muted" aria-hidden="true" />
             </button>
+          ) : wallets.length > 0 ? (
+            wallets.map((w) => (
+              <button key={w.id} type="button" className={walletRow} onClick={() => { close(); login(w.id); }}>
+                <span className={cn(rowIcon, "overflow-hidden")}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- the wallet's own data-URL icon (EIP-6963) */}
+                  {w.icon ? <img src={w.icon} alt="" className="size-6" /> : <Wallet className="size-5" aria-hidden="true" />}
+                </span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-base">{w.name}</span></span>
+                <span className="shrink-0 text-[13px] text-up">Detected</span>
+              </button>
+            ))
           ) : (
-            <button type="button" className={walletRow} disabled={!available} onClick={() => { close(); login(); }}>
+            <button type="button" className={walletRow} onClick={() => { close(); login(); }}>
               <span className={rowIcon}><Wallet className="size-5" aria-hidden="true" /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-base">Browser wallet</span>
