@@ -383,6 +383,38 @@
 }
 @media (prefers-reduced-motion: reduce) { .page-glow::before, .page-glow::after { animation: none; } }
 
+/* The hero's hands and coin, floating (components/hero.tsx). Each hand drifts up and down and pivots a hair from where
+   its arm meets the screen edge, so the cut end of the arm never pulls away from the edge; the two run at different
+   lengths and offsets so they never move in step. The coin bobs and rocks, and (on the separate `scale` property, so
+   it layers with the bob and with Tailwind's centring `translate`) slowly turns a little to and fro. */
+.hand-float-left { transform-origin: 0% 80%; animation: hand-float-left 6.5s ease-in-out infinite alternate; }
+.hand-float-right { transform-origin: 100% 35%; animation: hand-float-right 7.5s ease-in-out -3s infinite alternate; }
+@keyframes hand-float-left {
+  from { transform: translateY(5px) rotate(.3deg); }
+  to { transform: translateY(-9px) rotate(-.6deg); }
+}
+@keyframes hand-float-right {
+  from { transform: translateY(-5px) rotate(-.3deg); }
+  to { transform: translateY(9px) rotate(.6deg); }
+}
+.coin-float { animation: coin-bob 4.5s ease-in-out infinite alternate, coin-turn 3.2s ease-in-out -1s infinite alternate; }
+.coin-float .coin-shine { animation: coin-shine 2.6s ease-in-out infinite alternate; }
+@keyframes coin-bob {
+  from { transform: translateY(5%) rotate(-5deg); }
+  to { transform: translateY(-5%) rotate(5deg); }
+}
+@keyframes coin-turn {
+  from { scale: 1 1; }
+  to { scale: .9 1; }
+}
+@keyframes coin-shine {
+  from { opacity: .55; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hand-float-left, .hand-float-right, .coin-float, .coin-float .coin-shine { animation: none; }
+}
+
 html:has(dialog:modal) { overflow: hidden; scrollbar-gutter: stable; }
 
 

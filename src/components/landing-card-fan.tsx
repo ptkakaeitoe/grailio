@@ -5,23 +5,23 @@ import { StockCardFront } from "@/components/stock-card-front";
 import { cardArt } from "@/lib/cards";
 
 /**
- * Where each card sits in the cluster, as % of the box (cards are 56.9% wide, 2:3), and which way it drifts on hover.
- * Back to front: Common at the back, Legendary on top. Layout from graily's card fan; each card holds a real bStock.
+ * Where each card sits in the cluster, as % of the box (cards are 56.9% wide and 61.2% tall), and which way it drifts on
+ * hover. Back to front: Common at the back, Legendary on top. A symmetric diamond: top and bottom share a left edge
+ * (centred), left and right share a top edge, every step is half the free space (43.1% across, 38.8% down). That keeps
+ * the box's top-left and bottom-right corners empty for the hero's headline and tagline.
  */
 const PLACES = [
-  { ticker: "MSFT", rarity: 0, left: 5.2, top: 0, hx: -1, hy: -1 },
-  { ticker: "NVDA", rarity: 1, left: 43.1, top: 10.2, hx: 1, hy: -1 },
-  { ticker: "GOOGL", rarity: 2, left: 36.3, top: 38.8, hx: 1, hy: 1 },
-  { ticker: "TSLA", rarity: 3, left: 0, top: 27.8, hx: -1, hy: 1 },
+  { ticker: "MSFT", rarity: 0, left: 21.55, top: 0, hx: 0, hy: -1 },
+  { ticker: "NVDA", rarity: 1, left: 43.1, top: 19.4, hx: 1, hy: 0 },
+  { ticker: "GOOGL", rarity: 2, left: 21.55, top: 38.8, hx: 0, hy: 1 },
+  { ticker: "TSLA", rarity: 3, left: 0, top: 19.4, hx: -1, hy: 0 },
 ] as const;
 
-const tag = "absolute z-10 w-max bg-black px-2 py-1 text-sm leading-[1.3] text-white max-desk:hidden";
-
 /** The landing hero's cards: upright and overlapping in a loose cluster. Container units keep the hover drift proportional. */
-export function LandingCardFan() {
+export function LandingCardFan({ className }: { className?: string }) {
   return (
     <figure
-      className="group/art @container m-0 w-[70%] max-w-[290px] justify-self-center max-desk:order-first max-desk:mb-6 desk:w-[min(72%,calc((100svh_-_220px)*.59))] desk:max-w-[460px]"
+      className={cn("group/art @container m-0 w-[70%] max-w-[290px] justify-self-center desk:w-[min(72%,calc((100svh_-_220px)*.59))] desk:max-w-[460px]", className)}
       aria-hidden="true"
     >
       <div className="relative isolate aspect-[0.717]">
@@ -37,9 +37,6 @@ export function LandingCardFan() {
             </div>
           );
         })}
-        {/* Desktop tags, 12px off the cards: beside the back card and past the right edge. */}
-        <span className={cn(tag, "top-[8%] right-[calc(94.8%+12px)]")}>[BNB CHAIN]</span>
-        <span className={cn(tag, "top-[74%] left-[calc(100%+12px)]")}>[OPEN SOURCE]</span>
       </div>
     </figure>
   );
