@@ -107,6 +107,12 @@ function initial(coin: MarketCoin): LaunchSim {
 
 export const simOf = (all: Record<string, LaunchSim>, coin: MarketCoin) => all[coin.slug] ?? initial(coin);
 
+/** A demo-launched coin's token price: its launch mcap over the supply; null before launch or for seed coins. */
+export const simTokenPrice = (all: Record<string, LaunchSim>, coin: MarketCoin) => {
+  const s = all[coin.slug];
+  return s?.phase === "live" ? launchMcap(s.price * s.packsForSale) / TOTAL_SUPPLY : null;
+};
+
 function update(coin: MarketCoin, fn: (s: LaunchSim) => LaunchSim | null) {
   const all = load();
   const next = fn(simOf(all, coin));

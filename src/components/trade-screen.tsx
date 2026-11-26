@@ -7,6 +7,7 @@ import { StockLogo } from "@/components/stock-logo";
 import { cn } from "@/components/clean-ui";
 import { startDemo, tradeDemo, tradeDemoBnb, useDemo } from "@/lib/demo";
 import { demoTokenPrice } from "@/lib/market";
+import { simTokenPrice, useDemoLaunches } from "@/lib/demo-launch";
 import { useMarketCoins } from "@/lib/published-packs";
 import { stockOf } from "@/lib/stocks";
 import { showToast } from "@/lib/toast";
@@ -45,6 +46,7 @@ function Chart({ points, up }: { points: Point[]; up: boolean }) {
 export function TradeScreen({ asset }: { asset: Asset }) {
   const demo = useDemo();
   const coins = useMarketCoins();
+  const sims = useDemoLaunches();
   const [period, setPeriod] = useState<(typeof PERIODS)[number]>("24H");
   const [history, setHistory] = useState<Point[]>([]);
   const [livePrice, setLivePrice] = useState<number | null>(null);
@@ -56,8 +58,8 @@ export function TradeScreen({ asset }: { asset: Asset }) {
   const coin = asset.kind === "token" ? coins.find((c) => c.slug === asset.slug) : null;
   const isBnb = asset.kind === "bnb";
   const key = asset.kind === "stock" ? asset.ticker : asset.kind === "token" ? `token:${asset.slug}` : "bnb";
-  const symbol = isBnb ? "BNB" : stock ? stock.ticker : coin?.name ?? "";
-  const price = isBnb ? bnbUsd : stock ? livePrice : coin ? demoTokenPrice(coin) : null;
+  const symbol = isBnb ? "BNB" : stock ? stock.ticker : coin ? coin.config.ticker || coin.name : "";
+  const price = isBnb ? bnbUsd : stock ? livePrice : coin ? simTokenPrice(sims, coin) ?? demoTokenPrice(coin) : null;
   /** What you pay with: BNB for stocks and tokens, USDT for BNB. */
   const quote = isBnb ? "USDT" : "BNB";
   const quoteUsd = isBnb ? 1 : bnbUsd;
