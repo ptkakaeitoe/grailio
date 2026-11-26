@@ -8,6 +8,7 @@ import { cleanButton, cleanDialog, cn, dialogClose, dialogFooter, dialogHeader, 
 import { appChain, explorerUrl } from "@/lib/chain";
 import { startDemo } from "@/lib/demo";
 import { useWalletAuth } from "@/lib/wallet-auth";
+import { NetworkSwitch } from "@/components/network-switch";
 
 const note = "mt-4 block text-[13px] text-muted";
 
@@ -26,11 +27,11 @@ function useDropPanel() {
   return { dialog, place, open, close };
 }
 
-function DropPanel({ panel, label, title, children }: { panel: ReturnType<typeof useDropPanel>; label: string; title: string; children: ReactNode }) {
+function DropPanel({ panel, label, title, children }: { panel: ReturnType<typeof useDropPanel>; label: ReactNode; title: string; children: ReactNode }) {
   const { dialog, place, close } = panel;
   return (
     <dialog ref={dialog} style={place} className={cn(cleanDialog, "drop-panel inset-auto m-0 w-[min(380px,calc(100vw-32px))] max-h-[calc(100dvh-96px)]")} aria-label={title} onClick={(event) => { if (event.target === event.currentTarget) close(); }}>
-      <header className={dialogHeader}><span className={dialogLabel}>[ {label} ]</span><button type="button" className={dialogClose} aria-label="Close" onClick={close}><X className="size-5" /></button></header>
+      <header className={dialogHeader}>{typeof label === "string" ? <span className={dialogLabel}>[ {label} ]</span> : label}<button type="button" className={dialogClose} aria-label="Close" onClick={close}><X className="size-5" /></button></header>
       {children}
     </dialog>
   );
@@ -46,7 +47,7 @@ export function WalletEntry({ className = "btn btn-ghost shrink-0", disabled = f
     <button type="button" className={className} disabled={disabled} aria-haspopup="dialog" onClick={(e) => open(e.currentTarget)}>
       <Wallet className="size-4 max-phone:hidden" aria-hidden="true" /><span>Connect<span className="max-phone:hidden"> wallet</span></span>
     </button>
-    <DropPanel panel={panel} label="bsc testnet" title="Connect a wallet">
+    <DropPanel panel={panel} label={<NetworkSwitch />} title="Connect a wallet">
       <div className="p-6">
         <h2 className="display text-3xl">Your next move.</h2>
         <div className="mt-6 grid grid-cols-2 gap-2.5">
