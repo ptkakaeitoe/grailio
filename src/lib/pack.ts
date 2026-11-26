@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { stockOf } from "./stocks";
+import type { ArtSet } from "./cards";
 
 /** Everything the creator decides in the pack studio. This is what the launcher will receive. */
 export type Rarity = "common" | "rare" | "epic" | "legendary";
@@ -17,6 +18,8 @@ export type CardDesign = {
   art: CardArt;
   /** Data URL of uploaded card art. Kept for this session only; not saved in the draft. */
   image: string | null;
+  /** Art set whose art this rarity's card uses (cards.ts). Unset: the art follows the pack size. An image overrides it. */
+  set?: ArtSet;
 };
 
 /**
@@ -131,6 +134,10 @@ export type PackConfig = {
   risks: RiskTier[];
   /** Pool value (USD) at which Medium and High unlock. */
   unlocks: Unlocks;
+  /** "custom" when the creator designed the pack and cards in the Launch flow; otherwise the app's default art is used. */
+  design?: "default" | "custom";
+  /** Pack cover art: a set cover path (/art/packs/…) or a small uploaded data URL. Unset: colour and pattern. */
+  cover?: string | null;
 };
 
 export const TONES = ["#111111", "#3a1f5c", "#2f5f8f", "#2b8a3e", "#c2255c", "#c78a5c"];

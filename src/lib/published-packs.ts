@@ -25,9 +25,10 @@ export function publishPack(config: PackConfig) {
   const base = slugify(config.name);
   let slug = base;
   for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
-  // Keep the coin picture only if it's the small shrunk one; card images stay out of storage.
-  const image = config.image && config.image.length < 60_000 ? config.image : null;
-  const clean: PackConfig = { ...config, image, cards: config.cards.map((d) => ({ ...d, image: null })) };
+  // Keep the coin picture, cover and card images only if they're the small shrunk ones.
+  const small = (v: string | null | undefined, max: number) => (v && v.length < max ? v : null);
+  const image = small(config.image, 60_000);
+  const clean: PackConfig = { ...config, image, cover: small(config.cover, 60_000), cards: config.cards.map((d) => ({ ...d, image: small(d.image, 40_000) })) };
   cache = [...readPublished(), { slug, config: clean, publishedAt: Date.now() }];
   try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch { /* keep in memory */ }
   listeners.forEach((l) => l());

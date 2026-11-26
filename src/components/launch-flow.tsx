@@ -9,7 +9,8 @@ import { StockLogo } from "@/components/stock-logo";
 import { cleanButton, cleanChip, cleanField, cn } from "@/components/clean-ui";
 import { publishPack } from "@/lib/published-packs";
 import { showToast } from "@/lib/toast";
-import { BASKET_PRESETS, DEFAULT_SIZES, TIER_PRESETS, evenSplit, resetPack, risksFor, updatePack, usePack, type Launchpad } from "@/lib/pack";
+import { BASKET_PRESETS, DEFAULT_SIZES, TIER_PRESETS, evenSplit, resetPack, updatePack, usePack, type Launchpad } from "@/lib/pack";
+import { COIN_TONES as TONES, DesignStep, PIC_TYPES, designPatch, readPicture } from "@/components/launch-design";
 import { PRICED_STOCKS, stockOf } from "@/lib/stocks";
 import { appChain } from "@/lib/chain";
 import { useDemo } from "@/lib/demo";
@@ -18,42 +19,20 @@ import { txErrorMessage } from "@/lib/tx-error";
 
 /*
  * Launch a coin with its pack, in three steps: 1 the coin (picture, name, ticker, colour), 2 up to four bStocks for
- * its pack, 3 risk style and launchpad. On Four.meme with a wallet connected, launching creates the coin on our
+ * its pack, 3 design (the default pack and card art, or a custom cover and one card per rarity) and launchpad. Buyers
+ * pick the Low / Medium / High risk tier per pack, so the creator doesn't. On Four.meme with a wallet connected, launching creates the coin on our
  * OpenFour testnet (the app server signs the create request for the wallet, which sends it). Flap, or demo mode, lists
  * the pack in this browser only, simulated, until Flap enables our launcher factory.
  */
 
-const STEPS = ["Coin", "Stocks", "Risk"] as const;
+const STEPS = ["Coin", "Stocks", "Design"] as const;
 const MAX_STOCKS = 4;
 const TICKER_MAX = 10;
-const PIC_MAX_MB = 2;
-const PIC_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
-const TONES = ["#2f5f8f", "#3a1f5c", "#2b8a3e", "#c2255c", "#c78a5c", "#d9480f", "#0c8599", "#202020"];
 const PADS: { id: Launchpad; name: string }[] = [{ id: "flap", name: "Flap" }, { id: "four", name: "Four.meme" }];
 const label = "mb-2 block text-sm text-muted";
 const option = "flex min-h-14 items-center gap-3 rounded-md border border-border px-4 text-left transition-colors hover:border-border-strong aria-pressed:border-black aria-pressed:bg-surface-muted";
 
 const cleanTicker = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, TICKER_MAX);
-
-/** Shrinks the picture to a small square JPEG so it can be saved with the pack. */
-function shrink(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const size = 128, canvas = document.createElement("canvas");
-      canvas.width = canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { URL.revokeObjectURL(url); reject(new Error("no canvas")); return; }
-      const s = Math.min(img.width, img.height);
-      ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad image")); };
-    img.src = url;
-  });
-}
 
 export function LaunchFlow() {
   const c = usePack();
@@ -64,6 +43,7 @@ export function LaunchFlow() {
   const picInput = useRef<HTMLInputElement>(null);
 
   const picked = new Set(c.basket.map((b) => b.ticker));
+  // Kept for the on-chain create request's style; drafts start on Classic.
   const tier = TIER_PRESETS.find((t) => JSON.stringify(t.tiers) === JSON.stringify(c.tiers));
   const name = c.name.trim();
   const done = [name.length > 0 && c.ticker.length >= 2, c.basket.length > 0, true];
@@ -73,9 +53,10 @@ export function LaunchFlow() {
 
   async function choosePic(file: File | undefined) {
     if (!file) return;
-    if (!PIC_TYPES.includes(file.type)) { setPicError("Use a PNG, JPG, WebP or GIF."); return; }
-    if (file.size > PIC_MAX_MB * 1024 * 1024) { setPicError(`Keep it under ${PIC_MAX_MB} MB.`); return; }
-    try { updatePack({ image: await shrink(file) }); setPicError(""); } catch { setPicError("That image couldn't be read."); }
+    const res = await readPicture(file, 128, 128, 0.85);
+    if ("error" in res) { setPicError(res.error); return; }
+    updatePack({ image: res.url });
+    setPicError("");
   }
   const toggle = (ticker: string) => {
     const tickers = c.basket.map((b) => b.ticker);
@@ -101,7 +82,7 @@ export function LaunchFlow() {
 
   const launch = () => {
     if (onchain) { void launchOnchain(); return; }
-    const slug = publishPack({ ...c, name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
+    const slug = publishPack({ ...c, ...designPatch(c), name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES });
     showToast({ kind: "success", title: `${name} launched`, detail: `Simulated on ${padName} · BSC testnet` });
     router.push(`/app/packs/${slug}`);
   };
@@ -125,7 +106,7 @@ export function LaunchFlow() {
       if (!created) throw new Error("The coin wasn't created");
       const packVault = await publicClient.readContract({ address: created.args.migrateModule, abi: migrateModuleAbi, functionName: "packVault" });
       const slug = publishPack({
-        ...c, name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES,
+        ...c, ...designPatch(c), name, sizes: c.sizes?.length ? c.sizes : DEFAULT_SIZES,
         onchain: { pad: "four", token: created.args.token, saleVault: created.args.vault, packVault, createTx: hash },
       });
       showToast({ kind: "success", title: `${name} is live`, detail: "Four.meme · BSC testnet" });
@@ -282,18 +263,7 @@ export function LaunchFlow() {
       </>}
 
       {step === 2 && <>
-        <div>
-          <span className={label}>Risk</span>
-          <div className="flex flex-col gap-1.5" role="group" aria-label="Risk">
-            {TIER_PRESETS.map((t) => (
-              <button key={t.id} type="button" className={option} aria-pressed={tier?.id === t.id} onClick={() => updatePack({ tiers: t.tiers, risks: risksFor(t.id) })}>
-                <span className="flex-1 text-base">{t.name}</span>
-                <span className="text-sm text-muted">{t.blurb}</span>
-                <Check className={cn("size-4 shrink-0", tier?.id !== t.id && "invisible")} aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-        </div>
+        <DesignStep c={c} name={name} />
         <div>
           <span className={label}>Launchpad</span>
           <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Launchpad">
