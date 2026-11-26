@@ -1,10 +1,13 @@
 /**
- * Server-side NFT lookups through Avalanche's Glacier data API. Glacier has
- * already fetched and indexed each NFT's metadata, so this server never
- * fetches an arbitrary token URI itself (a token URI could point anywhere,
- * including internal addresses). Images come back as https links only.
+ * Server-side lookups for "any NFT you own" profile pictures.
+ *
+ * BNB Chain has no free, keyless NFT index, and this server never fetches an
+ * arbitrary token URI itself (a token URI could point anywhere, including
+ * internal addresses). So outside NFTs are switched off: listNfts returns
+ * nothing and getNft returns null. Grailio cards still work as profile
+ * pictures, since their art comes from the app itself. To bring outside NFTs
+ * back, plug an NFT indexer (with its own key) into these two functions.
  */
-const GLACIER = "https://glacier-api.avax.network/v1/chains/43114";
 const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
 
 export type NftItem = {
@@ -31,32 +34,15 @@ export function safeImage(uri: unknown): string | null {
   }
 }
 
-type GlacierToken = {
-  address?: string;
-  tokenId?: string;
-  name?: string;
-  metadata?: { name?: string | null; imageUri?: string | null };
-};
-
-const toItem = (t: GlacierToken): NftItem | null =>
-  t.address && t.tokenId
-    ? { nft: t.address, tokenId: String(t.tokenId), collection: t.name ?? "Unknown collection", name: t.metadata?.name ?? null, image: safeImage(t.metadata?.imageUri) }
-    : null;
-
-/** ERC-721s held by `owner` on Avalanche (first page, up to 100). */
+/** ERC-721s held by `owner` on BNB Chain: none until an NFT indexer is configured. */
 export async function listNfts(owner: string): Promise<NftItem[]> {
-  const res = await fetch(`${GLACIER}/addresses/${owner}/balances:listErc721?pageSize=100`, { next: { revalidate: 60 } });
-  if (!res.ok) throw new Error(`Glacier ${res.status}`);
-  const json = (await res.json()) as { erc721TokenBalances?: GlacierToken[] };
-  return (json.erc721TokenBalances ?? []).flatMap((t) => {
-    const item = toItem(t);
-    return item ? [item] : [];
-  });
+  void owner;
+  return [];
 }
 
-/** One NFT's collection, name and image. */
+/** One NFT's collection, name and image: unavailable until an NFT indexer is configured. */
 export async function getNft(nft: string, tokenId: string): Promise<NftItem | null> {
-  const res = await fetch(`${GLACIER}/nfts/collections/${nft}/tokens/${tokenId}`, { next: { revalidate: 3600 } });
-  if (!res.ok) return null;
-  return toItem((await res.json()) as GlacierToken);
+  void nft;
+  void tokenId;
+  return null;
 }

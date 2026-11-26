@@ -2,7 +2,7 @@ import { isAddress } from "viem";
 
 import { listNfts } from "@/lib/nft-metadata";
 
-/** A wallet's Avalanche NFTs, for the profile-picture picker: /api/nfts?owner=0x… */
+/** A wallet's BNB Chain NFTs, for the profile-picture picker: /api/nfts?owner=0x… */
 export async function GET(req: Request) {
   const owner = new URL(req.url).searchParams.get("owner") ?? "";
   if (!isAddress(owner)) return Response.json({ error: "Bad address" }, { status: 400 });
