@@ -1,0 +1,16 @@
+import type { Metadata } from "next";
+import { ProfileWorkspace } from "@/components/profile-workspace";
+import { PageShell } from "@/components/page-shell";
+
+export const metadata: Metadata = {
+  title: "Profile — graily",
+  description: "Your wallet, holdings and card collection on Avalanche.",
+};
+
+export default function ProfilePage() {
+  return (
+    <PageShell>
+      <ProfileWorkspace />
+    </PageShell>
+  );
+}

@@ -1,0 +1,19 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.28"
+optimizer = true
+optimizer_runs = 500
+via_ir = true
+fs_permissions = [{ access = "read-write", path = "../deployments" }]
+remappings = [
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "forge-std/=lib/forge-std/src/",
+]
+
+[rpc_endpoints]
+avalanche = "${AVALANCHE_RPC_URL}"
+
+[etherscan]
+avalanche = { key = "${SNOWTRACE_API_KEY}", chain = 43114, url = "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan" }
