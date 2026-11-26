@@ -22,9 +22,9 @@ The centre **+** button opens Launch. A creator picks *With coin* (a memecoin an
 | | |
 |---|---|
 | <img src="03-launch-coin.jpg" width="260"> | **Coin.** Picture, name and ticker, like any launchpad. |
-| <img src="04-launch-coin-details.jpg" width="260"> | **Details.** Description, optional links and a colour. The preview card shows the coin, its launchpad (Flap) and the 10-pack presale. |
-| <img src="05-launch-stocks.jpg" width="260"> | **Stocks.** The basket the cards draw from. Here it's the *AI chips* preset: NVDA 40 %, AMD 30 %, MU 30 %. |
-| <img src="06-launch-design-pack.jpg" width="260"> | **Design: pack.** Use the defaults or customize the pack art and colour. |
+| <img src="04-launch-coin-details.jpg" width="260"> | **Details.** Optional links and a colour. The preview shows the coin, its launchpad (Flap) and the 10-pack presale. |
+| <img src="05-launch-stocks.jpg" width="260"> | **Stocks.** The basket the cards draw from, each with its weight bar. Here it's the *AI chips* preset: NVDA, AMD and MU. |
+| <img src="06-launch-design-pack.jpg" width="260"> | **Design: pack.** Use the defaults or customize the pack colour and cover (here the Fable art). |
 | <img src="07-launch-design-cards.jpg" width="260"> | **Design: cards.** One artwork per rarity. |
 
 ## 3. Presale
