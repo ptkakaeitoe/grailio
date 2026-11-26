@@ -170,61 +170,62 @@ export function LaunchFlow() {
           ))}
         </div>
 
-        <ol className="flex items-center gap-1" aria-label="Steps">
+        <ol className="grid grid-cols-3 gap-2" aria-label="Steps">
           {steps.map((s, i) => (
-            <li key={s} className="flex min-w-0 flex-1 items-center gap-1">
+            <li key={s} className="min-w-0">
               <button type="button" disabled={!canOpen(i)} onClick={() => setStep(i)} aria-current={step === i ? "step" : undefined}
-                className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-sm text-muted transition-colors enabled:hover:text-black disabled:opacity-40 aria-[current=step]:text-black">
-                <span className={cn("grid size-6 shrink-0 place-items-center rounded-full border text-xs tabular-nums", step === i ? "border-black bg-black text-white" : done[i] && i < step ? "border-black" : "border-border-strong")}>
-                  {i < step && done[i] ? <Check className="size-3" /> : i + 1}
+                className="flex min-h-11 w-full min-w-0 flex-col gap-2 pt-1 text-left text-sm text-muted transition-colors enabled:hover:text-black disabled:opacity-40 aria-[current=step]:text-black">
+                <span className={cn("h-1 w-full rounded-full transition-colors", i <= step ? "bg-black" : "bg-border-strong")} aria-hidden="true" />
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="num shrink-0 text-[12px]">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="truncate">{s}</span>
+                  {i < step && done[i] && <Check className="size-3.5 shrink-0" aria-hidden="true" />}
                 </span>
-                <span className="truncate">{s}</span>
               </button>
-              {i < steps.length - 1 && <ArrowRight className="size-3.5 shrink-0 text-muted" aria-hidden="true" />}
             </li>
           ))}
         </ol>
 
         {/* Phones: the coin as it will look on the marketplace, compact, above the later steps. */}
-        {step > 0 && <div className="desk:hidden"><CoinPreview c={c} name={name} compact /></div>}
+        {/* On Design with the default art, the full preview shows the packs it will sell. */}
+        {step > 0 && <div className="desk:hidden"><CoinPreview c={c} name={name} compact={!(step === 2 && c.design !== "custom")} /></div>}
 
         {step === 0 && <>
-          <div>
-            <div className="relative mx-auto aspect-square w-full max-w-[280px] desk:max-w-[300px]">
+          <div className="grid grid-cols-[104px_minmax(0,1fr)] items-start gap-4 desk:grid-cols-[128px_minmax(0,1fr)]">
+            <div className="relative aspect-square w-full">
               <button type="button" onClick={() => picInput.current?.click()} aria-label={c.image ? (classic ? "Change cover" : "Change image") : (classic ? "Upload cover" : "Upload image")}
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setDragging(false); void choosePic(e.dataTransfer.files?.[0]); }}
-                className={cn("flex size-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border-2 transition-[border-color] hover:border-black",
+                className={cn("flex size-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-md border-2 transition-[border-color] hover:border-black",
                   c.image ? "border-transparent" : "border-dashed border-border-strong bg-surface-muted", dragging && "border-black")}>
                 {c.image ? (
                   // eslint-disable-next-line @next/next/no-img-element -- small data URL from the chosen file
                   <img src={c.image} alt="" className="size-full object-cover" />
                 ) : <>
-                  <ImagePlus className="size-8 text-muted" aria-hidden="true" />
-                  <span className="text-base">{classic ? "Upload cover" : "Upload image"}</span>
-                  <span className="text-xs text-muted">PNG, JPG, WebP, GIF · 2 MB</span>
+                  <ImagePlus className="size-6 text-muted" aria-hidden="true" />
+                  <span className="text-[13px]">{classic ? "Cover" : "Image"}</span>
+                  <span className="text-[11px] text-muted">2 MB</span>
                 </>}
               </button>
               {c.image && (
                 <button type="button" onClick={() => updatePack({ image: null })} aria-label={classic ? "Remove cover" : "Remove image"}
-                  className="absolute top-1.5 right-1.5 grid size-11 place-items-center rounded-full bg-[#000]/60 text-[#fff] transition-colors hover:bg-[#000]/80">
-                  <X className="size-4" />
+                  className="absolute -top-2 -right-2 grid size-8 place-items-center rounded-full border border-border-strong bg-white text-black transition-colors hover:border-black">
+                  <X className="size-3.5" />
                 </button>
               )}
+              <input ref={picInput} type="file" accept={PIC_TYPES.join(",")} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { void choosePic(e.target.files?.[0]); e.target.value = ""; }} />
             </div>
-            {picError && <p className="mt-2 text-center text-sm text-down" role="alert">{picError}</p>}
-            <input ref={picInput} type="file" accept={PIC_TYPES.join(",")} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { void choosePic(e.target.files?.[0]); e.target.value = ""; }} />
-          </div>
-
-          <div className={cn("grid gap-3", !classic && "grid-cols-[minmax(0,1fr)_128px]")}>
-            <div>
-              <label htmlFor="coin-name" className={label}>Name</label>
-              <input id="coin-name" className={cn(cleanField, "h-12")} value={c.name} maxLength={28} placeholder={classic ? "Blue Chips" : "Moon Cats"} autoComplete="off" onChange={(e) => updatePack({ name: e.target.value })} />
+            <div className="flex min-w-0 flex-col gap-3">
+              <div>
+                <label htmlFor="coin-name" className={label}>Name</label>
+                <input id="coin-name" className={cn(cleanField, "h-12")} value={c.name} maxLength={28} placeholder={classic ? "Blue Chips" : "Moon Cats"} autoComplete="off" onChange={(e) => updatePack({ name: e.target.value })} />
+              </div>
+              {!classic && <div>
+                <label htmlFor="coin-ticker" className={label}>Ticker</label>
+                <input id="coin-ticker" className={cn(cleanField, "num h-12 uppercase placeholder:normal-case")} value={c.ticker} placeholder="CATS" autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={(e) => updatePack({ ticker: cleanTicker(e.target.value) })} />
+              </div>}
             </div>
-            {!classic && <div>
-              <label htmlFor="coin-ticker" className={label}>Ticker</label>
-              <input id="coin-ticker" className={cn(cleanField, "num h-12 uppercase placeholder:normal-case")} value={c.ticker} placeholder="CATS" autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={(e) => updatePack({ ticker: cleanTicker(e.target.value) })} />
-            </div>}
+            {picError && <p className="col-span-2 text-sm text-down" role="alert">{picError}</p>}
           </div>
 
           <div>
@@ -296,7 +297,8 @@ export function LaunchFlow() {
             {c.basket.length > 0 ? (
               <ul className="overflow-hidden rounded-md border border-border" aria-label="Picked stocks">
                 {c.basket.map((b) => (
-                  <li key={b.ticker} className="flex min-h-14 items-center gap-3 border-b border-border pl-3 last:border-b-0">
+                  <li key={b.ticker} className="relative flex min-h-14 items-center gap-3 border-b border-border pl-3 last:border-b-0">
+                    <span className="absolute bottom-0 left-0 h-0.5 bg-black transition-[width]" style={{ width: `${b.weight}%` }} aria-hidden="true" />
                     <StockLogo ticker={b.ticker} size={24} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-base">{b.ticker}</span>
