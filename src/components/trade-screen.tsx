@@ -280,7 +280,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
           </div>
           <div className="mt-3 flex gap-1.5">
             {[0.25, 0.5, 0.75, 1].map((f) => (
-              <button key={f} type="button" disabled={!(payBalance > 0)} onClick={() => setAmount(String(Number((payBalance * f).toFixed(side === "buy" ? 6 : 8))))}
+              <button key={f} type="button" disabled={!(payBalance > 0)} onClick={() => { const d = side === "buy" ? 6 : 8; setAmount(String(Math.floor(payBalance * f * 10 ** d) / 10 ** d)); }}
                 className="min-h-9 flex-1 rounded-full border border-border-strong text-sm transition-colors hover:border-black disabled:opacity-40">{f === 1 ? "Max" : `${f * 100}%`}</button>
             ))}
           </div>
