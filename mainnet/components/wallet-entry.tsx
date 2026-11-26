@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type CSSProperties } from "react";
 import { useConnectWallet } from "@/components/beta-access";
 import { cleanButton, cleanDialog, cn, dialogClose, dialogFooter, dialogHeader, dialogLabel } from "@/components/clean-ui";
+import { NetworkSwitch } from "@/components/network-switch";
 
 const note = "mt-4 block text-[13px] text-muted";
 
@@ -38,6 +39,7 @@ export function WalletEntry({ className = cleanButton.solid, disabled = false, n
     <dialog ref={dialog} style={place} className={cn(cleanDialog, "drop-panel inset-auto m-0 w-[min(380px,calc(100vw-32px))] max-h-[calc(100dvh-96px)]")} aria-label="Welcome to grailio" onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       <header className={dialogHeader}><span className={dialogLabel}>[ get started ]</span><button type="button" className={dialogClose} aria-label="Close" onClick={() => dialog.current?.close()}><XIcon /></button></header>
       <div className="p-6">
+        <NetworkSwitch className="mb-6" />
         <h2 className="text-3xl leading-[1.1] font-normal tracking-[-0.02em]">Your next move.</h2>
         <p className="mt-4 text-sm leading-relaxed text-muted">Connect to trade and collect, or take a look around.</p>
       </div>

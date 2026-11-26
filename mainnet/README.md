@@ -50,6 +50,7 @@ Names are in `.env.example`; you fill in the values. Never commit `.env.local`.
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Mobile wallets via WalletConnect | Optional |
 | `NEXT_PUBLIC_BSC_RPC_URL` | Your own RPC instead of `bsc-dataseed.bnbchain.org` | Optional, recommended |
 | `NEXT_PUBLIC_SITE_URL` | Deployed origin, for link previews | Optional |
+| `NEXT_PUBLIC_TESTNET_URL` | The testnet app's URL, linked from the Testnet / Mainnet beta switch in the connect panel (shown as unavailable when unset) | Optional |
 
 ## Mainnet addresses it uses
 
