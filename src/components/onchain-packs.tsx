@@ -17,6 +17,7 @@ import { stockOf } from "@/lib/stocks";
 import { showToast } from "@/lib/toast";
 import { txErrorMessage } from "@/lib/tx-error";
 import type { MarketCoin } from "@/lib/market";
+import { CoinAvatar } from "@/components/coin-avatar";
 
 /*
  * Packs of a coin that lives on-chain (our OpenFour testnet). During the sale, buying tokens earns presale packs
@@ -122,12 +123,7 @@ export function OnchainPacks({ coin }: { coin: MarketCoin }) {
   return (
     <div className="mx-auto flex max-w-[560px] flex-col gap-6 pt-2 pb-10 desk:pt-4">
       <header className="flex items-center gap-3">
-        <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-full text-lg text-[#fff]" style={{ background: coin.tone }} aria-hidden="true">
-          {coin.config.image ? (
-            // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
-            <img src={coin.config.image} alt="" className="size-full object-cover" />
-          ) : coin.name[0]}
-        </span>
+        <CoinAvatar seed={coin.slug || coin.name} tone={coin.tone} image={coin.config.image} className="size-12 rounded-full" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[22px] leading-tight">{coin.name}</h1>
           <a href={`${explorerUrl}/address/${oc.token}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-muted hover:text-black">

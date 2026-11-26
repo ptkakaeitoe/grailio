@@ -9,6 +9,7 @@ import { PRESALE_PACKS, launchMcap } from "@/lib/demo-launch";
 import { SealedPack } from "@/components/pack-shop";
 import { ClassicPack } from "@/components/classic-pack-shop";
 import type { MarketCoin } from "@/lib/market";
+import { CoinAvatar as GeneratedAvatar } from "@/components/coin-avatar";
 
 /*
  * Live preview of the coin being launched, in the marketplace's look: picture (or colour and initial), name,
@@ -20,14 +21,7 @@ const PAD_NAME = { flap: "Flap", four: "Four.meme" } as const;
 
 export function CoinAvatar({ c, name, className }: { c: PackConfig; name: string; className?: string }) {
   const custom = customPack(c);
-  return (
-    <span className={cn("grid shrink-0 place-items-center overflow-hidden text-[#fff]", className)} style={c.image ? undefined : custom?.style ?? { background: c.tone }} aria-hidden="true">
-      {c.image ? (
-        // eslint-disable-next-line @next/next/no-img-element -- small data URL from the chosen file
-        <img src={c.image} alt="" className="size-full object-cover" />
-      ) : (name[0] ?? "?").toUpperCase()}
-    </span>
-  );
+  return <GeneratedAvatar seed={name || c.ticker || "new coin"} tone={c.tone} image={c.image} style={c.image ? undefined : custom?.style} className={className} />;
 }
 
 /** A new coin starts in presale: its presalePacks (default PRESALE_PACKS), launching when they sell out. */

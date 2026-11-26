@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ArrowUpRight, Lock, Minus, Plus, TrendingUp, X } from "lucide-react";
+import { ArrowUpRight, Lock, Minus, Plus, X } from "lucide-react";
 import { Holo, StockCardFront, tilt } from "@/components/stock-card-front";
 import { coverStyle, designedCard } from "@/components/launch-design";
 import { StakePanel } from "@/components/stake-panel";
@@ -19,6 +19,8 @@ import { RARITIES, type PackSize } from "@/lib/pack";
 import { amount, usd } from "@/lib/format";
 import { cleanButton, cleanDialog, cn, dialogClose, dialogHeader } from "@/components/clean-ui";
 import type { MarketCoin, PackColor } from "@/lib/market";
+import { EmblemGlyph } from "@/components/coin-avatar";
+import { coinArt } from "@/lib/coin-art";
 
 /*
  * One coin's pack page in demo mode (/app/packs/[coin]), simulating the pack launch model end to end (lib/demo-launch):
@@ -55,7 +57,7 @@ export function SealedPack({ size, coin, color, className, style }: { size: Pack
         <span className="max-w-full truncate text-[13px] tracking-[0.12em] uppercase">{coin}</span>
         <span className="mt-[9px] text-[7px] tracking-[0.14em] opacity-75">STOCK PACK · {usd(size.price, 0)}</span>
         <div className={cn("relative my-7 grid size-[112px] place-items-center border border-current before:absolute before:inset-[5px] before:rounded-[inherit] before:border before:border-current before:opacity-40 [&_svg]:size-[44%]", shape)}>
-          <TrendingUp strokeWidth={1.5} />
+          <svg viewBox="0 0 100 100" aria-hidden="true"><EmblemGlyph emblem={coinArt(coin).emblem} tilt={coinArt(coin).tilt} /></svg>
         </div>
         <span className="text-[34px] tracking-[-0.02em]">{size.name}</span>
         <span className="mt-1.5 text-[10px] opacity-80">{SUBTITLE[size.id] ?? ""}</span>
