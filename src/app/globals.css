@@ -381,6 +381,9 @@
   from { scale: 1 var(--from); }
   to { scale: 1 var(--to); }
 }
+/* The same glow at the foot of every page (app/layout.tsx, around the footer): flipped so it rises from the bottom
+   edge, shorter, and far fainter. */
+.page-glow--bottom { top: auto; bottom: 0; height: min(34svh, 320px); opacity: .07; scale: 1 -1; }
 @media (prefers-reduced-motion: reduce) { .page-glow::before, .page-glow::after { animation: none; } }
 
 /* The hero's hands and coin, floating (components/hero.tsx). Each hand drifts up and down and pivots a hair from where

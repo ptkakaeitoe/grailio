@@ -31,7 +31,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteHeader />
           <main id="main-content" className="flex-1">{children}</main>
           {/* Phones leave room under the footer for the tab bar. */}
-          <div className="pb-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] desk:pb-0"><SiteFooter /></div>
+          <div className="relative pb-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] desk:pb-0">
+            {/* The top glow, mirrored and much fainter, rising from the bottom of the page (globals.css). */}
+            <div className="page-glow page-glow--bottom" aria-hidden="true" />
+            <SiteFooter />
+          </div>
           <BottomTabs />
           <Toaster />
         </Providers>
