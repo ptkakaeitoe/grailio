@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Solidity projects with their own tooling.
+    "contracts/**",
+    "openfour/**",
   ]),
 ]);
 
