@@ -8,9 +8,9 @@ import { usd } from "@/lib/format";
 
 const amount = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 4 });
 
-/** Where a holding trades: a stock's trade screen, a launched coin's token screen, or Trade for BNB. */
+/** Where a holding trades: a stock's trade screen, a launched coin's token screen, or BNB/USDT for BNB and USDT. */
 const tradeHref = (key: string, ticker: string | null) =>
-  ticker ? `/app/trade/stock/${ticker}` : key.startsWith("token:") ? `/app/trade/token/${key.slice(6)}` : "/app/trade";
+  ticker ? `/app/trade/stock/${ticker}` : key.startsWith("token:") ? `/app/trade/token/${key.slice(6)}` : "/app/trade/bnb";
 
 /** The wallet's holdings and their estimated value: BNB and redeemed bStocks. */
 export function HoldingsPanel() {
@@ -29,6 +29,8 @@ export function HoldingsPanel() {
               <Link href={tradeHref(h.key, h.ticker)} className="-mx-2 grid grid-cols-[28px_minmax(0,1fr)_auto_16px] items-center gap-x-3 rounded-md px-2 py-2.5 text-base transition-colors hover:bg-surface-muted">
                 {h.ticker ? <StockLogo ticker={h.ticker} size={28} className="row-span-2" /> : h.key === "bnb" ? (
                   <span className="row-span-2 grid size-7 place-items-center rounded-full bg-[#f0b90b] text-[11px] font-semibold text-[#111]" aria-hidden="true">BNB</span>
+                ) : h.key === "usdt" ? (
+                  <span className="row-span-2 grid size-7 place-items-center rounded-full bg-[#26a17b] text-[13px] font-semibold text-[#fff]" aria-hidden="true">₮</span>
                 ) : (
                   <span className="row-span-2 grid size-7 place-items-center rounded-full bg-surface-muted text-sm" aria-hidden="true">{h.label[0]}</span>
                 )}

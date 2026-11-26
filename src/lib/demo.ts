@@ -12,12 +12,14 @@ import { clearDemoLaunches } from "@/lib/demo-launch";
 
 /** Starting demo balance, in BNB. */
 export const DEMO_START_BNB = 0.5;
+/** Starting demo USDT, for the BNB/USDT trade screen. */
+export const DEMO_START_USDT = 500;
 
 /** `assets`: bStocks (by ticker, e.g. TSLA) and launched tokens (by pack slug) bought in Trade. */
-export type DemoState = { active: boolean; bnb: number; assets?: Record<string, number> };
+export type DemoState = { active: boolean; bnb: number; usdt: number; assets?: Record<string, number> };
 
 const KEY = "bsctemp.demo.v1";
-const OFF: DemoState = { active: false, bnb: DEMO_START_BNB };
+const OFF: DemoState = { active: false, bnb: DEMO_START_BNB, usdt: DEMO_START_USDT };
 const listeners = new Set<() => void>();
 let cache: DemoState | null = null;
 
@@ -41,7 +43,7 @@ export const exitDemo = () => write({ ...read(), active: false });
 export function resetDemo() {
   clearCollection();
   clearDemoLaunches();
-  write({ active: read().active, bnb: DEMO_START_BNB, assets: {} });
+  write({ active: read().active, bnb: DEMO_START_BNB, usdt: DEMO_START_USDT, assets: {} });
 }
 /** Pays from the demo wallet; false if demo is off or the balance is short. */
 export function spendDemoBnb(amount: number) {
@@ -88,3 +90,20 @@ export function tradeDemo(side: "buy" | "sell", asset: string, amount: number, a
 
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 export const useDemo = () => useSyncExternalStore(subscribe, read, () => OFF);
+
+/**
+ * Swaps BNB and USDT in the demo wallet at `bnbUsd`. Buy spends `amount` USDT for BNB; sell sells `amount` BNB for
+ * USDT. False if demo is off or the balance is short.
+ */
+export function tradeDemoBnb(side: "buy" | "sell", amount: number, bnbUsd: number) {
+  const s = read();
+  if (!s.active || !(amount > 0) || !(bnbUsd > 0)) return false;
+  if (side === "buy") {
+    if (amount > s.usdt + 1e-9) return false;
+    write({ ...s, usdt: Math.max(0, s.usdt - amount), bnb: s.bnb + amount / bnbUsd });
+  } else {
+    if (amount > s.bnb + 1e-12) return false;
+    write({ ...s, bnb: Math.max(0, s.bnb - amount), usdt: s.usdt + amount * bnbUsd });
+  }
+  return true;
+}

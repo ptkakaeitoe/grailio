@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   await connection();
   const ticker = req.nextUrl.searchParams.get("ticker") ?? "";
   const period = req.nextUrl.searchParams.get("period") as HistoryPeriod;
-  if (!STOCKS.some((s) => s.ticker === ticker) || !HISTORY_PERIODS.includes(period)) {
+  if ((ticker !== "BNB" && !STOCKS.some((s) => s.ticker === ticker)) || !HISTORY_PERIODS.includes(period)) {
     return Response.json({ error: "Unknown ticker or period" }, { status: 400 });
   }
   return Response.json({ ticker, period, points: await fetchStockHistory(ticker, period) });

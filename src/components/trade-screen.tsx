@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowDownUp, ArrowLeft } from "lucide-react";
 import { StockLogo } from "@/components/stock-logo";
 import { cn } from "@/components/clean-ui";
-import { startDemo, tradeDemo, useDemo } from "@/lib/demo";
+import { startDemo, tradeDemo, tradeDemoBnb, useDemo } from "@/lib/demo";
 import { demoTokenPrice } from "@/lib/market";
 import { useMarketCoins } from "@/lib/published-packs";
 import { stockOf } from "@/lib/stocks";
@@ -15,10 +15,11 @@ import { usd } from "@/lib/format";
 /*
  * Trade one asset, minimal: the price and a chart on top, a swap box below (pay BNB, receive the asset; flip to sell).
  * Stocks: signed Atlas price, chart of the bStock token from CoinMarketCap. Tokens: demo price, no history yet.
+ * BNB (demo only): traded against the demo wallet's USDT at the Atlas BNB/USD price, with BNB's CoinMarketCap chart.
  * Trades run in the demo wallet until the contracts are on BSC testnet.
  */
 
-type Asset = { kind: "stock"; ticker: string } | { kind: "token"; slug: string };
+type Asset = { kind: "stock"; ticker: string } | { kind: "token"; slug: string } | { kind: "bnb" };
 type Point = { t: number; p: number };
 const PERIODS = ["24H", "7D", "30D"] as const;
 
@@ -53,9 +54,14 @@ export function TradeScreen({ asset }: { asset: Asset }) {
 
   const stock = asset.kind === "stock" ? stockOf(asset.ticker) : null;
   const coin = asset.kind === "token" ? coins.find((c) => c.slug === asset.slug) : null;
-  const key = asset.kind === "stock" ? asset.ticker : `token:${asset.slug}`;
-  const symbol = stock ? stock.ticker : coin?.name ?? "";
-  const price = stock ? livePrice : coin ? demoTokenPrice(coin) : null;
+  const isBnb = asset.kind === "bnb";
+  const key = asset.kind === "stock" ? asset.ticker : asset.kind === "token" ? `token:${asset.slug}` : "bnb";
+  const symbol = isBnb ? "BNB" : stock ? stock.ticker : coin?.name ?? "";
+  const price = isBnb ? bnbUsd : stock ? livePrice : coin ? demoTokenPrice(coin) : null;
+  /** What you pay with: BNB for stocks and tokens, USDT for BNB. */
+  const quote = isBnb ? "USDT" : "BNB";
+  const quoteUsd = isBnb ? 1 : bnbUsd;
+  const chartTicker = isBnb ? "BNB" : stock?.ticker;
 
   useEffect(() => {
     fetch("/api/bnb").then((r) => r.json()).then((d) => { if (typeof d.price === "number" && d.price > 0) setBnbUsd(d.price); }).catch(() => {});
@@ -68,23 +74,24 @@ export function TradeScreen({ asset }: { asset: Asset }) {
     }).catch(() => {});
   }, [stock?.feedId]);
   useEffect(() => {
-    if (!stock) return;
+    if (!chartTicker) return;
     let live = true;
-    fetch(`/api/history?ticker=${stock.ticker}&period=${period}`).then((r) => r.json()).then((d: { points?: Point[] }) => { if (live) setHistory(d.points ?? []); }).catch(() => { if (live) setHistory([]); });
+    fetch(`/api/history?ticker=${chartTicker}&period=${period}`).then((r) => r.json()).then((d: { points?: Point[] }) => { if (live) setHistory(d.points ?? []); }).catch(() => { if (live) setHistory([]); });
     return () => { live = false; };
-  }, [stock, period]);
+  }, [chartTicker, period]);
 
   const change = history.length > 1 ? (history.at(-1)!.p - history[0].p) / history[0].p : null;
-  const held = demo.assets?.[key] ?? 0;
-  const payBalance = side === "buy" ? demo.bnb : held;
+  const held = isBnb ? demo.bnb : demo.assets?.[key] ?? 0;
+  const quoteBalance = isBnb ? demo.usdt : demo.bnb;
+  const payBalance = side === "buy" ? quoteBalance : held;
   const value = Number(amount);
   const valid = Number.isFinite(value) && value > 0;
   const receive = useMemo(() => {
-    if (!valid || !price || !bnbUsd) return null;
-    return side === "buy" ? (value * bnbUsd) / price : (value * price) / bnbUsd;
-  }, [valid, value, price, bnbUsd, side]);
-  const payLabel = side === "buy" ? "BNB" : symbol;
-  const getLabel = side === "buy" ? symbol : "BNB";
+    if (!valid || !price || !quoteUsd) return null;
+    return side === "buy" ? (value * quoteUsd) / price : (value * price) / quoteUsd;
+  }, [valid, value, price, quoteUsd, side]);
+  const payLabel = side === "buy" ? quote : symbol;
+  const getLabel = side === "buy" ? symbol : quote;
   const short = valid && value > payBalance + 1e-12;
 
   if ((asset.kind === "token" && !coin) || (asset.kind === "stock" && !stock)) return <p className="py-16 text-center text-base text-muted">This isn&apos;t listed.</p>;
@@ -92,7 +99,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
   function submit() {
     if (!demo.active) { startDemo(); return; }
     if (!valid || !price || !bnbUsd) return;
-    if (tradeDemo(side, key, value, price, bnbUsd)) {
+    if (isBnb ? tradeDemoBnb(side, value, bnbUsd) : tradeDemo(side, key, value, price, bnbUsd)) {
       showToast({ kind: "success", title: `${side === "buy" ? "Bought" : "Sold"} ${fmt(side === "buy" ? receive ?? 0 : value, 4)} ${symbol}`, detail: "Simulated · BSC testnet" });
       setAmount("");
     }
@@ -103,7 +110,9 @@ export function TradeScreen({ asset }: { asset: Asset }) {
       <Link href="/app/trade" className="-ml-1 inline-flex min-h-11 w-fit items-center gap-1.5 px-1 text-sm text-muted hover:text-black"><ArrowLeft className="size-4" /> Trade</Link>
 
       <header className="flex items-center gap-3">
-        {stock ? <StockLogo ticker={stock.ticker} size={40} /> : (
+        {isBnb ? (
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f0b90b] text-[13px] font-semibold text-[#111]" aria-hidden="true">BNB</span>
+        ) : stock ? <StockLogo ticker={stock.ticker} size={40} /> : (
           <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full text-[#fff]" style={{ background: coin!.tone }} aria-hidden="true">
             {coin!.config.image ? (
               // eslint-disable-next-line @next/next/no-img-element -- small data URL saved with the launched coin
@@ -113,7 +122,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         )}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[22px] leading-tight">{symbol}</h1>
-          <p className="truncate text-sm text-muted">{stock ? stock.name : "Token"}</p>
+          <p className="truncate text-sm text-muted">{isBnb ? "vs USDT · demo" : stock ? stock.name : "Token"}</p>
         </div>
         <div className="text-right">
           <p className="text-[22px] leading-tight tabular-nums">{price ? priceText(price) : "—"}</p>
@@ -122,7 +131,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         </div>
       </header>
 
-      {stock ? (
+      {chartTicker ? (
         <section aria-label="Chart">
           {history.length > 1 ? <Chart points={history} up={(change ?? 0) >= 0} /> : <div className="grid h-[180px] place-items-center text-sm text-muted">Loading chart…</div>}
           <div className="mt-2 flex gap-1" role="group" aria-label="Period">
@@ -165,7 +174,7 @@ export function TradeScreen({ asset }: { asset: Asset }) {
         <div className="rounded-md border border-border p-4">
           <div className="flex items-baseline justify-between text-sm text-muted">
             <span>You receive</span>
-            <span className="tabular-nums">Balance {fmt(side === "buy" ? held : demo.bnb, 6)}</span>
+            <span className="tabular-nums">Balance {fmt(side === "buy" ? held : quoteBalance, 6)}</span>
           </div>
           <div className="mt-2 flex items-center gap-3">
             <span className="min-w-0 flex-1 truncate text-[32px] leading-none tabular-nums text-muted">{receive !== null ? fmt(receive, 6) : "—"}</span>

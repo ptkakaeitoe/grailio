@@ -57,6 +57,7 @@ export function useHoldings() {
 
   const holdings: Holding[] = [
     { key: "bnb", label: "BNB", name: "BNB Chain testnet", ticker: null, amount: demo.bnb, price: bnbUsd },
+    ...(demo.active && demo.usdt > 0 ? [{ key: "usdt", label: "USDT", name: "Demo USDT", ticker: null, amount: demo.usdt, price: 1 }] : []),
     ...[...redeemed].map(([ticker, amount]) => ({ key: ticker, label: `${ticker}B`, name: stockOf(ticker)?.name ?? ticker, ticker, amount, price: priceOf(ticker) })),
     ...tokens,
   ];

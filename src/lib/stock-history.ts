@@ -18,8 +18,12 @@ const WINDOWS: Record<HistoryPeriod, { interval: string; count: number }> = {
 const TTL_MS = 5 * 60 * 1000;
 const cache = new Map<string, { at: number; points: PricePoint[] }>();
 
-/** CoinMarketCap ID of a bStock from its stock ticker (TSLA → TSLAB's ID). */
-export const cmcIdFor = (ticker: string) => ATLAS_FEEDS.find((f) => f.symbol === `${ticker}B`)?.cmcId ?? null;
+/** CoinMarketCap ID of BNB itself, for the demo BNB/USDT screen. */
+const BNB_CMC_ID = 1839;
+
+/** CoinMarketCap ID of a bStock from its stock ticker (TSLA → TSLAB's ID); "BNB" is BNB. */
+export const cmcIdFor = (ticker: string) =>
+  ticker === "BNB" ? BNB_CMC_ID : ATLAS_FEEDS.find((f) => f.symbol === `${ticker}B`)?.cmcId ?? null;
 
 /** Real price history for one window; empty if CoinMarketCap doesn't answer. */
 export async function fetchStockHistory(ticker: string, period: HistoryPeriod): Promise<PricePoint[]> {
