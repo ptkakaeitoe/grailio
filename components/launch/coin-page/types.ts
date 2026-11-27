@@ -104,6 +104,8 @@ export type CoinPack = {
   mcapUsd: number | null;
   liquidityUsd: number | null;
   stockPoolUsd: number | null;
+  /** The pack vault that holds the pool: its address, explorer link and the presale reserve it keeps for presale packs (USD). */
+  vault: { address: Address; url: string; reserveUsd: number | null } | null;
   /** Stocks the packs draw from. */
   basket: { ticker: string; weight: number }[];
   presale: CoinPresale;

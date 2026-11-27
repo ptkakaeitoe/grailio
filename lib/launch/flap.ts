@@ -63,6 +63,7 @@ export const launcherAbi = parseAbi([
 export const flapVaultAbi = parseAbi([
   "function packPrice() view returns (uint256)",
   "function pool() view returns (uint256)",
+  "function presaleReserve() view returns (uint256)",
   "function maxPayout(uint8 tier) view returns (uint256)",
   "function poolNeeded(uint8 tier, uint256 quantity) view returns (uint256)",
   "function packsOf(address) view returns (uint256 presale, uint256 low, uint256 medium, uint256 high)",

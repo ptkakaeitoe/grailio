@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, LockSimpleIcon } from "@phosphor-icons/react/ssr";
+import { ArrowUpRightIcon, CheckIcon, LockSimpleIcon } from "@phosphor-icons/react/ssr";
 
 import { sectionLabel } from "@/components/market-parts";
 
@@ -24,6 +24,22 @@ export function TabPool({ pack }: { pack: CoinPack }) {
         <p className={sectionLabel}>Stock pool</p>
         <p className="mt-1 text-[40px] leading-[1.15] tracking-tight tabular-nums">{pack.stockPoolUsd === null ? "—" : money(pack.stockPoolUsd)}</p>
         <p className="mt-2 text-sm text-muted">Pays pack prizes in stocks. Bigger prizes unlock as it grows.</p>
+        {pack.vault && (
+          <dl className="mt-4 grid grid-cols-[1fr_auto] gap-x-6 gap-y-2 border-t border-border pt-4 text-sm">
+            {pack.vault.reserveUsd !== null && pack.vault.reserveUsd > 0 && (
+              <>
+                <dt className="text-muted">Presale reserve <span className="block text-[12px]">kept to pay out the presale packs</span></dt>
+                <dd className="m-0 text-right tabular-nums">{money(pack.vault.reserveUsd)}</dd>
+              </>
+            )}
+            <dt className="text-muted">Pack vault</dt>
+            <dd className="m-0 text-right">
+              <a href={pack.vault.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 tabular-nums hover:underline">
+                {pack.vault.address.slice(0, 6)}…{pack.vault.address.slice(-4)} <ArrowUpRightIcon weight="bold" className="size-3" aria-hidden="true" />
+              </a>
+            </dd>
+          </dl>
+        )}
 
         <p className="mt-8 mb-3 text-sm text-muted">Trading tax</p>
         {rawTotal === 0 ? (
