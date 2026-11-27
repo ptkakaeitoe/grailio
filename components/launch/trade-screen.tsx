@@ -7,7 +7,7 @@ import { useAccount } from "wagmi";
 import { ArrowLeftIcon, ArrowsDownUpIcon } from "@phosphor-icons/react/ssr";
 import { cleanButton, cn } from "@/components/clean-ui";
 import { CoinAvatar } from "@/components/launch/coin-avatar";
-import { CoinPackLink } from "@/components/launch/coin-link";
+import { CoinLoopFor } from "@/components/launch/coin-page/coin-loop";
 import { PriceChart } from "@/components/launch/price-chart";
 import { WalletEntry } from "@/components/wallet-entry";
 import { startDemo, tradeDemo, useDemo } from "@/lib/launch/demo";
@@ -131,7 +131,7 @@ export function CoinTradeScreen({ slug }: { slug: string }) {
           ) : (
             <div className="grid h-[260px] place-items-center rounded-md border border-dashed border-border text-sm text-muted">No trades yet. The chart starts with the first one.</div>
           )}
-          {coin.config.kind !== "classic" && <CoinPackLink market={coin} page="coin" />}
+          {coin.config.kind !== "classic" && <CoinLoopFor coin={coin} />}
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
