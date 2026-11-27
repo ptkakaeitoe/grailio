@@ -94,8 +94,8 @@ function BuyRow({ pack, unitPrice, unitUsd, max, quantity, setQuantity, buyLabel
         <div className="min-w-0">
           <p className="text-[28px] leading-none tracking-[-0.02em] tabular-nums">{quoteText(total, pack.quote)}</p>
           <p className="mt-1.5 text-sm text-muted tabular-nums">
-            {unitUsd !== null && <>≈ {usd(unitUsd * quantity)}</>}
-            {pack.balance !== null && <>{unitUsd !== null && " · "}Balance {quoteText(pack.balance, pack.quote)}</>}
+            {unitUsd !== null && <span className="max-phone:block">≈ {usd(unitUsd * quantity)}</span>}
+            {pack.balance !== null && <span className="max-phone:block">{unitUsd !== null && <span className="max-phone:hidden"> · </span>}Balance {quoteText(pack.balance, pack.quote)}</span>}
           </p>
         </div>
         <Stepper value={quantity} max={Math.max(1, max)} onChange={setQuantity} disabled={pack.needsWallet || max < 1} />
@@ -219,15 +219,15 @@ function TierTabs({ tiers, value, onChange }: { tiers: CoinTier[]; value: RiskTi
 function OddsGrid({ tier, quote }: { tier: CoinTier; quote: string }) {
   const odds = oddsOf(tier.outcomes);
   return (
-    <dl className="grid grid-cols-2 gap-1.5 phone:grid-cols-4" aria-label={`${tier.name} risk odds`}>
+    <dl className="grid grid-cols-4 gap-1.5" aria-label={`${tier.name} risk odds`}>
       {RARITY_NAMES.map((name, r) => (
-        <div key={name} className={cn("flex min-w-0 flex-col gap-0.5 rounded-md bg-surface-muted px-3 py-2.5", odds[r].chance === 0 && "opacity-40")}>
-          <dt className="flex min-w-0 items-center gap-1.5 text-[13px] text-muted">
+        <div key={name} className={cn("flex min-w-0 flex-col gap-0.5 rounded-md bg-surface-muted px-2 py-2 phone:px-3 phone:py-2.5", odds[r].chance === 0 && "opacity-40")}>
+          <dt className="flex min-w-0 items-center gap-1 text-[12px] text-muted phone:gap-1.5 phone:text-[13px]">
             <span className="size-1.5 shrink-0 rounded-full" style={{ background: RARITY_DOT[r] }} aria-hidden="true" />
             <span className="truncate">{name}</span>
           </dt>
           <dd className="text-base tabular-nums">{Math.round(odds[r].chance * 100)}%</dd>
-          <dd className="truncate text-[13px] text-muted tabular-nums">
+          <dd className="truncate text-[12px] text-muted tabular-nums phone:text-[13px]">
             {odds[r].chance === 0 ? "—" : tier.priceUsd !== null ? usd(odds[r].avg * tier.priceUsd) : `${amount(odds[r].avg * tier.price)} ${quote}`}
           </dd>
         </div>

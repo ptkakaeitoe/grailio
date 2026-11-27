@@ -95,7 +95,7 @@ export function PhaseSteps({ pack }: { pack: CoinPack }) {
   const steps = [
     { title: "Presale", note: refund ? "Didn't sell out · refunds open" : `${p.packsSold} / ${p.packsForSale} packs sold`, done: launched, current: pack.phase === "presale" || refund },
     { title: "Launch", note: launched ? "Liquidity and pool funded" : "When the last pack sells", done: launched, current: false },
-    { title: "Packs open", note: launched ? "Medium and High unlock as the pool grows" : "Low first, then Medium and High", done: false, current: launched },
+    { title: "Packs open", short: "Packs", note: launched ? "Medium and High unlock as the pool grows" : "Low first, then Medium and High", done: false, current: launched },
   ];
   return (
     <ol className="mt-6 grid list-none grid-cols-3 gap-1.5 p-0" aria-label="Launch steps">
@@ -104,7 +104,7 @@ export function PhaseSteps({ pack }: { pack: CoinPack }) {
           key={s.title}
           aria-current={s.current ? "step" : undefined}
           className={cn(
-            "flex min-w-0 items-start gap-2 rounded-md border p-2.5 phone:gap-3 phone:p-3",
+            "flex min-w-0 items-center gap-2 rounded-md border p-2.5 phone:items-start phone:gap-3 phone:p-3",
             s.current ? (refund && i === 0 ? "border-down/50" : "border-black") : "border-border",
             !s.current && !s.done && "text-muted",
           )}
@@ -113,7 +113,7 @@ export function PhaseSteps({ pack }: { pack: CoinPack }) {
             {s.done ? <CheckIcon weight="bold" className="size-3.5" aria-label="done" /> : i + 1}
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm">{s.title}</span>
+            <span className="block truncate text-sm">{"short" in s && s.short ? <><span className="phone:hidden">{s.short}</span><span className="max-phone:hidden">{s.title}</span></> : s.title}</span>
             <span className="mt-0.5 block truncate text-[12px] text-muted tabular-nums max-phone:hidden">{s.note}</span>
           </span>
         </li>
@@ -154,8 +154,8 @@ export function PackColumn({ pack }: { pack: CoinPack }) {
   }
   return (
     <div className="min-w-0">
-      <div className="grid place-items-center rounded-md bg-surface-muted/40 px-6 py-10 desk:py-14">
-        <div ref={ref} onPointerMove={tiltTo} onPointerLeave={untilt} className="pack-tilt relative w-[min(260px,62vw)]">
+      <div className="grid place-items-center rounded-md bg-surface-muted/40 px-6 py-6 phone:py-10 desk:py-14">
+        <div ref={ref} onPointerMove={tiltTo} onPointerLeave={untilt} className="pack-tilt relative w-[min(170px,46vw)] phone:w-[min(260px,62vw)]">
           <SealedPack size={size} coin={coin.name} color={color} priceLabel={packPriceLabel(pack)} style={custom ? coverStyle(coin.config.tone, coin.config.pattern, coin.config.cover) : undefined} />
           <span className="holo-glare rounded-[4px]" aria-hidden="true" />
         </div>
