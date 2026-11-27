@@ -16,17 +16,16 @@ export function CoinLoop({ pack }: { pack: CoinPack }) {
   const rate = Math.max(pack.coin.config.buyTax ?? 0, pack.coin.config.sellTax ?? 0);
   const packPrice = pack.phase === "presale" ? pack.presale.price : pack.tiers[0]?.price;
   const priceText = !packPrice ? null : pack.quote === "USD" ? usd(packPrice, packPrice < 10 ? 2 : 0) : `${packPrice.toLocaleString("en-US", { maximumFractionDigits: 4 })} ${pack.quote}`;
-  const poolText = pack.stockPoolUsd === null ? null : usd(pack.stockPoolUsd, 0);
   const share = pool >= 100 ? "All of it" : pool === 50 ? "Half of it" : `${pool}% of it`;
   const steps: React.ReactNode[] = pool > 0
     ? [
         <>Every {pack.ticker} trade pays a {rate > 0 ? `${rate}% ` : ""}tax</>,
-        <>{share} goes to the stock pool{poolText && <>: <b className="font-normal text-black tabular-nums">{poolText}</b> now</>}</>,
+        <>{share} goes to the stock pool</>,
         <>The pool pays pack prizes in stocks{priceText && <>. Packs cost <b className="font-normal text-black tabular-nums">{priceText}</b></>}</>,
         ...(stakers > 0 ? [<>Staked cards earn {stakers}% of the tax</>] : []),
       ]
     : [
-        <>The presale raise funds the stock pool{poolText && <>: <b className="font-normal text-black tabular-nums">{poolText}</b> now</>}</>,
+        <>The presale raise funds the stock pool</>,
         <>The pool pays pack prizes in stocks{priceText && <>. Packs cost <b className="font-normal text-black tabular-nums">{priceText}</b></>}</>,
       ];
   return (
