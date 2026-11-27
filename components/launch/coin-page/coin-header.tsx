@@ -104,12 +104,12 @@ export function PhaseSteps({ pack }: { pack: CoinPack }) {
           key={s.title}
           aria-current={s.current ? "step" : undefined}
           className={cn(
-            "flex min-w-0 items-center gap-2 rounded-md border p-2.5 phone:items-start phone:gap-3 phone:p-3",
+            "flex min-w-0 items-center gap-2 rounded-md border p-2.5 max-[359px]:justify-center max-[359px]:px-1.5 phone:items-start phone:gap-3 phone:p-3",
             s.current ? (refund && i === 0 ? "border-down/50" : "border-black") : "border-border",
             !s.current && !s.done && "text-muted",
           )}
         >
-          <span className={cn("grid size-6 shrink-0 place-items-center rounded-full border text-[12px] tabular-nums", s.done ? "border-black bg-black text-white" : s.current ? "border-black" : "border-border")}>
+          <span className={cn("grid size-6 shrink-0 place-items-center rounded-full border text-[12px] tabular-nums max-[359px]:hidden", s.done ? "border-black bg-black text-white" : s.current ? "border-black" : "border-border")}>
             {s.done ? <CheckIcon weight="bold" className="size-3.5" aria-label="done" /> : i + 1}
           </span>
           <span className="min-w-0">
@@ -155,7 +155,7 @@ export function PackColumn({ pack }: { pack: CoinPack }) {
   return (
     <div className="min-w-0">
       <div className="grid place-items-center rounded-md bg-surface-muted/40 px-6 py-6 phone:py-10 desk:py-14">
-        <div ref={ref} onPointerMove={tiltTo} onPointerLeave={untilt} className="pack-tilt relative w-[min(170px,46vw)] phone:w-[min(260px,62vw)]">
+        <div ref={ref} onPointerMove={tiltTo} onPointerLeave={untilt} className="pack-tilt relative w-[190px] phone:w-[min(260px,62vw)]">
           <SealedPack size={size} coin={coin.name} color={color} priceLabel={packPriceLabel(pack)} style={custom ? coverStyle(coin.config.tone, coin.config.pattern, coin.config.cover) : undefined} />
           <span className="holo-glare rounded-[4px]" aria-hidden="true" />
         </div>
