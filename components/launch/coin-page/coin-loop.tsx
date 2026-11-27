@@ -1,8 +1,5 @@
 "use client";
 
-import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-
-import { CoinAvatar } from "@/components/launch/coin-avatar";
 import { usd } from "@/lib/launch/format";
 
 import type { MarketCoin } from "@/lib/launch/market";
@@ -10,51 +7,40 @@ import type { MarketCoin } from "@/lib/launch/market";
 import type { CoinPack } from "./types";
 import { useCoinPack } from "./use-coin-pack";
 
-const compact = (n: number | null | undefined) =>
-  n === null || n === undefined ? "—" : n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(1)}k` : usd(n, n > 0 && n < 10 ? 2 : 0);
-
-function Node({ value, label }: { value: string; label: React.ReactNode }) {
-  return (
-    <div className="min-w-0 text-center">
-      <p className="truncate text-[17px] leading-tight tabular-nums phone:text-lg">{value}</p>
-      <p className="mt-1 flex items-center justify-center gap-1 truncate text-[12px] text-muted phone:text-[13px]">{label}</p>
-    </div>
-  );
-}
-
-function Arrow({ label }: { label: string }) {
-  return (
-    <div className="flex flex-col items-center gap-0.5 text-[11px] leading-none text-muted">
-      <span className="whitespace-nowrap">{label}</span>
-      <ArrowRightIcon className="size-3.5" aria-hidden="true" />
-    </div>
-  );
-}
-
 /**
- * How the coin feeds its packs, from the coin's real numbers: the coin (its mcap) → what fills the pool (the trading
- * tax's pool share, or the presale raise when there's no tax) → the stock pool → the packs. Under it, what stakers get.
+ * How the coin funds its packs, as plain numbered steps with the coin's real numbers: the trading tax, the share
+ * that fills the stock pool, what the pool pays for, and what stakers earn. With no tax, the presale raise funds it.
  */
 export function CoinLoop({ pack }: { pack: CoinPack }) {
-  const taxToPool = pack.taxSplit.pool;
+  const { pool, stakers } = pack.taxSplit;
+  const rate = Math.max(pack.coin.config.buyTax ?? 0, pack.coin.config.sellTax ?? 0);
   const packPrice = pack.phase === "presale" ? pack.presale.price : pack.tiers[0]?.price;
-  const priceText = !packPrice ? "—" : pack.quote === "USD" ? compact(packPrice) : `${packPrice.toLocaleString("en-US", { maximumFractionDigits: 4 })} ${pack.quote}`;
+  const priceText = !packPrice ? null : pack.quote === "USD" ? usd(packPrice, packPrice < 10 ? 2 : 0) : `${packPrice.toLocaleString("en-US", { maximumFractionDigits: 4 })} ${pack.quote}`;
+  const poolText = pack.stockPoolUsd === null ? null : usd(pack.stockPoolUsd, 0);
+  const share = pool >= 100 ? "All of it" : pool === 50 ? "Half of it" : `${pool}% of it`;
+  const steps: React.ReactNode[] = pool > 0
+    ? [
+        <>Every {pack.ticker} trade pays a {rate > 0 ? `${rate}% ` : ""}tax</>,
+        <>{share} goes to the stock pool{poolText && <>: <b className="font-normal text-black tabular-nums">{poolText}</b> now</>}</>,
+        <>The pool pays pack prizes in stocks{priceText && <>. Packs cost <b className="font-normal text-black tabular-nums">{priceText}</b></>}</>,
+        ...(stakers > 0 ? [<>Staked cards earn {stakers}% of the tax</>] : []),
+      ]
+    : [
+        <>The presale raise funds the stock pool{poolText && <>: <b className="font-normal text-black tabular-nums">{poolText}</b> now</>}</>,
+        <>The pool pays pack prizes in stocks{priceText && <>. Packs cost <b className="font-normal text-black tabular-nums">{priceText}</b></>}</>,
+      ];
   return (
-    <figure className="rounded-md border border-border px-2 py-4 min-[360px]:px-3 phone:px-5" aria-label="How the coin funds its packs">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 min-[360px]:gap-2">
-        <Node
-          value={compact(pack.mcapUsd)}
-          label={<><CoinAvatar seed={pack.coin.slug} tone={pack.coin.tone} image={pack.coin.config.image} className="size-3.5 shrink-0 rounded-full max-[359px]:hidden" /><span className="truncate">{pack.ticker}<span className="max-phone:hidden"> mcap</span></span></>}
-        />
-        <Arrow label={taxToPool > 0 ? `${taxToPool}% tax` : "raise"} />
-        <Node value={compact(pack.stockPoolUsd)} label={<><span className="max-[359px]:hidden">Stock pool</span><span className="min-[360px]:hidden">Pool</span></>} />
-        <Arrow label="prizes" />
-        <Node value={priceText} label="Pack" />
-      </div>
-      <figcaption className="mt-4 border-t border-border pt-3 text-center text-[12px] text-muted">
-        {pack.taxSplit.stakers > 0 ? `Staked cards earn ${pack.taxSplit.stakers}% of the trading tax` : "No trading tax: the presale raise funds the pool"}
-      </figcaption>
-    </figure>
+    <section className="rounded-md border border-border p-4 phone:p-5" aria-label="How the packs are funded">
+      <p className="text-sm">How the packs are funded</p>
+      <ol className="mt-3 flex list-none flex-col gap-2.5 p-0">
+        {steps.map((step, i) => (
+          <li key={i} className="flex items-start gap-3 text-sm text-muted">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full border border-border text-[11px] tabular-nums text-black" aria-hidden="true">{i + 1}</span>
+            <span className="min-w-0 pt-px">{step}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
