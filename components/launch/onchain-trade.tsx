@@ -12,6 +12,7 @@ import { CoinLoop } from "@/components/launch/coin-page/coin-loop";
 import { useCoinPack } from "@/components/launch/coin-page/use-coin-pack";
 import { PriceChart, type ChartPoint } from "@/components/launch/price-chart";
 import { WalletEntry } from "@/components/wallet-entry";
+import { useBnbUsd } from "@/components/launch/stake-panel";
 import { appChain, explorerUrl } from "@/lib/launch/chain";
 import { FLAP_V2_FACTORY, TEST_USD, v2Abi } from "@/lib/launch/flap";
 import { usd } from "@/lib/launch/format";
@@ -20,16 +21,23 @@ import { showToast } from "@/lib/toast";
 import { txErrorMessage } from "@/lib/tx-error";
 
 /*
- * A Flap coin's trade screen: real trades against the coin's PancakeSwap pool in Flap's free test USD. The price and
- * chart come from the pool (its Sync events), the stock pool panel from the coin's pack vault, and the swap box sends
- * real router swaps (the coin's 3% tax comes off each trade).
+ * An on-chain coin's trade screen: real trades against the coin's PancakeSwap pool. Flap coins trade in Flap's free
+ * test USD (their 3% tax comes off each trade); Four.meme coins trade in tBNB once their presale has sold out and
+ * migrated (before that the presale only sells packs). The price and chart come from the pool (its Sync events), the
+ * stock pool panel from the coin's pack vault, and the swap box sends real router swaps.
  */
 
-/** PancakeSwap's V2 router on BSC testnet (the one over the factory Flap seeds liquidity on). */
-const ROUTER: Address = "0xc9D63ddCB9549578057EAB6A83a543DdFEE2b8c3";
+/** PancakeSwap V2 routers on BSC testnet over the same factory: the one our Flap tests use, and the one OpenFour migrates with. */
+const FLAP_ROUTER: Address = "0xc9D63ddCB9549578057EAB6A83a543DdFEE2b8c3";
+const FOUR_ROUTER: Address = "0xD99D1c33F9fC3444f8101754aBC46c52416550D1";
+const WBNB: Address = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+/** tBNB kept back for gas when using Max. */
+const GAS_RESERVE = parseEther("0.002");
 const routerAbi = parseAbi([
   "function getAmountsOut(uint256 amountIn, address[] path) view returns (uint256[] amounts)",
   "function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)",
+  "function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable",
+  "function swapExactTokensForETHSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)",
 ]);
 const mintAbi = parseAbi(["function mint(address to, uint256 amount)"]);
 const syncEvent = parseAbiItem("event Sync(uint112 reserve0, uint112 reserve1)");
@@ -40,8 +48,13 @@ const fmt = (n: number, max = 6) => n.toLocaleString("en-US", { maximumFractionD
 const priceText = (p: number) => (p >= 1 ? usd(p) : `$${p.toPrecision(3)}`);
 const compactUsd = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(1)}k` : usd(n));
 
-export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
+export function OnchainTradeScreen({ coin }: { coin: MarketCoin }) {
   const pack = useCoinPack(coin);
+  const bnbUsd = useBnbUsd();
+  const four = coin.config.onchain?.pad === "four";
+  const QUOTE = four ? WBNB : TEST_USD;
+  const ROUTER = four ? FOUR_ROUTER : FLAP_ROUTER;
+  const quoteLabel = four ? "tBNB" : "USD";
   const { address, isConnected } = useAccount();
   const client = usePublicClient({ chainId: appChain.id });
   const { writeContractAsync } = useWriteContract();
@@ -52,36 +65,39 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [bal, setBal] = useState<{ usd: bigint; coin: bigint }>({ usd: 0n, coin: 0n });
+  const [bal, setBal] = useState<{ quote: bigint; coin: bigint }>({ quote: 0n, coin: 0n });
   const [quote, setQuote] = useState<bigint | null>(null);
   const [points, setPoints] = useState<ChartPoint[]>([]);
 
-  const path = useMemo<Address[]>(() => (token ? (side === "buy" ? [TEST_USD, token] : [token, TEST_USD]) : []), [token, side]);
+  const path = useMemo<Address[]>(() => (token ? (side === "buy" ? [QUOTE, token] : [token, QUOTE]) : []), [token, side, QUOTE]);
   const value = Number(amount);
   const valid = Number.isFinite(value) && value > 0;
   const amountIn = valid ? parseEther(amount as `${number}`) : 0n;
-  const payBal = side === "buy" ? bal.usd : bal.coin;
+  const payBal = side === "buy" ? bal.quote : bal.coin;
   const short = valid && amountIn > payBal;
-  const payLabel = side === "buy" ? "USD" : symbol;
-  const getLabel = side === "buy" ? symbol : "USD";
+  const payLabel = side === "buy" ? quoteLabel : symbol;
+  const getLabel = side === "buy" ? symbol : quoteLabel;
   const tax = Math.max(coin.config.buyTax ?? 0, coin.config.sellTax ?? 0) / 100;
 
   const readBalances = useCallback(async () => {
     if (!client || !address || !token) return;
     const [u, c] = await Promise.all([
-      client.readContract({ address: TEST_USD, abi: erc20Abi, functionName: "balanceOf", args: [address] }),
+      four ? client.getBalance({ address }) : client.readContract({ address: TEST_USD, abi: erc20Abi, functionName: "balanceOf", args: [address] }),
       client.readContract({ address: token, abi: erc20Abi, functionName: "balanceOf", args: [address] }),
     ]);
-    setBal({ usd: u, coin: c });
-  }, [client, address, token]);
+    setBal({ quote: u, coin: c });
+  }, [client, address, token, four]);
   useEffect(() => { const t = setTimeout(() => void readBalances(), 0); return () => clearTimeout(t); }, [readBalances]);
 
   // The chart: the pool's price after every trade, from its Sync events since the launch.
   const readChart = useCallback(async () => {
     if (!client || !token || !createTx) return;
-    const pair = await client.readContract({ address: FLAP_V2_FACTORY, abi: v2Abi, functionName: "getPair", args: [token, TEST_USD] });
+    const pair = await client.readContract({ address: FLAP_V2_FACTORY, abi: v2Abi, functionName: "getPair", args: [token, QUOTE] });
     if (pair === zeroAddress) return;
-    const usdFirst = (await client.readContract({ address: pair, abi: v2Abi, functionName: "token0" })).toLowerCase() === TEST_USD.toLowerCase();
+    const usdFirst = (await client.readContract({ address: pair, abi: v2Abi, functionName: "token0" })).toLowerCase() === QUOTE.toLowerCase();
+    // Quote → USD: test USD is $1; tBNB at the BNB price.
+    const toUsd = four ? bnbUsd ?? 0 : 1;
+    if (!toUsd) return;
     const from = (await client.getTransactionReceipt({ hash: createTx })).blockNumber;
     const head = await client.getBlockNumber();
     const logs = [];
@@ -96,9 +112,9 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
       const { reserve0, reserve1 } = l.args;
       if (reserve0 === undefined || reserve1 === undefined) return [];
       const [u, c] = usdFirst ? [reserve0, reserve1] : [reserve1, reserve0];
-      return c > 0n ? [{ t: times.get(l.blockNumber) ?? Date.now(), p: num(u) / num(c) }] : [];
+      return c > 0n ? [{ t: times.get(l.blockNumber) ?? Date.now(), p: (num(u) / num(c)) * toUsd }] : [];
     }));
-  }, [client, token, createTx]);
+  }, [client, token, createTx, QUOTE, four, bnbUsd]);
   useEffect(() => { const t = setTimeout(() => void readChart(), 0); return () => clearTimeout(t); }, [readChart]);
 
   useEffect(() => {
@@ -109,15 +125,15 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
         .then((a) => { if (live) setQuote(a[1]); }).catch(() => { if (live) setQuote(null); });
     }, 250);
     return () => { live = false; clearTimeout(t); };
-  }, [client, valid, amountIn, path]);
+  }, [client, valid, amountIn, path, ROUTER]);
 
   // After the coin's tax. A quote is only shown for a valid amount.
   const shown = valid ? quote : null;
   const receive = shown === null ? null : num(shown) * (1 - tax);
 
-  async function send(call: Parameters<typeof writeContractAsync>[0]) {
+  async function send(call: { address: Address; abi: readonly unknown[]; functionName: string; args?: readonly unknown[]; value?: bigint }) {
     if (!client) throw new Error("No chain client");
-    const hash = await writeContractAsync({ chainId: appChain.id, ...call } as Parameters<typeof writeContractAsync>[0]);
+    const hash = await writeContractAsync({ chainId: appChain.id, ...call } as unknown as Parameters<typeof writeContractAsync>[0]);
     const rec = await client.waitForTransactionReceipt({ hash });
     if (rec.status !== "success") throw new Error("Transaction reverted");
     return hash;
@@ -141,18 +157,23 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
     if (!client || !address || !token || !valid || short || shown === null) return;
     try {
       const payToken = path[0];
-      const allowance = await client.readContract({ address: payToken, abi: erc20Abi, functionName: "allowance", args: [address, ROUTER] });
-      if (allowance < amountIn) {
-        setBusy("Approving…");
-        await send({ address: payToken, abi: erc20Abi, functionName: "approve", args: [ROUTER, maxUint256] });
+      const nativeIn = four && side === "buy";
+      if (!nativeIn) {
+        const allowance = await client.readContract({ address: payToken, abi: erc20Abi, functionName: "allowance", args: [address, ROUTER] });
+        if (allowance < amountIn) {
+          setBusy("Approving…");
+          await send({ address: payToken, abi: erc20Abi, functionName: "approve", args: [ROUTER, maxUint256] });
+        }
       }
       setBusy(side === "buy" ? "Buying…" : "Selling…");
       // 10% slippage on top of the tax (thin testnet pool).
       const min = (shown * BigInt(Math.round((1 - tax) * 900))) / 1000n;
-      const hash = await send({
-        address: ROUTER, abi: routerAbi, functionName: "swapExactTokensForTokensSupportingFeeOnTransferTokens",
-        args: [amountIn, min, path, address, BigInt(Math.floor(Date.now() / 1000) + 600)],
-      });
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
+      const hash = nativeIn
+        ? await send({ address: ROUTER, abi: routerAbi, functionName: "swapExactETHForTokensSupportingFeeOnTransferTokens", args: [min, path, address, deadline], value: amountIn })
+        : four
+          ? await send({ address: ROUTER, abi: routerAbi, functionName: "swapExactTokensForETHSupportingFeeOnTransferTokens", args: [amountIn, min, path, address, deadline] })
+          : await send({ address: ROUTER, abi: routerAbi, functionName: "swapExactTokensForTokensSupportingFeeOnTransferTokens", args: [amountIn, min, path, address, deadline] });
       showToast({ kind: "success", title: `${side === "buy" ? "Bought" : "Sold"} ${symbol}`, detail: "BSC testnet", href: `${explorerUrl}/tx/${hash}` });
       setAmount("");
       await Promise.all([readBalances(), readChart()]);
@@ -174,7 +195,8 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
       ["to the pool", compactUsd(collected.pool), true],
       ["to stakers", compactUsd(collected.stakers), true],
     ] as [string, string, boolean][]) : []),
-    ["Pack", pack.tiers[0] ? `${usd(pack.tiers[0].price, 0)} each` : "—", false],
+    ...(pack.vault?.reserveUsd ? ([["Presale reserve", compactUsd(pack.vault.reserveUsd), false]] as [string, string, boolean][]) : []),
+    ["Pack", pack.tiers[0]?.priceUsd ? `${usd(pack.tiers[0].priceUsd, pack.tiers[0].priceUsd < 10 ? 2 : 0)} each` : "—", false],
   ];
 
   return (
@@ -190,7 +212,7 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
         <div className="text-right">
           <p className="text-[22px] leading-tight tabular-nums">{pack.priceUsd ? priceText(pack.priceUsd) : "—"}</p>
           {change !== null && <p className={cn("text-sm tabular-nums", change >= 0 ? "text-up" : "text-down")}>{change >= 0 ? "+" : ""}{(change * 100).toFixed(2)}%</p>}
-          <p className="text-sm text-muted">PancakeSwap · testnet</p>
+          <p className="text-sm text-muted">{live ? "PancakeSwap · testnet" : "presale price"}</p>
         </div>
       </header>
 
@@ -199,7 +221,7 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
           {points.length > 1 ? (
             <section aria-label="Chart"><PriceChart points={points} up={(change ?? 0) >= 0} /></section>
           ) : (
-            <div className="grid h-[260px] place-items-center rounded-md border border-dashed border-border px-4 text-center text-sm text-muted">{live ? "No trades yet. The chart starts with the first one." : "Trading opens when the presale sells out."}</div>
+            <div className="grid h-[260px] place-items-center rounded-md border border-dashed border-border px-4 text-center text-sm text-muted">{live ? "No trades yet. The chart starts with the first one." : `Trading opens when the presale sells out (${pack.presale.packsSold} of ${pack.presale.packsForSale} packs sold).`}</div>
           )}
           <CoinLoop pack={pack} />
         </div>
@@ -220,6 +242,11 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
                 </div>
               ))}
             </dl>
+            {pack.vault && (
+              <a href={pack.vault.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-[13px] text-muted hover:text-black hover:underline">
+                Pack vault {pack.vault.address.slice(0, 6)}…{pack.vault.address.slice(-4)} ↗
+              </a>
+            )}
             <Link href={`/packs/${coin.slug}`} className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-md border border-border-strong text-sm transition-colors hover:border-black">Open packs</Link>
           </section>
 
@@ -229,7 +256,7 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
                 <span>You pay</span>
                 <span className="tabular-nums">
                   Balance {fmt(num(payBal), 4)}
-                  {side === "buy" && isConnected && <button type="button" onClick={claimUsd} disabled={Boolean(busy)} className="ml-2 underline-offset-4 hover:text-black hover:underline disabled:opacity-40">Get 1,000</button>}
+                  {side === "buy" && isConnected && !four && <button type="button" onClick={claimUsd} disabled={Boolean(busy)} className="ml-2 underline-offset-4 hover:text-black hover:underline disabled:opacity-40">Get 1,000</button>}
                 </span>
               </div>
               <div className="mt-2 flex items-center gap-3">
@@ -239,7 +266,7 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
               </div>
               <div className="mt-3 flex gap-1.5">
                 {[0.25, 0.5, 0.75, 1].map((f) => (
-                  <button key={f} type="button" disabled={payBal === 0n} onClick={() => setAmount(formatEther(f === 1 ? payBal : (payBal * BigInt(f * 100)) / 100n))}
+                  <button key={f} type="button" disabled={payBal === 0n} onClick={() => { const spendable = four && side === "buy" ? (payBal > GAS_RESERVE ? payBal - GAS_RESERVE : 0n) : payBal; setAmount(formatEther(f === 1 ? spendable : (spendable * BigInt(f * 100)) / 100n)); }}
                     className="min-h-9 flex-1 rounded-full border border-border-strong text-sm transition-colors hover:border-black disabled:opacity-40">{f === 1 ? "Max" : `${f * 100}%`}</button>
                 ))}
               </div>
@@ -255,7 +282,7 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
             <div className="rounded-md border border-border p-4">
               <div className="flex items-baseline justify-between text-sm text-muted">
                 <span>You receive</span>
-                <span className="tabular-nums">Balance {fmt(num(side === "buy" ? bal.coin : bal.usd), 4)}</span>
+                <span className="tabular-nums">Balance {fmt(num(side === "buy" ? bal.coin : bal.quote), 4)}</span>
               </div>
               <div className="mt-2 flex items-center gap-3">
                 <span className="min-w-0 flex-1 truncate text-[32px] leading-none tabular-nums text-muted">{receive !== null ? fmt(receive, 4) : "—"}</span>
@@ -264,15 +291,17 @@ export function FlapTradeScreen({ coin }: { coin: MarketCoin }) {
             </div>
           </section>
 
-          {!isConnected ? (
+          {!live ? (
+            <Link href={`/packs/${coin.slug}`} className={cn(cleanButton.solid, "min-h-12 w-full justify-center")}>Buy presale packs</Link>
+          ) : !isConnected ? (
             <WalletEntry className={cn(cleanButton.solid, "min-h-12 w-full justify-center")} />
           ) : (
             <button type="button" onClick={swap} disabled={Boolean(busy) || !live || !valid || short || shown === null}
               className="min-h-12 rounded-md bg-black text-base text-white transition-opacity disabled:opacity-40">
-              {busy ?? (!live ? "Opens after the presale" : !valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`)}
+              {busy ?? (!valid ? "Enter an amount" : short ? `Not enough ${payLabel}` : `${side === "buy" ? "Buy" : "Sell"} ${symbol}`)}
             </button>
           )}
-          <p className="-mt-3 text-center text-sm text-muted">{tax > 0 ? `${Math.round(tax * 100)}% tax per trade · ` : ""}Free test USD · BSC testnet</p>
+          <p className="-mt-3 text-center text-sm text-muted">{!live ? "Trading opens after the presale · BSC testnet" : `${tax > 0 ? `${Math.round(tax * 100)}% tax per trade · ` : ""}${four ? "tBNB" : "Free test USD"} · BSC testnet`}</p>
         </div>
       </div>
     </div>

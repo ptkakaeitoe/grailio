@@ -8,7 +8,7 @@ import { ArrowLeftIcon, ArrowsDownUpIcon } from "@phosphor-icons/react/ssr";
 import { cleanButton, cn } from "@/components/clean-ui";
 import { CoinAvatar } from "@/components/launch/coin-avatar";
 import { CoinLoopFor } from "@/components/launch/coin-page/coin-loop";
-import { FlapTradeScreen } from "@/components/launch/flap-trade";
+import { OnchainTradeScreen } from "@/components/launch/onchain-trade";
 import { PriceChart } from "@/components/launch/price-chart";
 import { WalletEntry } from "@/components/wallet-entry";
 import { startDemo, tradeDemo, useDemo } from "@/lib/launch/demo";
@@ -96,8 +96,8 @@ export function CoinTradeScreen({ slug }: { slug: string }) {
   const short = valid && value > payBalance + 1e-12;
 
   if (!coin) return <p className="py-16 text-center text-base text-muted">This coin isn&apos;t listed.</p>;
-  // Flap coins trade for real against their PancakeSwap pool.
-  if (coin.config.onchain?.pad === "flap" && coin.config.onchain.launcher) return <FlapTradeScreen coin={coin} />;
+  // On-chain coins (Flap, Four.meme) trade for real against their PancakeSwap pool.
+  if (coin.config.onchain && (coin.config.onchain.pad === "four" || coin.config.onchain.launcher)) return <OnchainTradeScreen coin={coin} />;
 
   function submit() {
     if (!demo.active) { startDemo(); return; }

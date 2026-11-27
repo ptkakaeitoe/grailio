@@ -86,6 +86,7 @@ function baseFields(coin: MarketCoin) {
     coin,
     basket: coin.basket,
     ticker: coin.config.ticker || coin.name,
+    vault: null as CoinPack["vault"],
   };
 }
 
@@ -227,7 +228,7 @@ function usePoll(enabled: boolean, refresh: () => Promise<void>, ms: number) {
 const FOUR_MIGRATED = 3;
 const FOUR_SALE_PACKS = Number(SALE.saleAmount / SALE.tokensPerPack);
 
-type FourState = { phase: number; remaining: bigint; free: bigint; maxPayout: bigint; packs: bigint; tokens: bigint; deadline: number | null };
+type FourState = { phase: number; remaining: bigint; free: bigint; maxPayout: bigint; packs: bigint; tokens: bigint; deadline: number | null; reserves: { bnb: bigint; coin: bigint } | null };
 
 function useFourPack(coin: MarketCoin, enabled: boolean): CoinPack {
   const oc = coin.config.onchain;
@@ -253,7 +254,20 @@ function useFourPack(coin: MarketCoin, enabled: boolean): CoinPack {
       const block = rec ? await client.getBlock({ blockNumber: rec.blockNumber }).catch(() => null) : null;
       if (block) deadline = (Number(block.timestamp) + Number(SALE.duration)) * 1000;
     }
-    setS({ phase: Number(phase), remaining, free, maxPayout, packs, tokens, deadline });
+    // After migration the coin trades against tBNB on PancakeSwap: price and liquidity from that pool.
+    let reserves: FourState["reserves"] = null;
+    if (Number(phase) >= FOUR_MIGRATED) {
+      const pair = await client.readContract({ address: FLAP_V2_FACTORY, abi: v2Abi, functionName: "getPair", args: [oc.token, OPENFOUR.wbnb] }).catch(() => zeroAddress);
+      if (pair !== zeroAddress) {
+        const [[r0, r1], token0] = await Promise.all([
+          client.readContract({ address: pair, abi: v2Abi, functionName: "getReserves" }),
+          client.readContract({ address: pair, abi: v2Abi, functionName: "token0" }),
+        ]);
+        const bnbFirst = token0.toLowerCase() === OPENFOUR.wbnb.toLowerCase();
+        reserves = { bnb: bnbFirst ? r0 : r1, coin: bnbFirst ? r1 : r0 };
+      }
+    }
+    setS({ phase: Number(phase), remaining, free, maxPayout, packs, tokens, deadline, reserves });
   }, [client, oc, address, s?.deadline]);
   const run = useRunner(refresh);
   const poll = usePoll(enabled && Boolean(oc), refresh, 15_000);
@@ -262,7 +276,7 @@ function useFourPack(coin: MarketCoin, enabled: boolean): CoinPack {
   const leftInSale = s ? Number(s.remaining / SALE.tokensPerPack) : FOUR_SALE_PACKS;
   const sold = FOUR_SALE_PACKS - leftInSale;
   const packPrice = num(SALE.packPrice);
-  const tokenPrice = num(SALE.fixedPrice);
+  const tokenPrice = s?.reserves && s.reserves.coin > 0n ? num(s.reserves.bnb) / num(s.reserves.coin) : num(SALE.fixedPrice);
   const raiseBnb = packPrice * FOUR_SALE_PACKS;
   const poolShare = SALE.stockPoolBps / 10_000;
   const usdOf = (bnb: number) => (bnbUsd ? bnb * bnbUsd : null);
@@ -305,9 +319,10 @@ function useFourPack(coin: MarketCoin, enabled: boolean): CoinPack {
   return {
     ...baseFields(coin),
     ticker: chain.symbol ?? coin.config.ticker ?? coin.name,
+    vault: oc ? { address: oc.packVault, url: `${explorerUrl}/address/${oc.packVault}`, reserveUsd: null } : null,
     source: "four", simulated: false, phase: live ? "live" : "presale", launchpad: "Four.meme",
     tokenAddress: oc?.token ?? null, explorerUrl: oc ? `${explorerUrl}/token/${oc.token}` : null, quote: "tBNB",
-    priceUsd: usdOf(tokenPrice), mcapUsd: usdOf(tokenPrice * TOTAL_SUPPLY), liquidityUsd: null, stockPoolUsd: s && live ? usdOf(num(s.free)) : null,
+    priceUsd: usdOf(tokenPrice), mcapUsd: usdOf(tokenPrice * TOTAL_SUPPLY), liquidityUsd: s?.reserves ? usdOf(num(s.reserves.bnb)) : null, stockPoolUsd: s && live ? usdOf(num(s.free)) : null,
     presale: {
       packsSold: sold, packsForSale: FOUR_SALE_PACKS, price: packPrice, priceUsd: usdOf(packPrice),
       coinsPerPack: num(SALE.tokensPerPack), mine: s ? (live ? 0 : Number(s.tokens / SALE.tokensPerPack)) : 0, deadline: s?.deadline ?? null,
@@ -328,7 +343,7 @@ function useFourPack(coin: MarketCoin, enabled: boolean): CoinPack {
 /* ---------------------------------------------------------------- Flap */
 
 type FlapSale = { price: bigint; forSale: bigint; sold: bigint; mine: bigint; deadline: bigint; launched: boolean; token: Address; vault: Address; claimable: bigint };
-type FlapVault = { price: bigint; pool: bigint; top: [bigint, bigint, bigint]; packs: [bigint, bigint, bigint, bigint]; earned: bigint };
+type FlapVault = { price: bigint; pool: bigint; reserve: bigint; top: [bigint, bigint, bigint]; packs: [bigint, bigint, bigint, bigint]; earned: bigint };
 type FlapCard = { id: bigint; ticker: string; rarity: number; value: bigint; amount: bigint; staked: boolean };
 const FLAP_PRESALE_KIND = 3;
 
@@ -366,16 +381,17 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
     setUsdBal(bal as bigint);
     if (!s.launched || s.vault === zeroAddress) return;
     const v = s.vault;
-    const [vPrice, pool, t0, t1, t2, packs, earned] = await Promise.all([
+    const [vPrice, pool, reserve, t0, t1, t2, packs, earned] = await Promise.all([
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "packPrice" }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "pool" }),
+      client.readContract({ address: v, abi: flapVaultAbi, functionName: "presaleReserve" }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "maxPayout", args: [0] }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "maxPayout", args: [1] }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "maxPayout", args: [2] }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "packsOf", args: [me] }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "earned", args: [me] }),
     ]);
-    setVault({ price: vPrice, pool, top: [t0, t1, t2], packs: packs as unknown as [bigint, bigint, bigint, bigint], earned });
+    setVault({ price: vPrice, pool, reserve, top: [t0, t1, t2], packs: packs as unknown as [bigint, bigint, bigint, bigint], earned });
     const pair = await client.readContract({ address: FLAP_V2_FACTORY, abi: v2Abi, functionName: "getPair", args: [s.token, TEST_USD] }).catch(() => zeroAddress);
     if (pair !== zeroAddress) {
       const [[r0, r1], token0] = await Promise.all([
@@ -463,6 +479,7 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
   return {
     ...baseFields(coin),
     ticker: chain.symbol ?? coin.config.ticker ?? coin.name,
+    vault: live && sale && sale.vault !== zeroAddress ? { address: sale.vault, url: `${explorerUrl}/address/${sale.vault}`, reserveUsd: vault ? num(vault.reserve) : null } : null,
     source: "flap", simulated: false, phase: refund ? "refund" : live ? "live" : "presale", launchpad: "Flap",
     tokenAddress: live && sale ? sale.token : null, explorerUrl: live && sale ? `${explorerUrl}/token/${sale.token}` : launcher ? `${explorerUrl}/address/${launcher}` : null, quote: "USD",
     priceUsd: coinPrice, mcapUsd: coinPrice === null ? null : coinPrice * TOTAL_SUPPLY, liquidityUsd: !live ? null : reserves ? num(reserves.usd) : raise * (1 - seed), stockPoolUsd: vault ? num(vault.pool) : null,
