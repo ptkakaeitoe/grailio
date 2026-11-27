@@ -17,7 +17,7 @@ import {
   openBought, openPresale, otherBuysPresale, packSizeOf, poolNeeded, presalePacksOf, simTokenPrice, simulateTax, stakeCards, stakeStats,
   topMult, unstakeCards, useLaunchSim, type Opened, type Tier,
 } from "@/lib/launch/demo-launch";
-import { FLAP_SEED_BPS, TEST_USD, flapTickerOf, flapVaultAbi, launcherAbi } from "@/lib/launch/flap";
+import { FLAP_SEED_BPS, FLAP_V2_FACTORY, TEST_USD, flapTickerOf, flapVaultAbi, launcherAbi, v2Abi } from "@/lib/launch/flap";
 import { demoTokenPrice, type MarketCoin } from "@/lib/launch/market";
 import { MARKET, OPENFOUR, SALE, coreAbi, marketAbi, packVaultAbi, saleVaultAbi, tickerOfStock, toolsAbi } from "@/lib/launch/onchain";
 import { stockOf } from "@/lib/launch/stocks";
@@ -341,6 +341,8 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
   const [vault, setVault] = useState<FlapVault | null>(null);
   const [cards, setCards] = useState<FlapCard[]>([]);
   const [usdBal, setUsdBal] = useState(0n);
+  /** The coin's V2 pool reserves: test USD and coins. */
+  const [reserves, setReserves] = useState<{ usd: bigint; coin: bigint } | null>(null);
   const now = useNow(enabled, 30_000);
 
   const refresh = useCallback(async () => {
@@ -374,6 +376,15 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "earned", args: [me] }),
     ]);
     setVault({ price: vPrice, pool, top: [t0, t1, t2], packs: packs as unknown as [bigint, bigint, bigint, bigint], earned });
+    const pair = await client.readContract({ address: FLAP_V2_FACTORY, abi: v2Abi, functionName: "getPair", args: [s.token, TEST_USD] }).catch(() => zeroAddress);
+    if (pair !== zeroAddress) {
+      const [[r0, r1], token0] = await Promise.all([
+        client.readContract({ address: pair, abi: v2Abi, functionName: "getReserves" }),
+        client.readContract({ address: pair, abi: v2Abi, functionName: "token0" }),
+      ]);
+      const usdFirst = token0.toLowerCase() === TEST_USD.toLowerCase();
+      setReserves({ usd: usdFirst ? r0 : r1, coin: usdFirst ? r1 : r0 });
+    }
     if (!address) return;
     // Your cards: every card revealed to you since the presale was created, still yours or staked by you.
     const created = await client.getTransactionReceipt({ hash: oc.createTx });
@@ -435,6 +446,7 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
   const forSale = sale ? Number(sale.forSale) : 0;
   const raise = priceUsd * forSale;
   const seed = FLAP_SEED_BPS / 10_000;
+  const coinPrice = live && reserves && reserves.coin > 0n ? num(reserves.usd) / num(reserves.coin) : null;
   const tierNames = ["Low", "Medium", "High"] as const;
   const toCard = (c: FlapCard): CoinStakedCard => ({ id: c.id.toString(), ticker: c.ticker, rarity: c.rarity, valueUsd: num(c.value), earnsPerDayUsd: 0, art: cardThumb(coin, c) });
   const tiers: CoinTier[] = tierNames.map((name, i) => {
@@ -453,7 +465,7 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
     ticker: chain.symbol ?? coin.config.ticker ?? coin.name,
     source: "flap", simulated: false, phase: refund ? "refund" : live ? "live" : "presale", launchpad: "Flap",
     tokenAddress: live && sale ? sale.token : null, explorerUrl: live && sale ? `${explorerUrl}/token/${sale.token}` : launcher ? `${explorerUrl}/address/${launcher}` : null, quote: "USD",
-    priceUsd: null, mcapUsd: null, liquidityUsd: live ? raise * (1 - seed) : null, stockPoolUsd: vault ? num(vault.pool) : null,
+    priceUsd: coinPrice, mcapUsd: coinPrice === null ? null : coinPrice * TOTAL_SUPPLY, liquidityUsd: !live ? null : reserves ? num(reserves.usd) : raise * (1 - seed), stockPoolUsd: vault ? num(vault.pool) : null,
     presale: {
       packsSold: sale ? Number(sale.sold) : 0, packsForSale: forSale, price: priceUsd, priceUsd,
       coinsPerPack: forSale > 0 ? 500_000 / forSale : 0, mine: live ? (vault ? Number(vault.packs[0]) : 0) : sale ? Number(sale.mine) : 0,

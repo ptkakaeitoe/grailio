@@ -14,6 +14,13 @@ export const FLAP_LAUNCHER_FACTORY = getAddress(deployments.PackLauncherFactory)
 export const FLAP_VAULT_FACTORY = getAddress(deployments.PackVaultFactory);
 export const FLAP_MARKET = getAddress(deployments.MockStockMarket);
 export const TEST_USD = getAddress(deployments.flapTestUSD);
+/** The V2 factory Flap seeds launched coins' liquidity on (PancakeSwap's on BSC testnet). */
+export const FLAP_V2_FACTORY = getAddress("0x6725F303b657a9451d8BA641348b6761A6CC7a17");
+export const v2Abi = parseAbi([
+  "function getPair(address, address) view returns (address)",
+  "function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)",
+  "function token0() view returns (address)",
+]);
 /** Flap's tax-token implementation: launched tokens are its EIP-1167 clones, at addresses ending in 7777. */
 const FLAP_TOKEN_IMPL = "0x7777c57ff7dc441c1715b2e36fa581c48B782222" as Address;
 
