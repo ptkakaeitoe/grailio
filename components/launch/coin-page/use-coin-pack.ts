@@ -381,9 +381,10 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
     setUsdBal(bal as bigint);
     if (!s.launched || s.vault === zeroAddress) return;
     const v = s.vault;
-    const [vPrice, pool, reserve, t0, t1, t2, packs, earned] = await Promise.all([
+    const [vPrice, synced, unsplit, reserve, t0, t1, t2, packs, earned] = await Promise.all([
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "packPrice" }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "pool" }),
+      client.readContract({ address: v, abi: flapVaultAbi, functionName: "unrecognized" }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "presaleReserve" }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "maxPayout", args: [0] }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "maxPayout", args: [1] }),
@@ -391,6 +392,9 @@ function useFlapPack(coin: MarketCoin, enabled: boolean): CoinPack {
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "packsOf", args: [me] }),
       client.readContract({ address: v, abi: flapVaultAbi, functionName: "earned", args: [me] }),
     ]);
+    // Tax that has reached the vault but isn't split yet: the next sync (any buy or open does one first) adds the
+    // pool's 50% share, so count it now.
+    const pool = synced + (unsplit * BigInt(TAX_SPLIT.pool * 10_000)) / 10_000n;
     setVault({ price: vPrice, pool, reserve, top: [t0, t1, t2], packs: packs as unknown as [bigint, bigint, bigint, bigint], earned });
     const pair = await client.readContract({ address: FLAP_V2_FACTORY, abi: v2Abi, functionName: "getPair", args: [s.token, TEST_USD] }).catch(() => zeroAddress);
     if (pair !== zeroAddress) {
